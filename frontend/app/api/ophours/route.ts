@@ -1,8 +1,19 @@
-import { supabase } from "@/utils/Database/supabase";
+import { getSupabase } from "@/utils/Database/supabase";
 import { cookies } from "next/headers";
 import { encode } from "@/utils/Cookies";
 
 export async function POST(req: Request) {
+	const supabase = getSupabase();
+
+	if (!supabase) {
+		return Response.json(
+			{ error: "Database configuration is missing" },
+			{
+				status: 503,
+			},
+		);
+	}
+
 	const cookie = await cookies();
 	const key = cookie.get("key")?.value ?? "";
 	const body = await req.json();

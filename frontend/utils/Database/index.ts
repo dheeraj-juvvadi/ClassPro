@@ -1,5 +1,5 @@
 import type { CalendarData } from "@/types/CalendarData";
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 import { encode } from "../Cookies";
 
 interface DatabaseRecord {
@@ -15,6 +15,12 @@ interface DatabaseRecord {
 
 class Database {
 	async getEvents(): Promise<CalendarData[]> {
+		const supabase = getSupabase();
+
+		if (!supabase) {
+			throw new Error("Database configuration is missing");
+		}
+
 		const { data, error } = await supabase
 			.from("gocal")
 			.select("*");
@@ -63,6 +69,10 @@ class Database {
 
 	// Method to get data by regNumber
 	async getData(regNumber: string): Promise<DatabaseRecord | null> {
+		const supabase = getSupabase();
+
+		if (!supabase) return null;
+
 		try {
 			const { data, error } = await supabase
 				.from("goscrape") // Replace with your actual table name
@@ -87,6 +97,10 @@ class Database {
 		cookie: string,
 		selector = "*",
 	): Promise<DatabaseRecord | null> {
+		const supabase = getSupabase();
+
+		if (!supabase) return null;
+
 		try {
 			const { data, error } = await supabase
 				.from("goscrape") // Replace with your actual table name
@@ -109,6 +123,10 @@ class Database {
 	}
 
 	async checkCookie(cookie: string): Promise<DatabaseRecord | null> {
+		const supabase = getSupabase();
+
+		if (!supabase) return null;
+
 		try {
 			const { data, error } = await supabase
 				.from("goscrape") // Replace with your actual table name
@@ -132,6 +150,10 @@ class Database {
 
 	// Method to delete data by regNumber
 	async deleteData(regNumber: string): Promise<void> {
+		const supabase = getSupabase();
+
+		if (!supabase) return;
+
 		try {
 			const { error } = await supabase
 				.from("goscrape") // Replace with your actual table name
