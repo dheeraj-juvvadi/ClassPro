@@ -12,9 +12,11 @@ const nextConfig: NextConfig = {
 	output: 'standalone',
 	// Monorepo: ensure file tracing resolves from workspace root.
 	outputFileTracingRoot: path.join(__dirname, ".."),
+	// viewTransition was dropped from experimental in Next 16; it is reported as
+	// an unrecognised key and fails the type check. View transitions come from
+	// the next-view-transitions package, so nothing here depends on the flag.
 	experimental: {
 		nextScriptWorkers: true,
-		viewTransition: true,
 		staticGenerationMaxConcurrency: 8,
 	},
 	async headers() {
