@@ -10,77 +10,77 @@ help:
 
 
 build: 
-	docker-compose build
+	docker compose build
 
 up: 
-	docker-compose up -d
+	docker compose up -d
 
 down: 
-	docker-compose down
+	docker compose down
 
 logs: 
-	docker-compose logs -f
+	docker compose logs -f
 
 status: 
-	docker-compose ps
+	docker compose ps
 
 
 frontend-build: 
-	docker build -f Dockerfile.frontend -t classpro-frontend .
+	docker build -t classpro-frontend ./frontend
 
 frontend-up: 
-	cd frontend && docker-compose up -d
+	cd frontend && docker compose up -d
 
 frontend-down: 
-	cd frontend && docker-compose down
+	cd frontend && docker compose down
 
 frontend-logs: 
-	cd frontend && docker-compose logs -f
+	cd frontend && docker compose logs -f
 
 backend-build: 
-	docker build -f Dockerfile.backend -t classpro-backend .
+	docker build -f dockerfile -t classpro-backend ./backend
 
 backend-up: 
-	cd backend && docker-compose up -d
+	cd backend && docker compose up -d
 
 backend-down: 
-	cd backend && docker-compose down
+	cd backend && docker compose down
 
 backend-logs: 
-	cd backend && docker-compose logs -f
+	cd backend && docker compose logs -f
 
 
 dev: 
-	docker-compose run --service-ports frontend bun run dev
+	docker compose run --service-ports frontend bun run dev
 
 dev-backend: 
-	docker-compose run --service-ports backend go run src/main.go
+	docker compose run --service-ports backend go run src/main.go
 
 
 clean: 
-	docker-compose down --rmi all --volumes --remove-orphans
+	docker compose down --rmi all --volumes --remove-orphans
 	docker system prune -f
 
 restart: 
-	docker-compose restart
+	docker compose restart
 
 restart-frontend: 
-	docker-compose restart frontend
+	docker compose restart frontend
 
 restart-backend: 
-	docker-compose restart backend
+	docker compose restart backend
 
 
 health: 
 	@echo "Checking service health..."
-	@docker-compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+	@docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
 
 
 shell-frontend: 
-	docker-compose exec frontend sh
+	docker compose exec frontend sh
 
 shell-backend: 
-	docker-compose exec backend sh
+	docker compose exec backend sh
 
 start: build up
 	@echo "ClassPro is starting..."
