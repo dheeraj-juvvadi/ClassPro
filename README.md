@@ -112,6 +112,11 @@ bun run build:backend
 ### Docker Deployment
 
 ```bash
+# Copy .env into both workspaces first. NEXT_PUBLIC_* values are inlined into
+# the client bundle while the frontend image builds, so changing them later
+# needs a rebuild rather than a restart.
+bun run sync:env
+
 # Build and run with Docker Compose
 bun run docker:build
 bun run docker:up
