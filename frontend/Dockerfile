@@ -1,58 +1,42 @@
+ARG NODE_VERSION=22
 
+# Debian rather than Alpine: bun publishes no aarch64 musl binary, so
+# `npm install -g bun` fails on arm64 Alpine with
+# "Failed to find package @oven/bun-linux-aarch64".
+FROM node:${NODE_VERSION}-slim AS base
 
-ARG NODE_VERSION=22.11.0
-
-
-FROM node:${NODE_VERSION}-alpine AS base
-
-
-RUN npm install -g bun@1.1.38
+RUN npm install -g bun@1.2.21
 
 WORKDIR /app
 
-
-FROM base as deps
-
+FROM base AS build
 
 COPY package.json bun.lock* ./
-
-
-RUN bun install --frozen-lockfile --production
-
-
-FROM base as build
-
-
-COPY package.json bun.lock* ./
-
 
 RUN bun install --frozen-lockfile
 
-
 COPY . .
-
-
-COPY .env* ./
-
 
 RUN bun run build
 
-
-FROM base as final
+FROM node:${NODE_VERSION}-slim AS final
 
 ENV NODE_ENV=production
 ENV PORT=243
 
+WORKDIR /app
+
 USER node
 
-
-COPY package.json ./
-COPY --from=deps /app/node_modules ./node_modules
-
-
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
+# node_modules comes from the build stage rather than a --production install:
+# next.config.ts imports @serwist/turbopack, a devDependency, and `next start`
+# loads that config at boot. A production-only tree fails with
+# MODULE_NOT_FOUND before serving a single request.
+COPY --chown=node:node package.json ./
+COPY --chown=node:node --from=build /app/node_modules ./node_modules
+COPY --chown=node:node --from=build /app/.next ./.next
+COPY --chown=node:node --from=build /app/public ./public
 
 EXPOSE 243
 
-CMD ["bun", "start", "--port", "243"]
+CMD ["node_modules/.bin/next", "start", "-p", "243"]
