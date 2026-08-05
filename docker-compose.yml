@@ -1,49 +1,49 @@
-version: '3.8'
-
+# Run `bun run sync:env` before building: NEXT_PUBLIC_* values are inlined into
+# the client bundle at build time, so frontend/.env must exist and be correct
+# before the frontend image is built. Changing them later needs a rebuild, not
+# a restart.
 services:
-  
+
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./frontend
     container_name: classpro-frontend
+    env_file: .env
+    # Listed explicitly because environment: wins over env_file:, and
+    # .env.example ships NODE_ENV=development.
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_BACKEND_URL=http://backend:8080
     ports:
       - "243:243"
     depends_on:
       - backend
-    volumes:
-      - ./.env:/app/.env:ro
     networks:
       - classpro-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:243/api/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:243/home"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ./backend
+      # Spelled lowercase in the goscraper submodule; naming it explicitly
+      # keeps the build working on case-sensitive filesystems.
+      dockerfile: dockerfile
     container_name: classpro-backend
+    env_file: .env
     environment:
       - GO_ENV=production
-      - PORT=8080
     ports:
       - "8080:8080"
-    volumes:
-      - ./.env:/app/.env:ro
     networks:
       - classpro-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/hello"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -52,7 +52,3 @@ services:
 networks:
   classpro-network:
     driver: bridge
-
-volumes:
-  
-  pass 

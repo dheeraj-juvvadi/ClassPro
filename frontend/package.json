@@ -2,7 +2,7 @@
   "name": "classpro-frontend",
   "version": "3.1.2",
   "private": true,
-  "packageManager": "bun@1.1.38",
+  "packageManager": "bun@1.2.21",
   "scripts": {
     "dev": "next dev --port 0243",
     "build": "next build",
