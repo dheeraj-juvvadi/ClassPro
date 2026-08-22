@@ -18,25 +18,52 @@ export default function Form() {
 	const [statusMessage, setMessage] = useState("");
 
 	const handleLogin = useCallback(async (account: string, password: string) => {
+		const registrationId = account.replaceAll(" ", "").replace("@srmist.edu.in", "");
 		setStatus(1);
-		const login = await fetch(`${rotateUrl()}/login`, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${token()}`,
-				"content-type": "application/json",
-			},
-			body: JSON.stringify({
-				account: account.replaceAll(" ", "").replace("@srmist.edu.in", ""),
-				password: password,
-			}),
-		});
+		setMessage("");
+
+		let login: Response;
+		try {
+			login = await fetch(`${rotateUrl()}/login`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token()}`,
+					"content-type": "application/json",
+				},
+				body: JSON.stringify({
+					account: registrationId,
+					password,
+				}),
+			});
+		} catch {
+			setStatus(-1);
+			setMessage("Unable to reach ClassPro services. Check your connection.");
+			return;
+		}
+
+		let loginResponse: {
+			authenticated?: boolean;
+			cookies?: string;
+			message?: string;
+		};
+		try {
+			loginResponse = await login.json();
+		} catch {
+			setStatus(-1);
+			setMessage("The authentication service returned an invalid response.");
+			return;
+		}
 
 		if (!login.ok) {
 			setStatus(-1);
-			setMessage("Server down.");
+			setMessage(
+				loginResponse?.message ||
+					(login.status >= 500
+						? "Authentication service is unavailable."
+						: "Login failed. Check your details and try again."),
+			);
+			return;
 		}
-
-		const loginResponse = await login.json();
 
 		if (loginResponse.authenticated) {
 			setStatus(2);
@@ -62,9 +89,12 @@ export default function Form() {
 	return (
 		<form
 			className="flex flex-col gap-6"
-			onSubmit={(e) => {
-				e.preventDefault();
+			onSubmit={(event) => {
+				event.preventDefault();
+				if (!uid || !pass || status === 1 || status === 2) return;
+				void handleLogin(uid, pass);
 			}}
+			noValidate
 		>
 			{status === -1 && (
 				<p className="rounded-2xl bg-light-error-background px-4 py-2 text-light-error-color dark:bg-dark-error-background dark:text-dark-error-color">
@@ -96,7 +126,6 @@ export default function Form() {
 									: ""
 					}`}
 					type="submit"
-					onClick={() => handleLogin(uid, pass)}
 				>
 					{status === 1 ? "Authenticating" : status === 2 ? "Success" : "Login"}
 				</Button>

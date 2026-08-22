@@ -13,6 +13,10 @@ export async function GET() {
 		return new Response('Unauthorized', { status: 401 });
 	}
 
+	if (!supabase) {
+		return new Response('Persistence unavailable', { status: 503 });
+	}
+
 	const { data, error } = await supabase.from("goscrape")
 		.select("timetable,ophour")
 		.eq("token", encode(key))
@@ -23,8 +27,12 @@ export async function GET() {
 	}
 
 	const json = {
-		timetable: JSON.parse(data?.timetable),
+		timetable: JSON.parse(data?.timetable ?? "null"),
 		ophour: data?.ophour,
+	}
+
+	if (!Array.isArray(json.timetable?.schedule)) {
+		throw new Error("Timetable is unavailable");
 	}
 
 	const timetable = json.timetable.schedule;
@@ -36,7 +44,7 @@ export async function GET() {
 			const dayIndex = Number.parseInt(day.replace("D", "")) - 1;
 			const hourIndex = Number.parseInt(hour.replace("H", "")) - 1;
 
-			const slot = timetable[dayIndex].table[hourIndex];
+			const slot = timetable[dayIndex]?.table?.[hourIndex];
 			if (slot) slot.isOptional = true;
 		}
 	}

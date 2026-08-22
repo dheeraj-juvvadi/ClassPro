@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/react";
 
 import "./globals.css";
@@ -17,6 +16,24 @@ const APP_DEFAULT_TITLE = "ClassPro";
 const APP_TITLE_TEMPLATE = "%s - PWA App";
 const APP_DESCRIPTION = "Better way to manage your academics.";
 const PRODUCTION_URL = "https://class-pro.vercel.app";
+
+const academicDisplay = localFont({
+	src: "./fonts/Fraunces-VariableFont.ttf",
+	variable: "--font-academic-display",
+	display: "swap",
+});
+
+const academicText = localFont({
+	src: "./fonts/Sora-VariableFont_wght.woff2",
+	variable: "--font-academic-text",
+	display: "swap",
+});
+
+const academicMono = localFont({
+	src: "./fonts/IBMPlexMono-Regular.woff2",
+	variable: "--font-academic-mono",
+	display: "swap",
+});
 
 export const metadata: Metadata = {
 	metadataBase: new URL(
@@ -96,7 +113,7 @@ export default async function RootLayout({
 		<ViewTransitions>
 			<html
 				lang="en"
-				className={`dark h-screen bg-light-background-normal dark:bg-dark-background-normal ${GeistSans.variable} ${GeistMono.variable}`}
+				className={`dark h-screen bg-light-background-normal dark:bg-dark-background-normal ${academicDisplay.variable} ${academicText.variable} ${academicMono.variable}`}
 			>
 				<Script
 				id="razorpay-checkout-js"

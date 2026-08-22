@@ -40,7 +40,7 @@ export function Sidebar({
   mini: ReactNode;
   profile?: ReactNode;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   useGestures({
     onSwipeLeft: () => {
@@ -51,17 +51,17 @@ export function Sidebar({
     },
   });
   useEffect(() => {
-    const isMobile = window.innerWidth <= 1024;
-    const sidebarWidth = isOpen ? '310px' : isMobile ? '0px' : '60px';
+    const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+    const sidebarWidth = isMobile ? '0px' : isOpen ? '310px' : '60px';
     document.documentElement.style.setProperty('--sidebar-width', sidebarWidth);
   }, [isOpen]);
 
   useEffect(() => {
-    const isMobile = window.innerWidth <= 1024;
+    const isMobile = window.matchMedia('(max-width: 1024px)').matches;
     if (isMobile) setIsOpen(false);
 
     const handleResize = () => {
-      const isMobile = window.innerWidth <= 1024;
+      const isMobile = window.matchMedia('(max-width: 1024px)').matches;
       setIsOpen(!isMobile);
     };
     window.addEventListener('resize', handleResize);
@@ -134,7 +134,7 @@ export function Sidebar({
               <GradeXIcon className='text-xl' />
               GradeX
             </Link> */}
-          <Link title="Question papers" href="/academia/library">
+          <Link title="Question papers" href="/academia/library" onClick={handleClick}>
             <IoLibrarySharp className="text-xl" />
             <span className="flex items-center justify-start gap-3 text-light-color dark:text-dark-color">
               Library{" "}
@@ -143,19 +143,6 @@ export function Sidebar({
               </span>
             </span>
           </Link>
-          {/* 
-					
-          <Link
-            aria-disabled
-            className="relative cursor-not-allowed border border-dashed border-[#F34F4F1e] font-semibold text-[#F34F4F] hover:bg-[#F34F4F1e] hover:text-[#F34F4F] dark:text-[#F34F4F] dark:hover:bg-[#F34F4F1e] dark:hover:text-[#F34F4F]"
-            title="Coming Soon"
-            href="#"
-          >
-            <BsFillPinAngleFill className="text-xl" />
-            <span className="text-xl">🏗️</span>
-            Events
-          </Link>
-           */}
         </div>
 
         <div className='flex flex-col-reverse gap-4'>

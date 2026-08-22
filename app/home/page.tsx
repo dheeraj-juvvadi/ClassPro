@@ -8,7 +8,7 @@ import Image from "next/image";
 export default async function Academia() {
 	const cookie = (await cookies()).get("key");
 	return (
-		<main className="flex relative flex-col items-center justify-start gap-4 bg-light-background-normal p-4 pt-24 dark:bg-dark-background-dark w-screen h-screen overflow-hidden">
+		<main className="academic-surface flex relative flex-col items-center justify-start gap-4 bg-light-background-normal p-4 pt-24 dark:bg-dark-background-dark w-screen min-h-screen overflow-x-hidden">
 			<div className="flex absolute top-4 left-0 w-screen justify-between px-4 pl-8">
 				<div className="flex items-center justify-center gap-4">
 					<FaBookOpen className="text-2xl text-light-accent dark:text-dark-accent" />
@@ -50,7 +50,7 @@ export default async function Academia() {
 				<VscMegaphone className="-rotate-12 text-xl" /> Read about ClassPro v3
 			</Link>
 
-			<h1 className="md:text-6xl text-4xl md:max-w-3xl max-w-md mx-2 text-center font-semibold text-light-color dark:text-dark-color">
+			<h1 className="font-display md:text-7xl text-4xl md:max-w-4xl max-w-md mx-2 text-center font-semibold text-light-color dark:text-dark-color">
 				Better way to manage
 				<br />
 				your academics.
@@ -62,7 +62,7 @@ export default async function Academia() {
 				{cookie?.value ? (
 					<Link
 						href="/academia"
-						className="text-md flex w-auto transform items-center justify-center rounded-2xl border-2 border-transparent bg-light-accent px-5 py-2 text-lg font-semibold text-light-background-light transition-all duration-150  dark:bg-dark-accent dark:text-dark-background-darker hover:opacity-80"
+				className="min-h-11 text-md flex w-auto transform items-center justify-center rounded-2xl border-2 border-transparent bg-light-accent px-5 py-2 text-lg font-semibold transition-all duration-150 hover:-translate-y-0.5 hover:bg-accent-ink hover:text-accent-ink dark:bg-dark-accent"
 					>
 						Dashboard
 					</Link>
@@ -76,7 +76,7 @@ export default async function Academia() {
 				)}
 				<Link
 					href="https://academia.srmist.edu.in"
-					className="text-md flex w-auto transform items-center justify-center rounded-2xl border-2 border-light-accent px-5 py-2 text-lg font-semibold text-light-accent dark:text-dark-accent transition-all duration-150 dark:border-dark-accent"
+				className="min-h-11 text-md flex w-auto transform items-center justify-center rounded-2xl border-2 border-light-accent px-5 py-2 text-lg font-semibold text-light-accent transition-all duration-150 hover:bg-light-side dark:border-dark-accent dark:text-dark-accent"
 				>
 					SRM Academia
 				</Link>

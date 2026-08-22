@@ -22,17 +22,19 @@ export default async function Academia() {
 	const cookie = (await cookies()).get("key");
 	let ophours: string[] = [];
 
-	const { data, error } = await supabase
-		.from("goscrape")
-		.select("ophour")
-		.eq("token", encode(cookie?.value ?? ""))
-		.single();
+	if (cookie?.value && supabase) {
+		const { data, error } = await supabase
+			.from("goscrape")
+			.select("ophour")
+			.eq("token", encode(cookie.value))
+			.single();
 
-	if (error) {
-		if (error.code === "PGRST116") ophours = json.ophour?.split(",") ?? [];
-		else console.error("Error fetching ophours:", error);
-	} else {
-		ophours = data?.ophour?.split(",");
+		if (error) {
+			if (error.code === "PGRST116") ophours = json.ophour?.split(",") ?? [];
+			else console.error("Error fetching ophours:", error);
+		} else if (data?.ophour) {
+			ophours = data.ophour.split(",");
+		}
 	}
 
 	return (
@@ -41,7 +43,7 @@ export default async function Academia() {
 				<Suspense fallback={<Loading size="xl" />}>
 					<Timetable
 						user={json.user}
-						ophours={ophours ?? []}
+						ophours={ophours}
 						schedule={json.timetable?.schedule}
 					/>
 				</Suspense>

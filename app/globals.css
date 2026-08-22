@@ -1,14 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap')
-layer(base);
-
 @import 'tailwindcss';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-*: initial;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-academic-text), ui-sans-serif;
+  --font-mono: var(--font-academic-mono), monospace;
+  --font-display: var(--font-academic-display), serif;
 
   --font-weight-*: initial;
   --font-weight-normal: 500;
@@ -91,6 +89,8 @@ layer(base);
 
   --color-dark-info-background: rgb(var(--info-background));
   --color-dark-info-color: rgb(var(--info-color));
+
+  --color-accent-ink: rgb(var(--accent-ink));
 
   --ease-bouncy: cubic-bezier(0.68, -0.55, 0.27, 1.55);
 
@@ -250,6 +250,7 @@ layer(base);
     --info-color: 124 179 235;
     --theory: 242 216 105;
     --practical: 105 224 105;
+    --accent-ink: 6 9 13;
   }
 
   html,
@@ -270,6 +271,19 @@ layer(base);
 
   .mono * {
     font-family: var(--font-geist-mono), monospace;
+  }
+
+  .font-display {
+    font-family: var(--font-display), Georgia, serif;
+    letter-spacing: -0.035em;
+    font-optical-sizing: auto;
+  }
+
+  .academic-surface {
+    background:
+      linear-gradient(135deg, rgb(var(--background-normal) / 0.94), rgb(var(--background-light) / 0.88)),
+      radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent) 18%, transparent), transparent 34%),
+      repeating-linear-gradient(90deg, transparent 0 23px, rgb(var(--side) / 0.5) 23px 24px);
   }
 
   .animate-gradient {
@@ -346,4 +360,24 @@ layer(base);
 	100% {
 		transform: rotate(360deg);
 	}
+}
+
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-light-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html,
+    body,
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }

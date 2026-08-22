@@ -1,13 +1,19 @@
 {
   "name": "classpro",
   "version": "3.0.0",
+  "license": "CC-BY-NC-ND-4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rahuletto/classpro.git"
+  },
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "next dev --port 0243",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@dotmind/react-use-pwa": "^1.0.4",
@@ -39,17 +45,23 @@
     "@builder.io/partytown": "^0.10.3",
     "@eslint/eslintrc": "^3.2.0",
     "@tailwindcss/postcss": "^4.0.0",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.6",
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^22.10.10",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "6.1.0",
     "all-contributors-cli": "^6.26.1",
     "babel-plugin-react-compiler": "^19.0.0-beta-27714ef-20250124",
     "eslint": "^9.19.0",
     "eslint-config-next": "15.1.6",
+    "jsdom": "30.0.1",
     "postcss": "^8.5.1",
     "serwist": "^9.0.11",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "4.1.11"
   }
 }
