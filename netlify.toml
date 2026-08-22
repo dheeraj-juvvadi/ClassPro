@@ -1,0 +1,64 @@
+[build]
+  base = "frontend"
+  command = "bun install && bun run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "22"
+  BUN_VERSION = "1.1.38"
+
+[dev]
+  command = "bun run dev"
+  port = 3000
+  targetPort = 3000
+
+[[redirects]]
+  from = "/elab"
+  to = "https://better-lab.vercel.app"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/papers"
+  to = "https://docu-pro.vercel.app"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/map"
+  to = "https://d23qowwaqkh3fj.cloudfront.net/wp-content/uploads/2022/06/srmist-ktr-campus-layout.jpg"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/ssr"
+  to = "https://academia.srmist.edu.in/#Form:Student_Service_Requests_SSR"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/leave"
+  to = "http://10.1.105.62/srmleaveapp"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/github"
+  to = "https://github.com/rahuletto/classpro"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/instagram"
+  to = "https://www.instagram.com/srm_academiapro/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/whatsapp"
+  to = "https://chat.whatsapp.com/FLvHgGU87OLEOeQIqJEhto"
+  status = 301
+  force = true

@@ -1,0 +1,54 @@
+# Run `bun run sync:env` before building: NEXT_PUBLIC_* values are inlined into
+# the client bundle at build time, so frontend/.env must exist and be correct
+# before the frontend image is built. Changing them later needs a rebuild, not
+# a restart.
+services:
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: classpro-frontend
+    env_file: .env
+    # Listed explicitly because environment: wins over env_file:, and
+    # .env.example ships NODE_ENV=development.
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "243:243"
+    depends_on:
+      - backend
+    networks:
+      - classpro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:243/home"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backend:
+    build:
+      context: ./backend
+      # Spelled lowercase in the goscraper submodule; naming it explicitly
+      # keeps the build working on case-sensitive filesystems.
+      dockerfile: dockerfile
+    container_name: classpro-backend
+    env_file: .env
+    environment:
+      - GO_ENV=production
+    ports:
+      - "8080:8080"
+    networks:
+      - classpro-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/hello"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  classpro-network:
+    driver: bridge

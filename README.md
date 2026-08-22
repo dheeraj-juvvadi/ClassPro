@@ -1,38 +1,132 @@
+![alt text](frontend/public/images/og.png)
+
 # ClassPro
-## Better way to manage your academics.
+### Better way to manage your academics.
+
 View, predict, and strategize your success.
 
----
+> This fork contains the upstream ClassPro monorepo plus reliability and interaction fixes.
+> 
+> ---
+> 
+> ## Monorepo Structure
+> 
+> ```
+> classpro/
+> ├── frontend/          # Next.js frontend application
+> ├── backend/           # Go backend API
+> ├── .env.example       # Environment variables template
+> ├── package.json
+> ├── docker-compose.yml
+> └── README.md
+> ```
+
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) (>=1.2.0)
+- [Go](https://golang.org/) (>=1.23.0)
+- [Docker](https://docker.com/) (optional, for containerized deployment)
+
+### Setup
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone --recurse-submodules https://github.com/rahuletto/classpro
+   cd classpro
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   # Install the run script
+   bun install
+
+   # Install all dependencies
+   bun run install:all
+   ```
+
+3. **Environment Setup:**
+Copy from `.env.example` and paste it in the root directory
+
+```bash
+# Optional persistence. The frontend builds without these credentials.
+NEXT_PUBLIC_SUPABASE_URL=""
+NEXT_PUBLIC_SERVICE_KEY=""
+NEXT_PUBLIC_VALIDATION_KEY=""
+
+# Backend-specific values are documented in backend configuration.
+```
+
 
 > [!TIP]
-> ClassPro is now self-hostable! You can run your very own ClassPro instance.
-> - `NEXT_PUBLIC_URL` is the [backend](https://github.com/rahuletto/goscraper) that you have to deploy it by yourself and link it
-> - `NEXT_PUBLIC_VALIDATION_KEY` should be an unique key that should match with the backend server.. This key is used to validate if the requests are authentic and from desired frontend
-> - `NEXT_PUBLIC_SERVICE_KEY` and `NEXT_PUBLIC_SUPABASE_URL` should be your supabase SERVICE key and ANON key.
+> Generate secure keys for `VALIDATION_KEY` and `ENCRYPTION_KEY`.
 >
-> Host it, get the url, use it and enjoy! 
+> **For Linux, macOS, or Windows with Git Bash/WSL:**
+>
+> ```bash
+> openssl rand -hex 32
+> ```
+>
+> **For Windows with PowerShell:**
+>
+> ```powershell
+> [BitConverter]::ToString((New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes(32)).Replace("-", "").ToLower()
+> ```
 
-### `.env`
+### Development
+
+#### Run both services:
+
+```bash
+# Frontend (http://localhost:0243)
+bun run dev:frontend
+
+# Backend (http://localhost:8080)
+bun run dev:backend
+
+# Run the app as a whole
+bun run dev
 ```
-NEXT_PUBLIC_URL=""
-NEXT_PUBLIC_VALIDATION_KEY=""
-NEXT_PUBLIC_SERVICE_KEY=""
-NEXT_PUBLIC_SUPABASE_URL=""
+
+### Production Build
+
+```bash
+# Build both services as a whole
+bun run build
+
+# Build individually
+bun run build:frontend
+bun run build:backend
 ```
+
+### Docker Deployment
+
+```bash
+# Copy .env into both workspaces first. NEXT_PUBLIC_* values are inlined into
+# the client bundle while the frontend image builds, so changing them later
+# needs a rebuild rather than a restart.
+# Build and run with Docker Compose
+bun run docker:build
+bun run docker:up
+
+# Stop services
+bun run docker:down
+```
+
 
 > [!WARNING]
 > We will **NOT** take account for anything caused by your self-hosted instance
 
-## Development
+## Quality checks
 
 ```bash
-pnpm install
-pnpm test
-pnpm exec tsc --noEmit
-pnpm build
+bun install
+cd frontend && bun run lint && bun run build
 ```
 
-`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SERVICE_KEY` configure optional persistence for saved optional hours. The production build succeeds without them; related API routes return HTTP 503 until they are supplied.
+Optional Supabase credentials configure persistence for saved optional hours. Related API routes return HTTP 503 until they are supplied.
 
 ## Why Choose ClassPro?
 
@@ -48,7 +142,6 @@ pnpm build
 ### The Idea Behind ClassPro
 
 This project was intended to show the timetable and attendance. but it grew and scaled to a full-on replacement to SRM Academia. We made sure to use the web-standards and the best-in-class approaches to make sure our service is `fast`, `easy-to-use` and `easy on eyes`.
-
 
 ## Contributors
 

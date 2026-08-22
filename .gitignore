@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+frontend/node_modules
+backend/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,15 +12,20 @@
 !.yarn/releases
 !.yarn/versions
 pnpm-lock.yaml
+bun.lockb
 # testing
 /coverage
+frontend/coverage
+backend/coverage
 
 # next.js
-/.next/
-/out/
+frontend/.next/
+frontend/out/
 
 # production
-/build
+frontend/build
+backend/bin/
+backend/main
 
 # misc
 .DS_Store
@@ -44,5 +51,20 @@ next-env.d.ts
 .million
 
 # Service Workers
-public/sw*
-public/swe-worker*
+frontend/public/sw*
+frontend/public/swe-worker*
+
+# Backend specific
+backend/.env
+backend/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace files
+go.work
+go.work.sum
