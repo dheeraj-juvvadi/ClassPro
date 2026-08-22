@@ -115,6 +115,21 @@ bun run docker:up
 bun run docker:down
 ```
 
+### Vercel Deployment Walkthrough
+
+Follow these steps to get a fork of ClassPro deployed on Vercel without build or publish issues:
+
+1. Fork this repository and import it into Vercel using **Add New… → Project**.
+2. In **Build & Development Settings**, set the following values (they are also mirrored in `vercel.json`):
+   - **Framework preset**: `Next.js`
+   - **Install Command**: `bun install && (cd frontend && bun install)`
+   - **Build Command**: `cd frontend && bun run build`
+   - **Output Directory**: `frontend/.next`
+3. Add the environment variables from `.env.example` (Supabase keys, validation key, encryption key, etc.) to the project.
+4. Trigger a deployment. Subsequent redeploys will reuse the same configuration, and the Bun install/build steps will keep the project in sync with the monorepo.
+
+> [!NOTE]
+> If you rely on Vercel’s UI to edit the commands later, make sure they continue to match the values above so Bun installs both the root tooling and the frontend workspace before building.
 
 > [!WARNING]
 > We will **NOT** take account for anything caused by your self-hosted instance
