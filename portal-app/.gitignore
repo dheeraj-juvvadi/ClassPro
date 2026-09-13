@@ -1,0 +1,7 @@
+node_modules/
+.venv-ocr/
+__pycache__/
+.env
+*.log
+playwright-report/
+test-results/

@@ -1,0 +1,308 @@
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+let authenticated = false;
+let busy = false;
+const loginPreparation = createLoginPreparation({ prepare: async () => {
+  const started = performance.now();
+  const [challenge] = await Promise.all([
+    api('/api/challenge', { method: 'POST', body: '{}' }, true),
+    window.portalOcr.preload(),
+  ]);
+  window.portalTestMetric('challenge', { durationMs: performance.now() - started, ok: true });
+  if (challenge.authenticated) return challenge;
+  const prediction = await window.portalOcr.solve(challenge.image);
+  window.portalTestMetric('inference', { inferenceMs: prediction.inferenceMs, ok: true });
+  if (prediction.confidence >= 90 && prediction.minCharConfidence >= 80) {
+    await api('/api/challenge/prepare', { method: 'POST', body: JSON.stringify({ answer: prediction.answer }) }, true);
+  }
+  return { prediction };
+} });
+
+function node(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = String(text);
+  return element;
+}
+
+function message(id, text = '', error = false) {
+  const element = $(id);
+  element.textContent = text;
+  element.hidden = !text;
+  element.classList.toggle('error', error);
+}
+
+function syncControls() {
+  for (const button of document.querySelectorAll('button')) button.disabled = busy;
+  $('account').disabled = busy;
+  $('password').disabled = busy;
+  $('login-form').setAttribute('aria-busy', String(busy));
+}
+
+async function run(action) {
+  if (busy) return;
+  busy = true;
+  syncControls();
+  try {
+    await action();
+  } catch (error) {
+    if (!error.expired) {
+      message(authenticated ? 'reports-message' : 'login-message', error.message || 'Something went wrong. Please try again.', true);
+    }
+  } finally {
+    busy = false;
+    syncControls();
+    $('sign-in').textContent = 'Sign in';
+    $('refresh').textContent = 'Refresh reports';
+    $('logout').textContent = 'Sign out';
+    $('report-content').setAttribute('aria-busy', 'false');
+  }
+}
+
+function showLogin(text = '', error = false) {
+  document.body.classList.add('garden-login');
+  authenticated = false;
+  $('startup').hidden = true;
+  $('login-view').hidden = false;
+  $('reports-view').hidden = true;
+  $('logout').hidden = true;
+  $('login-form').reset();
+  $('attendance-content').replaceChildren();
+  $('marks-content').replaceChildren();
+  $('attendance-count').textContent = '';
+  $('marks-count').textContent = '';
+  $('updated-at').textContent = 'Your attendance and marks.';
+  message('reports-message');
+  message('login-message', text, error);
+  $('login-title').tabIndex = -1;
+  $('login-title').focus();
+  window.portalOcr.preload().catch(() => {});
+  loginPreparation.preload().catch(() => {});
+}
+
+function showReports() {
+  document.body.classList.remove('garden-login');
+  loginPreparation.clear();
+  authenticated = true;
+  $('password').value = '';
+  $('startup').hidden = true;
+  $('login-view').hidden = true;
+  $('reports-view').hidden = false;
+  $('logout').hidden = false;
+  message('login-message');
+  $('reports-title').focus();
+}
+
+async function api(path, options = {}, login = false) {
+  let response;
+  try {
+    response = await fetch(path, {
+      credentials: 'same-origin', cache: 'no-store', ...options,
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      signal: AbortSignal.timeout(login || path === '/api/reports' && (!options.method || options.method === 'GET') ? 120000 : 45000)
+    });
+  } catch (error) {
+    throw new Error(error.name === 'TimeoutError' ? 'The request took too long. Please try again.' : 'Could not connect. Check your connection and try again.');
+  }
+  if (response.status === 401 && !login) {
+    showLogin('Your session has expired. Please sign in again.', true);
+    throw Object.assign(new Error('Session expired'), { expired: true });
+  }
+  let data = {};
+  const text = await response.text();
+  if (text) {
+    try { data = JSON.parse(text); }
+    catch { throw new Error('The server returned an unexpected response. Please try again.'); }
+  }
+  if (!response.ok) {
+      throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code });
+  }
+  return data;
+}
+
+function value(input) {
+  return input === null || input === undefined || input === '' ? '—' : String(input);
+}
+
+function score(item) {
+  return item.scoreLabel ? String(item.scoreLabel) : `${value(item.scored)} / ${value(item.total)}`;
+}
+
+function courseHeading(course) {
+  const heading = node('div', 'course-heading');
+  heading.append(node('span', 'course-code', course.code || 'Course'), node('span', 'course-title', course.title || 'Untitled course'));
+  return heading;
+}
+
+function reportState(kind, report) {
+  const container = $(`${kind}-content`);
+  container.replaceChildren();
+  const data = Array.isArray(report?.data) ? report.data : [];
+  $(`${kind}-count`).textContent = data.length ? `${data.length} ${data.length === 1 ? 'course' : 'courses'}` : '';
+  if (report?.error) {
+    container.append(node('p', 'message error', report.error.message || `Could not load ${kind}. Try refreshing reports.`));
+  } else if (!report || !Array.isArray(report.data)) {
+    container.append(node('p', 'message error', `The ${kind} report is unavailable. Try refreshing reports.`));
+  } else if (!data.length) {
+    container.append(node('div', 'empty-state', `No ${kind === 'marks' ? 'marks' : 'attendance records'} are available yet.`));
+  }
+  return { container, data };
+}
+
+function renderAttendance(report) {
+  const { container, data } = reportState('attendance', report);
+  if (!data.length) return;
+  const wrap = node('div', 'table-wrap');
+  wrap.tabIndex = 0;
+  wrap.setAttribute('role', 'region');
+  wrap.setAttribute('aria-label', 'Attendance by course. Scroll horizontally for all columns.');
+  const table = node('table');
+  const caption = node('caption', 'sr-only', 'Attendance by course');
+  const head = node('thead');
+  const headings = node('tr');
+  for (const label of ['Course', 'Conducted', 'Present', 'Absent', 'Attendance']) {
+    const cell = node('th', '', label);
+    cell.scope = 'col';
+    headings.append(cell);
+  }
+  head.append(headings);
+  const body = node('tbody');
+  for (const course of data) {
+    const row = node('tr');
+    const name = node('th');
+    name.scope = 'row';
+    name.append(courseHeading(course));
+    row.append(name);
+    for (const key of ['conducted', 'present', 'absent']) row.append(node('td', 'number', value(course[key])));
+    const percentage = node('td', 'percentage');
+    const raw = course.percentage;
+    const numeric = raw === null || raw === undefined || raw === '' ? NaN : Number(String(raw).replace('%', ''));
+    percentage.append(node('span', 'percentage-label', Number.isFinite(numeric) ? `${numeric}%` : value(raw)));
+    if (Number.isFinite(numeric)) {
+      const meter = node('meter');
+      meter.min = 0;
+      meter.max = 100;
+      meter.value = Math.max(0, Math.min(100, numeric));
+      meter.setAttribute('aria-label', `${course.code || 'Course'} attendance`);
+      percentage.append(meter);
+    }
+    row.append(percentage);
+    body.append(row);
+  }
+  table.append(caption, head, body);
+  wrap.append(table);
+  container.append(wrap);
+}
+
+function renderMarks(report) {
+  const { container, data } = reportState('marks', report);
+  const list = node('div', 'marks-list');
+  for (const course of data) {
+    const details = node('details', 'course-details');
+    const summary = node('summary');
+    summary.append(courseHeading(course), node('span', 'course-score', score(course)));
+    const content = node('div', 'assessments');
+    content.append(node('h3', 'assessment-heading', 'Assessment details'));
+    if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
+    const components = Array.isArray(course.components) ? course.components : [];
+    if (!components.length && !course.detailsError) content.append(node('p', 'quiet', 'No assessment details are available yet.'));
+    for (const component of components) {
+      const row = node('div', 'assessment-row');
+      const info = node('div');
+      info.append(node('div', 'assessment-name', component.name || 'Assessment'));
+      if (component.enteredOn) info.append(node('div', 'quiet assessment-date', `Entered ${component.enteredOn}`));
+      row.append(info, node('span', 'assessment-score', score(component)));
+      content.append(row);
+    }
+    details.append(summary, content);
+    list.append(details);
+  }
+  if (data.length) container.append(list);
+}
+
+async function loadReports() {
+  $('refresh').textContent = 'Refreshing…';
+  $('report-content').setAttribute('aria-busy', 'true');
+  message('reports-message', 'Loading your reports…');
+  if (!$('attendance-content').childElementCount) {
+    $('attendance-content').append(node('div', 'empty-state', 'Loading attendance…'));
+    $('marks-content').append(node('div', 'empty-state', 'Loading marks…'));
+  }
+  try {
+    const reports = await api('/api/reports');
+    renderAttendance(reports.attendance);
+    renderMarks(reports.marks);
+    const date = new Date(reports.updatedAt);
+    $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
+    message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. You can try refreshing again.' : 'Reports updated.');
+  } catch (error) {
+    for (const kind of ['attendance', 'marks']) {
+      const container = $(`${kind}-content`);
+      if (container.firstElementChild?.textContent === `Loading ${kind}…`) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Refresh reports to try again.'));
+    }
+    throw error;
+  }
+}
+
+$('login-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!$('login-form').reportValidity()) return;
+  run(async () => {
+    message('login-message', 'Signing in…');
+    $('sign-in').textContent = 'Signing in…';
+    const start = performance.now();
+    await window.portalOcr.preload();
+    window.portalTestMetric('model_wait', { durationMs: performance.now() - start, ok: true });
+    let data;
+    try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const prepared = await loginPreparation.take();
+      if (prepared.authenticated) { data = prepared; break; }
+      const prediction = prepared.prediction;
+      if (prediction.confidence < 90 || prediction.minCharConfidence < 80) {
+        if (attempt === 0) continue;
+        throw new Error('Your device could not confidently read this verification. Please retry.');
+      }
+      const submitStart = performance.now();
+      data = await api('/api/login/client', {
+      method: 'POST',
+      body: JSON.stringify({ account: $('account').value.trim(), password: $('password').value, answer: prediction.answer })
+    }, true);
+      window.portalTestMetric('portal_submit', { durationMs: performance.now() - submitStart, ok: data.authenticated === true });
+      break;
+    }
+    } catch (error) {
+      window.portalTestMetric('login', { durationMs: performance.now() - start, ok: false, errorCode: error.code || 'CLIENT_ERROR' });
+      throw error;
+    }
+    window.portalTestMetric('login', { durationMs: performance.now() - start, ok: data?.authenticated === true });
+    if (data.authenticated !== true) {
+      throw new Error(data.error?.message || 'Sign in could not be confirmed. Please try again.');
+    }
+    showReports();
+    const reportStart = performance.now();
+    await loadReports();
+    window.portalTestMetric('reports', { durationMs: performance.now() - reportStart, ok: true });
+  });
+});
+
+$('refresh').addEventListener('click', () => run(loadReports));
+$('logout').addEventListener('click', () => run(async () => {
+  $('logout').textContent = 'Signing out…';
+  await api('/api/session', { method: 'DELETE' });
+  showLogin('You have signed out.');
+}));
+
+run(async () => {
+  try {
+    const session = await api('/api/session');
+    if (session.authenticated) {
+      showReports();
+      await loadReports();
+    } else showLogin();
+  } catch (error) {
+    if (!authenticated && !error.expired) showLogin(error.message, true);
+    else throw error;
+  }
+});

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#191b19" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#191b19" media="(prefers-color-scheme: dark)">
+  <title>ClassPro · Student Portal</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/garden.css">
+  <script src="/phone-metrics.js" defer></script>
+  <script src="/client-ocr.js" defer></script>
+  <script src="/login-preparation.js" defer></script>
+  <script src="/app.js" defer></script>
+  <script src="/login-effects.js" defer></script>
+</head>
+<body class="garden-login">
+  <div class="botanical-backdrop" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="brand">ClassPro<span class="brand-caption">A LITTLE ROOM TO GROW</span></div>
+    <button id="logout" class="secondary" type="button" hidden>Sign out</button>
+  </header>
+  <main id="main" tabindex="-1">
+    <div id="startup" class="startup" role="status">Checking your session…</div>
+    <section id="login-view" class="login-layout" aria-labelledby="login-title" hidden>
+      <div class="login-card">
+        <p class="card-kicker">CLASS PRO</p>
+        <h1 id="login-title">Welcome back.</h1>
+        <p class="quiet">Your attendance and marks, all in one place.</p>
+        <form id="login-form">
+          <label for="account">NetID</label>
+          <input id="account" name="account" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your SRM NetID" required>
+          <label for="password">Password</label>
+          <div class="password-field">
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
+            <button id="password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button>
+          </div>
+          <p id="login-message" class="message" role="status" aria-live="polite" hidden></p>
+          <details class="test-diagnostics"><summary>Connection details</summary><p id="ocr-status" class="quiet" role="status" aria-live="polite"></p></details>
+          <button id="sign-in" type="submit" class="primary full-width">Sign in <span aria-hidden="true">↗</span></button>
+        </form>
+        <p class="login-footnote">Use your SRM Student Portal credentials.<br>Your password is never stored.</p>
+      </div>
+    </section>
+    <section id="reports-view" aria-labelledby="reports-title" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Your academic record</p>
+          <h1 id="reports-title" tabindex="-1">Academic overview</h1>
+          <p id="updated-at" class="quiet">Your attendance and marks.</p>
+        </div>
+        <button id="refresh" class="primary" type="button">Refresh reports</button>
+      </div>
+      <p id="reports-message" class="message" role="status" aria-live="polite" hidden></p>
+      <div id="report-content" aria-busy="false">
+        <section class="report-section" aria-labelledby="attendance-title">
+          <div class="section-heading"><h2 id="attendance-title">Attendance</h2><span id="attendance-count" class="quiet"></span></div>
+          <div id="attendance-content"></div>
+        </section>
+        <section class="report-section" aria-labelledby="marks-title">
+          <div class="section-heading"><h2 id="marks-title">Marks</h2><span id="marks-count" class="quiet"></span></div>
+          <p class="section-help quiet">Select a course to view its assessment details.</p>
+          <div id="marks-content"></div>
+        </section>
+      </div>
+    </section>
+    <noscript><p class="message">JavaScript is required to sign in and load your student reports. Please enable it and reload this page.</p></noscript>
+  </main>
+  <footer class="site-footer">ClassPro <span>Student Portal</span><span id="test-session" class="quiet"></span></footer>
+</body>
+</html>

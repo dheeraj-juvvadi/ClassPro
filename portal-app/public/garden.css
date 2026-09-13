@@ -1,0 +1,69 @@
+/* Original distressed floral screen print. Artwork is static, decorative, and local. */
+:root{color-scheme:dark;--page:#191b19;--surface:#20231f;--soft:#2b3029;--ink:#f1efe6;--muted:#b3b8ab;--line:#42483b;--accent:#d5dda9;--accent-hover:#e6edc2;--on-accent:#252b1c;--focus:#a4a8df;--error:#ffc0aa;--error-bg:#3b2924}
+body.garden-login{background:#191b19;isolation:isolate}
+.botanical-backdrop{display:none}
+.garden-login .botanical-backdrop{display:block;position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/floral-screenprint.svg') center/cover no-repeat}
+.garden-login .site-header{max-width:1400px;min-height:90px;border:0;padding:1.5rem 3rem;position:relative}
+.garden-login .brand{font-size:1.3rem;font-weight:600;letter-spacing:-.06em;color:#f1efe6;background:#191b19d9;padding:.3rem .65rem;border-radius:2px}
+.brand-caption{display:none!important}
+.garden-login main{max-width:1140px;min-height:calc(100svh - 160px);padding:2rem 1.5rem 4rem;display:grid;place-items:center}
+.garden-login .login-layout{display:block;width:100%;max-width:410px;padding:0;margin:0}
+.login-intro{display:none}
+.garden-login .login-card{padding:2.25rem 2rem 1.75rem;background:#1d211d;border:1px solid #404638;border-radius:12px;box-shadow:none;position:relative}
+.card-kicker{font-size:.6rem;letter-spacing:.18em;font-weight:500;color:#b7c2a0;margin:0 0 1.4rem}
+.garden-login .login-card h1{font-family:Georgia,'Times New Roman',serif;font-size:2.65rem;font-weight:400;line-height:1.1;letter-spacing:-.045em;color:#f1eee3;margin:0}
+.garden-login .login-card>.quiet{font-size:.8rem;color:#b0b7a5;margin:.85rem 0 2rem;line-height:1.65;max-width:290px}
+.garden-login label{color:#d7ddcd;font-size:.75rem;font-weight:500;letter-spacing:.015em;margin-bottom:.6rem}
+.garden-login input{min-height:51px;border:1px solid #4a5141;background:#171b16;color:#f1efe5;border-radius:5px;padding:.8rem .9rem;font-size:.875rem;box-shadow:none}
+.garden-login input+label{margin-top:1.3rem}
+.garden-login input::placeholder{color:#959e89}
+.garden-login input:focus{border-color:#bfc98f;outline:2px solid #bfc98f35;outline-offset:2px}
+.garden-login input:-webkit-autofill{-webkit-text-fill-color:#f1eee2;box-shadow:0 0 0 1000px #283122 inset;caret-color:#f1eee2}
+.password-field{position:relative}
+.garden-login .password-field input{padding-right:3.2rem}
+#password-toggle{position:absolute;top:50%;right:.3rem;transform:translateY(-50%);width:44px;height:44px;min-height:44px;padding:.5rem;display:grid;place-items:center;background:transparent;color:#b8c0ab;border:0;border-radius:5px}
+#password-toggle:hover{background:#d5dda910;color:#e4e9d5}
+.eye-slash{display:none}
+#password-toggle[aria-pressed=true] .eye-slash{display:block}
+.garden-login button.primary{background:#d5dda9;color:#252b1c;border:0;border-radius:5px;font-size:.875rem;font-weight:600;min-height:51px}
+.garden-login button.primary:hover:not(:disabled){background:#e6edc2}
+.garden-login .full-width{margin-top:1.25rem}
+.login-footnote{font-size:.65rem;color:#aeb6a0;text-align:center;line-height:1.75;margin:1.4rem 0 0}
+.test-diagnostics{margin-top:.9rem;color:#aeb6a0;font-size:.65rem}
+.test-diagnostics summary{display:block;padding:.25rem 0;font-size:.65rem;line-height:1.5;min-height:24px;font-weight:400}
+.test-diagnostics summary::after{content:' +';font-size:.75rem}
+.test-diagnostics[open] summary::after{content:' −'}
+.test-diagnostics summary:hover{background:transparent;color:#e0e6cc}
+.test-diagnostics #ocr-status{padding:.4rem 0;font-size:.65rem;color:#aeb6a0;line-height:1.6}
+.garden-login .message{background:#283222;border:1px solid #4b5c3b;color:#e0e8d0;border-radius:5px;font-size:.8rem}
+.garden-login .message.error{color:#ffc0aa;background:#3b2924;border-color:#8c5945}
+.garden-login .site-footer{max-width:1400px;border:0;padding:1rem 3rem;color:#b0b7a7;font-size:.65rem;gap:1rem}
+.garden-login .site-footer>*{background:#191b19de;padding:.25rem}
+.garden-login #test-session{font-size:.58rem;text-align:right;overflow-wrap:anywhere;max-width:52%}
+@media(max-width:700px){.garden-login .botanical-backdrop{background-image:url('/floral-mobile.svg');background-size:cover;background-position:center}.garden-login .site-header{padding:1.25rem 1.25rem;min-height:78px}.garden-login main{padding:1.75rem 1.5rem 3rem;min-height:calc(100svh - 148px)}.garden-login .login-layout{max-width:390px}.garden-login .login-card{padding:1.85rem 1.5rem 1.5rem;background:#1d211dfa;border-radius:9px}.garden-login .login-card h1{font-size:2.35rem}.garden-login .login-card>.quiet{margin:.8rem 0 1.65rem;font-size:.75rem}.card-kicker{margin-bottom:1.1rem}.garden-login .site-footer{padding:1rem 1.25rem}.garden-login .site-footer>span:not(#test-session){display:none}}
+@media(max-width:360px){.garden-login main{padding:1rem 1.15rem 2rem}.garden-login .login-card{padding:1.5rem 1.15rem}.garden-login .login-card h1{font-size:2.1rem}}
+/* Airier composition and a compact, neutral charcoal form. */
+.garden-login .login-card{background:#20211f;border-color:#46483e}
+.garden-login input{background:#191b18}
+@media(max-width:700px){
+ .garden-login .botanical-backdrop{background-size:100% 100%}
+ .garden-login .site-header{min-height:70px;padding:1rem 1.25rem}
+ .garden-login main{padding:1.5rem 2rem 2.5rem;min-height:calc(100svh - 140px)}
+ .garden-login .login-layout{max-width:330px}
+ .garden-login .login-card{padding:1.5rem 1.25rem 1.2rem;background:#20211f;border-radius:8px}
+ .garden-login .login-card h1{font-size:2.1rem}
+ .garden-login .login-card>.quiet{margin:.6rem 0 1.2rem;font-size:.73rem}
+ .card-kicker{margin-bottom:.9rem;font-size:.55rem}
+ .garden-login input{min-height:46px;padding:.65rem .8rem;font-size:16px}
+ .garden-login input+label{margin-top:1rem}
+ .garden-login label{margin-bottom:.45rem;font-size:.73rem}
+ .garden-login button.primary{min-height:46px}
+ .garden-login .full-width{margin-top:.85rem}
+ .login-footnote{margin-top:1rem;font-size:.6rem}
+ .test-diagnostics{margin-top:.65rem}
+}
+@media(max-width:360px){
+ .garden-login main{padding:1.25rem 1.5rem 2rem}
+ .garden-login .login-card{padding:1.3rem 1rem 1.1rem}
+ .garden-login .login-card h1{font-size:1.9rem}
+}

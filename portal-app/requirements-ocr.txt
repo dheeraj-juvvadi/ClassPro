@@ -1,0 +1,11 @@
+# Local CAPTCHA OCR worker (portal-app/scripts/captcha-worker.py).
+# CPU only, offline. Install into a dedicated venv:
+#   python3.12 -m venv portal-app/.venv-ocr
+#   portal-app/.venv-ocr/bin/pip install -r portal-app/requirements-ocr.txt
+# Python must be <= 3.12 (ddddocr ships no wheels for 3.13+/3.14).
+ddddocr==1.5.6
+onnxruntime==1.30.0
+
+# Transitive deps (numpy, pillow, opencv-python-headless, protobuf, flatbuffers,
+# packaging) are left unpinned on purpose: pip resolves the correct platform
+# wheels, and pinning them tends to break across OS/arch combinations.

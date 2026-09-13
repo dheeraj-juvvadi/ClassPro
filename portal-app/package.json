@@ -1,0 +1,21 @@
+{
+  "name": "classpro-student-portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "browsers": "playwright install chromium"
+  },
+  "dependencies": {
+    "cheerio": "1.1.2",
+    "express": "5.1.0",
+    "playwright": "1.58.2",
+    "sharp": "^0.34.5"
+  }
+}
