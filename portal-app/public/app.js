@@ -4,15 +4,12 @@ const $ = (id) => document.getElementById(id);
 let authenticated = false;
 let busy = false;
 const loginPreparation = createLoginPreparation({ prepare: async () => {
-  const started = performance.now();
   const [challenge] = await Promise.all([
     api('/api/challenge', { method: 'POST', body: '{}' }, true),
     window.portalOcr.preload(),
   ]);
-  window.portalTestMetric('challenge', { durationMs: performance.now() - started, ok: true });
   if (challenge.authenticated) return challenge;
   const prediction = await window.portalOcr.solve(challenge.image);
-  window.portalTestMetric('inference', { inferenceMs: prediction.inferenceMs, ok: true });
   if (prediction.confidence >= 90 && prediction.minCharConfidence >= 80) {
     await api('/api/challenge/prepare', { method: 'POST', body: JSON.stringify({ answer: prediction.answer }) }, true);
   }
@@ -251,9 +248,7 @@ $('login-form').addEventListener('submit', (event) => {
   run(async () => {
     message('login-message', 'Signing in…');
     $('sign-in').textContent = 'Signing in…';
-    const start = performance.now();
     await window.portalOcr.preload();
-    window.portalTestMetric('model_wait', { durationMs: performance.now() - start, ok: true });
     let data;
     try {
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -264,26 +259,20 @@ $('login-form').addEventListener('submit', (event) => {
         if (attempt === 0) continue;
         throw new Error('Your device could not confidently read this verification. Please retry.');
       }
-      const submitStart = performance.now();
       data = await api('/api/login/client', {
       method: 'POST',
       body: JSON.stringify({ account: $('account').value.trim(), password: $('password').value, answer: prediction.answer })
     }, true);
-      window.portalTestMetric('portal_submit', { durationMs: performance.now() - submitStart, ok: data.authenticated === true });
       break;
     }
     } catch (error) {
-      window.portalTestMetric('login', { durationMs: performance.now() - start, ok: false, errorCode: error.code || 'CLIENT_ERROR' });
       throw error;
     }
-    window.portalTestMetric('login', { durationMs: performance.now() - start, ok: data?.authenticated === true });
     if (data.authenticated !== true) {
       throw new Error(data.error?.message || 'Sign in could not be confirmed. Please try again.');
     }
     showReports();
-    const reportStart = performance.now();
     await loadReports();
-    window.portalTestMetric('reports', { durationMs: performance.now() - reportStart, ok: true });
   });
 });
 

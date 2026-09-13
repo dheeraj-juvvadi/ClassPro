@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: revamp-tracker-backend
+    runtime: docker
+    repo: https://github.com/dheeraj-juvvadi/revamp-tracker
+    branch: main
+    dockerfilePath: portal-app/Dockerfile.render
+    dockerContext: portal-app
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: CORS_ORIGIN
+        value: https://revamp-tracker.vercel.app
+      - key: MAX_SESSIONS
+        value: "2"

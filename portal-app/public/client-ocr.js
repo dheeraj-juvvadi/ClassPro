@@ -57,22 +57,6 @@
     return raw.replace(/\s+/g, ' ').slice(0, 200) || 'unknown error';
   }
 
-  let initReported = false;
-
-  function reportMetric(event, fields) {
-    const sink = typeof window !== 'undefined' ? window.portalTestMetric : null;
-    if (typeof sink !== 'function') return;
-    try {
-      sink(event, fields);
-    } catch (ignored) { /* a broken metric sink must never break OCR */ }
-  }
-
-  function reportInit(event, fields) {
-    if (initReported) return;
-    initReported = true;
-    reportMetric(event, fields);
-  }
-
   function settle(id, outcome) {
     const entry = state.pending.get(id);
     if (!entry) return;
@@ -87,7 +71,6 @@
     state.pending.forEach((entry) => {
       if (entry.type === 'init') initInFlight = true;
     });
-    if (initInFlight) reportInit('model_error', { ok: false });
     state.dead = true;
     metrics.available = false;
     metrics.ready = false;
@@ -168,9 +151,7 @@
   function preload() {
     if (state.preloadPromise) return state.preloadPromise;
     const preloadStarted = performance.now();
-    initReported = false;
     if (!host()) {
-      reportInit('model_error', { ok: false });
       shutdown('Web Workers are not available');
       state.preloadPromise = Promise.reject(new Error('OCR unavailable: Web Workers are not available'));
       return state.preloadPromise;
@@ -186,13 +167,8 @@
       metrics.lastError = null;
       stamp();
       status(readyText());
-      metrics.totalReadyMs = Math.round(performance.now() - preloadStarted);
-      reportInit('model_ready', { initializationMs: metrics.initMs,
-        durationMs: metrics.totalReadyMs, modelDownloadMs: info.modelDownloadMs,
-        runtimeSetupMs: info.runtimeSetupMs, warmMs: info.warmMs, downloadBytes: info.downloadBytes });
       return info;
     }).catch((error) => {
-      reportInit('model_error', { ok: false });
       metrics.failures += 1;
       metrics.lastError = describe(error);
       stamp();

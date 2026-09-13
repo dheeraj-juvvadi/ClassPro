@@ -3,7 +3,6 @@ import { autoLogin } from './auto-login.js';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
-import { installTestMetrics } from './test-metrics.js';
 
 const COOKIE = 'portal_session';
 const SESSION_TTL = 30 * 60 * 1000;
@@ -33,8 +32,12 @@ export function createApp({ createSession, maxSessions = 8, secureCookie = false
     });
     if (req.path.startsWith('/api/') && !['GET', 'HEAD'].includes(req.method)) {
       const origin = req.get('origin');
+      const allowedOrigin = process.env.CORS_ORIGIN;
       let valid = false;
-      try { valid = new URL(origin).host === req.get('host'); } catch { /* Reject missing/invalid origin. */ }
+      try {
+        valid = new URL(origin).host === req.get('host')
+          || (allowedOrigin && origin === allowedOrigin);
+      } catch { /* Reject missing/invalid origin. */ }
       if (!valid || req.get('sec-fetch-site') === 'cross-site') return error(res, 403, 'INVALID_ORIGIN', 'Reload the app and try again.');
       if (req.method === 'POST' && !req.is('application/json')) return error(res, 415, 'INVALID_REQUEST', 'Send JSON.');
     }
@@ -170,7 +173,6 @@ export function createApp({ createSession, maxSessions = 8, secureCookie = false
     res.json({ success: true });
   });
   app.get('/health', (req, res) => res.json({ ok: true }));
-  installTestMetrics(app);
   app.use('/api', (req, res) => error(res, 404, 'NOT_FOUND', 'Unknown action.'));
   app.get('/ocr/:asset', (req, res, next) => {
     if (!['portal-alnum.onnx', 'charset.json', 'ort.wasm.min.js', 'ort-wasm-simd-threaded.mjs', 'ort-wasm-simd-threaded.wasm'].includes(req.params.asset)) return next();
