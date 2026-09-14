@@ -52,12 +52,6 @@
 .planner .assessment-score { font-size: 13px; color: #efeee4; }
 .planner .assessment-date { font-size: 10px; margin-top: 4px; }
 .planner .section-help { font-size: 11px; line-height: 1.6; }
-.planner[data-page="marks"] main { padding-inline: 0; }
-.planner[data-page="marks"] .page-heading,
-.planner[data-page="marks"] #reports-message,
-.planner[data-page="marks"] .section-heading,
-.planner[data-page="marks"] .section-help { margin-left: 18px; margin-right: 18px; }
-.planner[data-page="marks"] .course-details { border-left: 0; border-right: 0; border-radius: 0; }
 dialog { color: #f1eee3; background: #20231e; border: 1px solid #505846; border-radius: 20px; padding: 24px; width: min(440px, calc(100% - 28px)); max-height: calc(100svh - 40px); overflow-y: auto; }
 dialog::backdrop { background: #080b08b8; }
 .schedule-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
@@ -84,7 +78,7 @@ dialog input { font-size: 16px; }
 @media (max-width: 700px) {
   .planner .botanical-backdrop { background-image: url('/floral-mobile.svg'); background-size: 100% 100%; }
   .planner .site-header { padding: 13px 25px; min-height: 70px; }
-  .planner main { margin: 0 0 22px; padding: 18px 13px 105px; border-radius: 23px; }
+  .planner main { margin: 0 13px 22px; padding: 18px 12px 105px; border-radius: 23px; }
   .planner .home-greeting { margin: 2px 0 24px; }
   .planner .next-class-card { padding: 22px 21px 16px; }
   .planner .next-class-card h2 { font-size: 30px; }
@@ -97,6 +91,7 @@ dialog input { font-size: 16px; }
   .attendance-counts { gap: 12px; }
   .attendance-row-heading { flex-wrap: wrap; }
   .margin-badge { padding-left: 0; }
-  .planner .course-details > summary { flex-wrap: wrap; }
+  .planner .course-details > summary { padding-inline: 12px; gap: 10px; }
+  .planner .course-details .course-score { font-size: 19px; }
   .projection-control { flex-wrap: wrap; }
 }
