@@ -93,13 +93,6 @@ export class PortalSession {
     const emptyId = /net\s*id should not be empty/.test(content);
     const invalid = /invalid (?:net\s*id|password|credentials)|incorrect password/.test(content);
     const code = limited ? 'SESSION_LIMIT' : challenged ? 'CAPTCHA_INVALID' : emptyId ? 'PORTAL_FORM_REJECTED' : invalid ? 'LOGIN_REJECTED' : 'LOGIN_FAILED';
-    if (process.env.PORTAL_TEST_METRICS_FILE) {
-      // Structural diagnostics only: never log HTML, tokens, answers or credentials.
-      console.log(JSON.stringify({ event: 'portal_login_failure', code,
-        path: new URL(this.page.url()).pathname,
-        loginFormPresent: await this.page.locator('#login_form').count() > 0,
-        dashboardPresent: await this.page.locator('#userHomePage').count() > 0 }));
-    }
     const message = limited ? 'Student Portal reported a session limit. Sign out of its other sessions, then retry.'
       : challenged ? 'The CAPTCHA was not accepted. Try the new image.'
       : emptyId ? 'Student Portal rejected the submitted NetID field. The login adapter needs updating.'

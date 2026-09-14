@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="290" viewBox="0 0 390 290" fill="none">
+  <title>ClassPro navigation typography and icon options</title>
+  <style>
+    @font-face{font-family:Inter;src:url('/InterVariable.woff2') format('woff2')}
+    text{font-family:Inter,Arial,sans-serif}
+  </style>
+  <rect width="390" height="290" rx="24" fill="#191b19"/>
+  <text x="30" y="33" fill="#b2baa8" font-size="12">A · Solid icons, lighter labels</text>
+  <rect x="30" y="48" width="330" height="76" rx="25" fill="#242a22" stroke="#46503e"/>
+  <rect x="38" y="56" width="96" height="60" rx="19" fill="#c5d4a7"/>
+  <path d="M77 78L86 70L95 78V89H89V82H83V89H77Z" fill="#263321"/>
+  <g fill="#b9c3ad">
+    <rect x="186" y="72" width="18" height="19" rx="3"/>
+    <rect x="298" y="72" width="16" height="20" rx="2.5"/>
+  </g>
+  <path d="M191 70V75M199 70V75" stroke="#b9c3ad" stroke-width="2" stroke-linecap="round"/>
+  <path d="M191 82L194 85L199 79M302 78H310M302 82H310M302 86H307" stroke="#242a22" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="86" y="106" text-anchor="middle" fill="#263321" font-size="12" font-weight="500">Home</text>
+  <text x="195" y="106" text-anchor="middle" fill="#b9c3ad" font-size="12" font-weight="400">Attendance</text>
+  <text x="306" y="106" text-anchor="middle" fill="#b9c3ad" font-size="12" font-weight="400">Marks</text>
+  <text x="30" y="171" fill="#b2baa8" font-size="12">B · Rounded outlines, stronger labels</text>
+  <rect x="30" y="186" width="330" height="76" rx="25" fill="#242a22" stroke="#46503e"/>
+  <rect x="38" y="194" width="96" height="60" rx="19" fill="#c5d4a7"/>
+  <g stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M77 219V214Q77 212 79 211L84 207Q86 205 88 207L93 211Q95 212 95 214V222Q95 225 92 225H80Q77 225 77 222ZM83 225V218H89V225" stroke="#263321"/>
+    <rect x="186" y="209" width="18" height="18" rx="5" stroke="#b9c3ad"/>
+    <path d="M191 218L194 221L199 215" stroke="#b9c3ad"/>
+    <path d="M300 208H312Q314 208 314 211V227H300Q296 227 296 223V212Q296 208 300 208ZM301 208V227M305 214H310M305 219H309" stroke="#b9c3ad"/>
+  </g>
+  <text x="86" y="244" text-anchor="middle" fill="#263321" font-size="12" font-weight="600" letter-spacing="-.3">Home</text>
+  <text x="195" y="244" text-anchor="middle" fill="#b9c3ad" font-size="12" font-weight="550" letter-spacing="-.3">Attendance</text>
+  <text x="306" y="244" text-anchor="middle" fill="#b9c3ad" font-size="12" font-weight="550" letter-spacing="-.3">Marks</text>
+</svg>

@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="1000" viewBox="0 0 390 1000" fill="none" role="img" aria-labelledby="title description">
+  <title id="title">ClassPro Marks — design concept</title>
+  <desc id="description">Sample semester five marks. Published points total 81 of 100: Data Structures 26 of 30, Computer Networks 19 of 30, Operating Systems 36 of 40. Each subject shows two assessment results. Floating navigation: Home, Attendance, Marks active.</desc>
+  <style>
+    @font-face{font-family:Inter;src:url('/InterVariable.woff2') format('woff2');font-weight:100 900}
+    text{font-family:Inter,Arial,sans-serif;font-variant-numeric:tabular-nums;fill:#f1eee3}
+    .muted{fill:#b0b0a8}.label{font-size:11px;font-weight:500}.detail{font-size:12px;font-weight:500}
+    .subject{font-size:16px;font-weight:550;letter-spacing:-.5px}.score{font-size:34px;font-weight:600;letter-spacing:-1.8px}
+    .denominator{font-size:14px;font-weight:450;letter-spacing:-.3px;fill:#b0b0a8}.ink{fill:#191b19}
+  </style>
+  <rect width="390" height="1000" fill="#191b19"/>
+  <rect x="14" y="14" width="362" height="976" rx="25" stroke="#41433e"/>
+  <text x="28" y="65" font-size="32" font-weight="550" letter-spacing="-1.6">Your marks.</text>
+  <text x="29" y="91" class="label muted">Semester 05</text>
+  <rect x="270" y="72" width="92" height="25" rx="12.5" stroke="#41433e"/>
+  <text x="316" y="89" text-anchor="middle" font-size="10" font-weight="550" fill="#b0b0a8">Sample data</text>
+
+  <rect x="26" y="123" width="338" height="164" rx="21" fill="#c5c0d8" stroke="#d4cfe4"/>
+  <text x="46" y="152" class="ink" font-size="10" font-weight="650" letter-spacing="1">PUBLISHED TOTAL</text>
+  <text x="43" y="221" class="ink" font-size="64" font-weight="550" letter-spacing="-4">81<tspan font-size="34" letter-spacing="-1">%</tspan></text>
+  <text x="343" y="194" text-anchor="end" class="ink" font-size="20" font-weight="600" letter-spacing="-.7">81 / 100</text>
+  <text x="343" y="215" text-anchor="end" class="ink label">points earned</text>
+  <path d="M46 240H344" stroke="#a6a2b7"/>
+  <text x="46" y="264" class="ink label">3 subjects · 6 assessments</text>
+  <text x="344" y="264" text-anchor="end" class="ink" font-size="10" font-weight="500">Not a final grade</text>
+
+  <text x="28" y="329" font-size="17" font-weight="550" letter-spacing="-.6">Subject breakdown</text>
+  <text x="362" y="329" text-anchor="end" class="label muted">Earned / max</text>
+  <rect x="26" y="350" width="338" height="165" rx="17" fill="#191b19" stroke="#41433e"/>
+  <text x="44" y="379" class="subject">Data Structures</text>
+  <text x="44" y="401" class="label muted">CS201 · 4 credits</text>
+  <text x="346" y="420" text-anchor="end" class="score">26<tspan class="denominator"> / 30</tspan></text>
+  <path d="M44 435H346" stroke="#41433e"/>
+  <circle cx="47" cy="459" r="3" fill="#c5c0d8"/>
+  <text x="60" y="463" class="detail muted">Cycle test 1</text>
+  <text x="346" y="463" text-anchor="end" class="detail">18 / 20</text>
+  <circle cx="47" cy="488" r="3" fill="#b4bea6"/>
+  <text x="60" y="492" class="detail muted">Assignment</text>
+  <text x="346" y="492" text-anchor="end" class="detail">8 / 10</text>
+  <rect x="26" y="527" width="338" height="165" rx="17" fill="#191b19" stroke="#41433e"/>
+  <text x="44" y="556" class="subject">Computer Networks</text>
+  <text x="44" y="578" class="label muted">CS205 · 3 credits</text>
+  <text x="346" y="597" text-anchor="end" class="score" style="fill:#df9983">19<tspan class="denominator"> / 30</tspan></text>
+  <path d="M44 612H346" stroke="#41433e"/>
+  <circle cx="47" cy="636" r="3" fill="#c5c0d8"/>
+  <text x="60" y="640" class="detail muted">Cycle test 1</text>
+  <text x="346" y="640" text-anchor="end" class="detail">12 / 20</text>
+  <circle cx="47" cy="665" r="3" fill="#b4bea6"/>
+  <text x="60" y="669" class="detail muted">Assignment</text>
+  <text x="346" y="669" text-anchor="end" class="detail">7 / 10</text>
+
+  <rect x="26" y="704" width="338" height="165" rx="17" fill="#191b19" stroke="#41433e"/>
+  <text x="44" y="733" class="subject">Operating Systems</text>
+  <text x="44" y="755" class="label muted">CS203 · 3 credits</text>
+  <text x="346" y="774" text-anchor="end" class="score">36<tspan class="denominator"> / 40</tspan></text>
+  <path d="M44 789H346" stroke="#41433e"/>
+  <circle cx="47" cy="813" r="3" fill="#c5c0d8"/>
+  <text x="60" y="817" class="detail muted">Lab evaluation</text>
+  <text x="346" y="817" text-anchor="end" class="detail">27 / 30</text>
+  <circle cx="47" cy="842" r="3" fill="#b4bea6"/>
+  <text x="60" y="846" class="detail muted">Assignment</text>
+  <text x="346" y="846" text-anchor="end" class="detail">9 / 10</text>
+
+  <g aria-label="Navigation: Home, Attendance, Marks active">
+    <rect x="35" y="910" width="320" height="62" rx="21" fill="#191b19" stroke="#454741"/>
+    <rect x="255" y="918" width="92" height="46" rx="14" fill="#f1eee3"/>
+    <g stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M82 934L89 928L96 934V942H91V937H87V942H82Z" stroke="#c2c2b9"/>
+      <rect x="188" y="929" width="14" height="14" rx="3" stroke="#c2c2b9"/>
+      <path d="M192 935.5L194 938L198 933.5" stroke="#c2c2b9"/>
+      <path d="M295 942V936M301 942V929M307 942V933" stroke="#191b19"/>
+    </g>
+    <text x="89" y="957" text-anchor="middle" font-size="12" font-weight="650" letter-spacing="-.25" style="fill:#c2c2b9">Home</text>
+    <text x="195" y="957" text-anchor="middle" font-size="12" font-weight="650" letter-spacing="-.25" style="fill:#c2c2b9">Attendance</text>
+    <text x="301" y="957" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="-.25" class="ink">Marks</text>
+  </g>
+</svg>

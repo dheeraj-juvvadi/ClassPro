@@ -1,5 +1,6 @@
 """Original screen-print artwork with gentle CSS wind and reduced-motion support."""
 from pathlib import Path
+from botanical_vines import botanical_vines
 import random, math
 r=random.Random(431)
 COLORS=['#12834f','#159855','#087548','#238c50']
@@ -73,14 +74,27 @@ def generate(mobile=False):
  </style>''')
  if mobile:
   leaves=[(6,192,-28,.64,1),(76,62,-103,.52,0),(486,233,28,.65,1),(8,1035,-12,.74,2),(483,1030,28,.76,1)]
-  flowers=[(362,74,.8,24,5),(10,270,.56,5,6),(459,776,.7,30,5),(116,926,.8,-18,7),(470,420,.42,18,6)]
+  flowers=[(362,74,1.04,24,5),(10,270,.56,5,6),(459,776,.84,30,5),(116,926,1.04,-18,7),(470,420,.42,18,6)]
  else:
   leaves=[(80,188,-55,1.22,1),(242,10,-105,1.25,2),(45,372,12,1.18,0),(-50,690,42,1.35,1),(134,1050,-24,1.55,2),(277,1030,-69,1.17,0),(361,1040,18,.88,1),(1390,490,22,1.5,1),(1470,247,-22,1.36,2),(1402,982,42,1.5,0),(1225,1060,-18,1.25,2),(1451,1080,4,1.42,1),(1170,-12,-94,.87,0)]
   flowers=[(72,34,1.02,12,7),(297,218,.7,-23,5),(47,709,.93,8,6),(267,877,1.02,33,5),(1400,60,1.2,17,5),(1347,649,.91,-21,7),(1158,957,.9,11,6),(405,990,.52,30,5)]
   # Open up the lower corners instead of layering dense green foliage.
   leaves=[v for i,v in enumerate(leaves) if i not in (3,6,11)]
+ parts.append(botanical_vines(mobile))
  for args in leaves:parts.append('<g class="breeze">'+leaf(*args)+'</g>')
  for args in flowers:parts.append('<g class="breeze">'+flower(*args)+'</g>')
+ if mobile:
+  accents=[(-12,655,-12,.48,1),(266,1004,-23,.57,0),(367,1015,24,.55,1),
+           (-14,462,12,.48,0),(493,644,-14,.57,1),
+           (190,1005,-38,.58,1),(414,1002,32,.57,0)]
+  for placement in accents:parts.append('<g class="breeze">'+leaf(*placement)+'</g>')
+  petals=[(223,89,-32,.65),(408,285,26,.5),(29,747,-18,.55),(300,793,42,.6),(211,909,-45,.45),
+          (88,212,24,.42),(416,213,-38,.48),(38,486,18,.4),
+          (448,680,-28,.5),(161,808,34,.45),(350,908,-20,.5)]
+  parts.append('<g id="scattered-petals">')
+  for horizontal,vertical,angle,size in petals:
+   parts.append(f'<g transform="translate({horizontal} {vertical}) rotate({angle}) scale({size})"><path d="M0 0Q-10-8-6-23L-1-27Q9-17 4-5Z" fill="#e95029"/><path d="M-2-5L-2-20" stroke="#dfaa36" stroke-width="1.5"/></g>')
+  parts.append('</g>')
  parts.append('</svg>')
  name='floral-mobile.svg' if mobile else 'floral-screenprint.svg'
  Path(__file__).resolve().parents[1].joinpath('public',name).write_text(''.join(parts))

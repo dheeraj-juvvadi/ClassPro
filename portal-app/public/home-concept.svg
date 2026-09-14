@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="1000" viewBox="0 0 390 1000" fill="none">
+  <title>ClassPro home screen — design concept</title>
+  <desc>Sample student planner with bold typography, bordered cards and bottom navigation inside a single rounded screen.</desc>
+  <style>
+    @font-face{font-family:Inter;src:url('/InterVariable.woff2') format('woff2')}
+    text{font-family:Inter,Arial,sans-serif}:where(text:not([fill])){fill:#f1eee3}
+    .muted{fill:#b2baa8}.ink{fill:#263321}.small{font-size:11px}.micro{font-size:9px}
+    .eyebrow{font-size:9px;font-weight:600;letter-spacing:1.1px}.subject{font-size:12px;font-weight:500}
+  </style>
+  <rect width="390" height="1000" fill="#191b19"/>
+  <rect x="14" y="14" width="362" height="976" rx="25" fill="#191b19" stroke="#454d3e" stroke-opacity=".8"/>
+  <text x="27" y="46" font-size="22" font-weight="750" letter-spacing="-1.3">ClassPro</text>
+  <g fill="#eceede"><circle cx="342" cy="39" r="2"/><circle cx="349" cy="39" r="2"/><circle cx="356" cy="39" r="2"/></g>
+  <text x="28" y="91" font-size="15" font-weight="500" letter-spacing="-.4">Good morning.</text>
+  <text x="28" y="110" class="small muted">Monday, 14 September</text>
+  <text x="362" y="108" text-anchor="end" font-size="8" class="muted" letter-spacing=".5">SAMPLE DAY</text>
+
+  <rect x="26" y="139" width="338" height="239" rx="21" fill="#c5d4a7" stroke="#dde6c9" stroke-opacity=".65"/>
+  <text x="48" y="170" class="eyebrow ink">NEXT CLASS</text>
+  <text x="342" y="170" text-anchor="end" class="small ink">Starts in 42 min</text>
+  <text x="47" y="221" font-size="32" font-weight="550" letter-spacing="-1.8" class="ink">Data Structures</text>
+  <text x="48" y="258" font-size="24" font-weight="500" letter-spacing="-1" class="ink">10:30 → 12:30</text>
+  <text x="49" y="283" font-size="12" class="ink">Lab 3 · Tech Block</text>
+  <path d="M48 309H342" stroke="#263321" stroke-opacity=".18"/>
+  <text x="48" y="345" font-size="10" class="ink">Next · Operating Systems · 12:30</text>
+  <circle cx="324" cy="341" r="19" fill="#283b25"/>
+  <path d="M318 347L330 335M319 335H330V346" stroke="#f0f2df" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="26" y="391" width="162" height="143" rx="17" fill="#cbd7b6" stroke="#e0e8cf" stroke-opacity=".65"/>
+  <text x="43" y="417" font-size="8.5" font-weight="600" letter-spacing=".65" class="ink">DATA STRUCTURES</text>
+  <text x="40" y="477" font-size="52" font-weight="500" letter-spacing="-3.5" class="ink">82<tspan font-size="30" letter-spacing="-1">%</tspan></text>
+  <text x="44" y="511" class="small ink">2 margin</text>
+  <rect x="201" y="391" width="163" height="143" rx="17" fill="#bd6a55" stroke="#da907c" stroke-opacity=".7"/>
+  <text x="218" y="417" font-size="8.5" font-weight="600" letter-spacing=".45" fill="#291e19">COMPUTER NETWORKS</text>
+  <text x="215" y="477" font-size="52" font-weight="500" letter-spacing="-3.5" fill="#291e19">68<tspan font-size="30" letter-spacing="-1">%</tspan></text>
+  <text x="219" y="511" font-size="11" fill="#291e19">−1 margin</text>
+
+  <path d="M28 593H361M99 664H361M99 745H361M99 826H361" stroke="#3c4436" stroke-opacity=".7"/>
+  <text x="28" y="577" font-size="17" font-weight="500" letter-spacing="-.6">Today’s classes</text>
+  <text x="361" y="577" text-anchor="end" class="small muted">4 classes</text>
+  <path d="M83 611V861" stroke="#879776" stroke-opacity=".35"/>
+  <g fill="#b1c797"><circle cx="83" cy="613" r="3"/><circle cx="83" cy="694" r="2.5"/><circle cx="83" cy="775" r="2.5"/><circle cx="83" cy="856" r="2.5"/></g>
+  <text x="28" y="617" class="small">10:30</text>
+  <text x="28" y="637" class="small muted">12:30</text>
+  <text x="99" y="617" class="subject">Data Structures</text>
+  <text x="99" y="638" class="small muted">Lab 3 · Tech Block</text>
+  <text x="361" y="617" text-anchor="end" class="small" fill="#c5d4a7">82%</text>
+  <text x="28" y="698" class="small">12:30</text>
+  <text x="28" y="718" class="small muted">13:30</text>
+  <text x="99" y="698" class="subject">Operating Systems</text>
+  <text x="99" y="719" class="small muted">Room 204</text>
+  <text x="361" y="698" text-anchor="end" class="small" fill="#c5d4a7">91%</text>
+  <text x="28" y="779" class="small">14:30</text>
+  <text x="28" y="799" class="small muted">15:30</text>
+  <text x="99" y="779" class="subject">Computer Networks</text>
+  <text x="99" y="800" class="small muted">Lab 1 · Main Block</text>
+  <text x="361" y="779" text-anchor="end" class="small" fill="#e59b83">68%</text>
+  <text x="28" y="860" class="small">17:00</text>
+  <text x="28" y="880" class="small muted">18:00</text>
+  <text x="99" y="860" class="subject">Discrete Mathematics</text>
+  <text x="99" y="881" class="small muted">Room 301</text>
+  <text x="361" y="860" text-anchor="end" class="small" fill="#d6bd80">76%</text>
+
+  <rect x="35" y="910" width="320" height="62" rx="21" fill="#22271f" stroke="#3c4436"/>
+  <rect x="43" y="918" width="92" height="46" rx="14" fill="#c5d4a7"/>
+  <g stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M82 934L89 928L96 934V942H91V937H87V942H82Z" stroke="#263321"/>
+    <rect x="188" y="929" width="14" height="14" rx="3" stroke="#b6c0ac"/>
+    <path d="M192 935.5L194 938L198 933.5" stroke="#b6c0ac"/>
+    <path d="M295 942V936M301 942V929M307 942V933" stroke="#b6c0ac"/>
+  </g>
+  <text x="89" y="957" text-anchor="middle" font-size="12" font-weight="650" letter-spacing="-.25" class="ink">Home</text>
+  <text x="195" y="957" text-anchor="middle" font-size="12" font-weight="600" letter-spacing="-.25" fill="#c1c9b8">Attendance</text>
+  <text x="301" y="957" text-anchor="middle" font-size="12" font-weight="600" letter-spacing="-.25" fill="#c1c9b8">Marks</text>
+</svg>

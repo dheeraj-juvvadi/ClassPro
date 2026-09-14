@@ -3,6 +3,8 @@
 const $ = (id) => document.getElementById(id);
 let authenticated = false;
 let busy = false;
+const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
+const signInParticles = createSignInParticles($('sign-in'));
 const loginPreparation = createLoginPreparation({ prepare: async () => {
   const [challenge] = await Promise.all([
     api('/api/challenge', { method: 'POST', body: '{}' }, true),
@@ -31,9 +33,10 @@ function message(id, text = '', error = false) {
 }
 
 function syncControls() {
-  for (const button of document.querySelectorAll('button')) button.disabled = busy;
+  for (const id of ['sign-in', 'password-toggle', 'refresh', 'logout']) $(id).disabled = busy;
   $('account').disabled = busy;
   $('password').disabled = busy;
+  $('remember').disabled = busy;
   $('login-form').setAttribute('aria-busy', String(busy));
 }
 
@@ -50,8 +53,8 @@ async function run(action) {
   } finally {
     busy = false;
     syncControls();
-    $('sign-in').textContent = 'Sign in';
-    $('refresh').textContent = 'Refresh reports';
+    signInParticles.stop();
+    $('refresh').textContent = 'Sync';
     $('logout').textContent = 'Sign out';
     $('report-content').setAttribute('aria-busy', 'false');
   }
@@ -59,6 +62,12 @@ async function run(action) {
 
 function showLogin(text = '', error = false) {
   document.body.classList.add('garden-login');
+  document.body.classList.remove('planner');
+  $('home-view').hidden = true;
+  $('planner-nav').hidden = true;
+  $('planner-menu').hidden = true;
+  classproHome.clear();
+  academicUI.clear();
   authenticated = false;
   $('startup').hidden = true;
   $('login-view').hidden = false;
@@ -74,12 +83,11 @@ function showLogin(text = '', error = false) {
   message('login-message', text, error);
   $('login-title').tabIndex = -1;
   $('login-title').focus();
-  window.portalOcr.preload().catch(() => {});
-  loginPreparation.preload().catch(() => {});
 }
 
 function showReports() {
   document.body.classList.remove('garden-login');
+  document.body.classList.add('planner');
   loginPreparation.clear();
   authenticated = true;
   $('password').value = '';
@@ -87,8 +95,10 @@ function showReports() {
   $('login-view').hidden = true;
   $('reports-view').hidden = false;
   $('logout').hidden = false;
+  $('planner-nav').hidden = false;
+  $('planner-menu').hidden = false;
   message('login-message');
-  $('reports-title').focus();
+  classproHome.enter();
 }
 
 async function api(path, options = {}, login = false) {
@@ -110,7 +120,7 @@ async function api(path, options = {}, login = false) {
   const text = await response.text();
   if (text) {
     try { data = JSON.parse(text); }
-    catch { throw new Error('The server returned an unexpected response. Please try again.'); }
+    catch { throw new Error('The server returned an unexpected response.\nPlease try again.'); }
   }
   if (!response.ok) {
       throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code });
@@ -149,47 +159,7 @@ function reportState(kind, report) {
 
 function renderAttendance(report) {
   const { container, data } = reportState('attendance', report);
-  if (!data.length) return;
-  const wrap = node('div', 'table-wrap');
-  wrap.tabIndex = 0;
-  wrap.setAttribute('role', 'region');
-  wrap.setAttribute('aria-label', 'Attendance by course. Scroll horizontally for all columns.');
-  const table = node('table');
-  const caption = node('caption', 'sr-only', 'Attendance by course');
-  const head = node('thead');
-  const headings = node('tr');
-  for (const label of ['Course', 'Conducted', 'Present', 'Absent', 'Attendance']) {
-    const cell = node('th', '', label);
-    cell.scope = 'col';
-    headings.append(cell);
-  }
-  head.append(headings);
-  const body = node('tbody');
-  for (const course of data) {
-    const row = node('tr');
-    const name = node('th');
-    name.scope = 'row';
-    name.append(courseHeading(course));
-    row.append(name);
-    for (const key of ['conducted', 'present', 'absent']) row.append(node('td', 'number', value(course[key])));
-    const percentage = node('td', 'percentage');
-    const raw = course.percentage;
-    const numeric = raw === null || raw === undefined || raw === '' ? NaN : Number(String(raw).replace('%', ''));
-    percentage.append(node('span', 'percentage-label', Number.isFinite(numeric) ? `${numeric}%` : value(raw)));
-    if (Number.isFinite(numeric)) {
-      const meter = node('meter');
-      meter.min = 0;
-      meter.max = 100;
-      meter.value = Math.max(0, Math.min(100, numeric));
-      meter.setAttribute('aria-label', `${course.code || 'Course'} attendance`);
-      percentage.append(meter);
-    }
-    row.append(percentage);
-    body.append(row);
-  }
-  table.append(caption, head, body);
-  wrap.append(table);
-  container.append(wrap);
+  academicUI.renderAttendance(data, container);
 }
 
 function renderMarks(report) {
@@ -219,6 +189,7 @@ function renderMarks(report) {
 }
 
 async function loadReports() {
+  if (designPreview) return;
   $('refresh').textContent = 'Refreshing…';
   $('report-content').setAttribute('aria-busy', 'true');
   message('reports-message', 'Loading your reports…');
@@ -230,6 +201,7 @@ async function loadReports() {
     const reports = await api('/api/reports');
     renderAttendance(reports.attendance);
     renderMarks(reports.marks);
+    classproHome.update(reports.attendance);
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. You can try refreshing again.' : 'Reports updated.');
@@ -246,9 +218,10 @@ $('login-form').addEventListener('submit', (event) => {
   event.preventDefault();
   if (!$('login-form').reportValidity()) return;
   run(async () => {
-    message('login-message', 'Signing in…');
-    $('sign-in').textContent = 'Signing in…';
+    message('login-message');
+    signInParticles.start();
     await window.portalOcr.preload();
+    signInParticles.stage('Connecting to SRM…', .4);
     let data;
     try {
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -259,9 +232,10 @@ $('login-form').addEventListener('submit', (event) => {
         if (attempt === 0) continue;
         throw new Error('Your device could not confidently read this verification. Please retry.');
       }
+      signInParticles.stage('Signing in…', .72);
       data = await api('/api/login/client', {
       method: 'POST',
-      body: JSON.stringify({ account: $('account').value.trim(), password: $('password').value, answer: prediction.answer })
+      body: JSON.stringify({ account: $('account').value.trim(), password: $('password').value, answer: prediction.answer, remember: $('remember').checked })
     }, true);
       break;
     }
@@ -271,6 +245,8 @@ $('login-form').addEventListener('submit', (event) => {
     if (data.authenticated !== true) {
       throw new Error(data.error?.message || 'Sign in could not be confirmed. Please try again.');
     }
+    signInParticles.stage('Signed in', 1);
+    signInParticles.stop();
     showReports();
     await loadReports();
   });
@@ -278,12 +254,20 @@ $('login-form').addEventListener('submit', (event) => {
 
 $('refresh').addEventListener('click', () => run(loadReports));
 $('logout').addEventListener('click', () => run(async () => {
+  if (designPreview) { location.href = '/'; return; }
   $('logout').textContent = 'Signing out…';
   await api('/api/session', { method: 'DELETE' });
   showLogin('You have signed out.');
 }));
 
-run(async () => {
+if (designPreview) {
+  const reports = classproHome.preview();
+  showReports();
+  renderAttendance(reports.attendance);
+  renderMarks(reports.marks);
+  classproHome.update(reports.attendance);
+  $('updated-at').textContent = 'Design preview · sample data';
+} else run(async () => {
   try {
     const session = await api('/api/session');
     if (session.authenticated) {

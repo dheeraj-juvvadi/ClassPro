@@ -7,10 +7,20 @@
   <meta name="theme-color" content="#191b19" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#191b19" media="(prefers-color-scheme: dark)">
   <title>ClassPro · Student Portal</title>
+  <link rel="preload" href="/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/garden.css">
+  <link rel="stylesheet" href="/login.css">
+  <link rel="stylesheet" href="/home.css">
+  <link rel="stylesheet" href="/academic.css">
   <script src="/client-ocr.js" defer></script>
   <script src="/login-preparation.js" defer></script>
+  <script src="/sign-in-particles.js" defer></script>
+  <script src="/attendance-math.js" defer></script>
+  <script src="/home-model.js" defer></script>
+  <script src="/home.js" defer></script>
+  <script src="/quantity-stepper.js" defer></script>
+  <script src="/academic-ui.js" defer></script>
   <script src="/app.js" defer></script>
   <script src="/login-effects.js" defer></script>
 </head>
@@ -19,15 +29,21 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="brand">ClassPro<span class="brand-caption">A LITTLE ROOM TO GROW</span></div>
-    <button id="logout" class="secondary" type="button" hidden>Sign out</button>
+    <details id="planner-menu" hidden>
+      <summary aria-label="More options">•••</summary>
+      <div class="planner-menu-items">
+        <button id="open-schedule" type="button">Schedule</button>
+        <button id="open-subjects" type="button">Subjects</button>
+        <button id="logout" class="secondary" type="button" hidden>Sign out</button>
+      </div>
+    </details>
   </header>
   <main id="main" tabindex="-1">
     <div id="startup" class="startup" role="status">Checking your session…</div>
     <section id="login-view" class="login-layout" aria-labelledby="login-title" hidden>
       <div class="login-card">
-        <p class="card-kicker">CLASS PRO</p>
-        <h1 id="login-title">Welcome back.</h1>
-        <p class="quiet">Your attendance and marks, all in one place.</p>
+        <h1 id="login-title">Welcome <span>back.</span></h1>
+        <p class="quiet">Lightweight. No bs.</p>
         <form id="login-form">
           <label for="account">NetID</label>
           <input id="account" name="account" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your SRM NetID" required>
@@ -36,12 +52,26 @@
             <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
             <button id="password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button>
           </div>
-          <p id="login-message" class="message" role="status" aria-live="polite" hidden></p>
+          <div class="login-options">
+            <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox">Keep me signed in</label>
+            <a href="https://ssp.srmist.edu.in/resetpassword/" target="_blank" rel="noopener noreferrer">Forgot password?</a>
+          </div>
+          <button id="sign-in" type="submit" class="primary"><canvas class="sign-in-particles" aria-hidden="true"></canvas><span id="sign-in-label">Sign in</span><span class="sign-in-arrow" aria-hidden="true">→</span></button>
+          <span id="sign-in-status" class="sign-in-status" role="status" aria-live="polite" aria-atomic="true"></span>
           <details class="test-diagnostics"><summary>Connection details</summary><p id="ocr-status" class="quiet" role="status" aria-live="polite"></p></details>
-          <button id="sign-in" type="submit" class="primary full-width">Sign in <span aria-hidden="true">↗</span></button>
+          <p id="login-message" class="message" role="status" aria-live="polite" hidden></p>
         </form>
-        <p class="login-footnote">Use your SRM Student Portal credentials.<br>Your password is never stored.</p>
       </div>
+    </section>
+    <section id="home-view" aria-labelledby="home-title" hidden>
+      <div class="home-greeting"><h1 id="home-title" tabindex="-1">Good morning.</h1><p id="home-date"></p></div>
+      <p id="home-preview-note" class="preview-note" hidden>Design preview · sample day <a href="/">Back to sign in</a></p>
+      <article id="next-class-card" class="next-class-card" aria-labelledby="next-class-title"></article>
+      <section class="attendance-insights" aria-label="Attendance at a glance" id="home-insights"></section>
+      <section class="day-timeline" aria-labelledby="today-title">
+        <div class="timeline-heading"><h2 id="today-title">Today’s classes</h2><span id="today-count"></span></div>
+        <ol id="today-classes"></ol>
+      </section>
     </section>
     <section id="reports-view" aria-labelledby="reports-title" hidden>
       <div class="page-heading">
@@ -50,15 +80,15 @@
           <h1 id="reports-title" tabindex="-1">Academic overview</h1>
           <p id="updated-at" class="quiet">Your attendance and marks.</p>
         </div>
-        <button id="refresh" class="primary" type="button">Refresh reports</button>
+        <div class="report-actions"><button id="calculate-attendance" type="button">Calculate ↗</button><button id="refresh" class="primary" type="button">Sync</button></div>
       </div>
       <p id="reports-message" class="message" role="status" aria-live="polite" hidden></p>
       <div id="report-content" aria-busy="false">
-        <section class="report-section" aria-labelledby="attendance-title">
+        <section id="attendance-panel" class="report-section" aria-labelledby="attendance-title">
           <div class="section-heading"><h2 id="attendance-title">Attendance</h2><span id="attendance-count" class="quiet"></span></div>
           <div id="attendance-content"></div>
         </section>
-        <section class="report-section" aria-labelledby="marks-title">
+        <section id="marks-panel" class="report-section" aria-labelledby="marks-title">
           <div class="section-heading"><h2 id="marks-title">Marks</h2><span id="marks-count" class="quiet"></span></div>
           <p class="section-help quiet">Select a course to view its assessment details.</p>
           <div id="marks-content"></div>
@@ -67,6 +97,34 @@
     </section>
     <noscript><p class="message">JavaScript is required to sign in and load your student reports. Please enable it and reload this page.</p></noscript>
   </main>
+  <nav id="planner-nav" aria-label="Main navigation" hidden>
+    <button type="button" data-page="home" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></svg>Home</button>
+    <button type="button" data-page="attendance"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m7 12 3 3 7-7"/></svg>Attendance</button>
+    <button type="button" data-page="marks"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 21V11m7 10V3m7 18V7"/></svg>Marks</button>
+  </nav>
+  <dialog id="schedule-dialog" aria-labelledby="schedule-title">
+    <div class="schedule-heading"><h2 id="schedule-title">Weekly schedule</h2><button id="close-schedule" type="button" aria-label="Close schedule">×</button></div>
+    <p class="quiet">Saved on this device. Add one entry for the full class duration.</p>
+    <ul id="schedule-entries"></ul>
+    <form id="schedule-form">
+      <label for="schedule-day">Day</label><select id="schedule-day"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select>
+      <label for="schedule-code">Course code</label><input id="schedule-code" required maxlength="40" placeholder="Match your attendance course code">
+      <label for="schedule-name">Subject</label><input id="schedule-name" required maxlength="100">
+      <div class="schedule-times"><div><label for="schedule-start">Starts</label><input id="schedule-start" type="time" required></div><div><label for="schedule-end">Ends</label><input id="schedule-end" type="time" required></div></div>
+      <label for="schedule-room">Room / block</label><input id="schedule-room" required maxlength="100">
+      <p id="schedule-error" role="status"></p><button type="submit" class="primary">Add class</button>
+    </form>
+  </dialog>
   <footer class="site-footer">ClassPro <span>Student Portal</span></footer>
+  <dialog id="projection-dialog" aria-labelledby="projection-title">
+    <div class="schedule-heading"><h2 id="projection-title">A little room to plan.</h2><button id="close-projection" type="button" aria-label="Close calculator">×</button></div>
+    <p class="quiet">Explore your attendance at a 75% target. This won’t change your records.</p>
+    <label for="projection-course">Subject</label><select id="projection-course"></select>
+    <div class="projection-control"><span>Hours to attend</span><div id="projection-attend"></div></div>
+    <div class="projection-control"><span>Hours to miss</span><div id="projection-miss"></div></div>
+    <div class="projection-control"><span>OD correction</span><div id="projection-od"></div></div>
+    <p class="quiet projection-note">OD converts existing absent hours to present, up to your recorded absences.</p>
+    <output id="projection-result" class="projection-result" aria-live="polite" aria-atomic="true"></output>
+  </dialog>
 </body>
 </html>

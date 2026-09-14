@@ -72,6 +72,30 @@ test('client OCR challenge is bound to its session and answer is not returned', 
   assert.equal((await call('/api/reports', 'GET', cookie)).status, 200);
 });
 
+test('keep me signed in controls cookie persistence through report refreshes', async t => {
+  for (const remember of [false, true]) {
+    await t.test(`remember=${remember}`, async context => {
+      const { call } = await fixture(context, { configurePortal(portal) {
+        portal.open = async () => 'data:image/png;base64,c3ludGhldGlj';
+      } });
+      const challenge = await call('/api/challenge', 'POST', '', {});
+      const cookie = cookieOf(challenge);
+      const login = await call('/api/login/client', 'POST', cookie, {
+        ...credentials, answer: 'Ab12Cd', remember,
+      });
+      const reports = await call('/api/reports', 'GET', cookie);
+      for (const response of [login, reports]) {
+        assert.equal(response.status, 200);
+        const header = response.headers.get('set-cookie');
+        assert.match(header, /HttpOnly/);
+        assert.match(header, /SameSite=Strict/);
+        assert.equal(/Max-Age=1800/.test(header), remember);
+        assert.equal(/Expires=/.test(header), remember);
+      }
+    });
+  }
+});
+
 test('client challenge retry refreshes its existing browser rather than allocating another', async t => {
   let refreshed = 0;
   const { call, portals } = await fixture(t, { configurePortal(p) {

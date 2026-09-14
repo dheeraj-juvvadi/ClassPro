@@ -11,8 +11,8 @@ export function createApp({ createSession, maxSessions = 8, secureCookie = false
   const app = express();
   const sessions = new Map();
   const rates = new Map();
-  const cookie = (res, id, ttl = SESSION_TTL) => res.cookie(COOKIE, id, {
-    httpOnly: true, secure: secureCookie, sameSite: 'strict', path: '/', maxAge: ttl,
+  const cookie = (res, id, ttl = SESSION_TTL, persistent = true) => res.cookie(COOKIE, id, {
+    httpOnly: true, secure: secureCookie, sameSite: 'strict', path: '/', ...(persistent ? { maxAge: ttl } : {}),
   });
   const error = (res, status, code, message) => res.status(status).json({ error: { code, message } });
   async function drop(id) {
@@ -151,7 +151,8 @@ export function createApp({ createSession, maxSessions = 8, secureCookie = false
         return res.status(401).json({ authenticated: false, error: result.error });
       }
       entry.expires = now() + SESSION_TTL;
-      cookie(res, req.portalId);
+      entry.persistent = req.body.remember === true;
+      cookie(res, req.portalId, SESSION_TTL, entry.persistent);
       res.json({ authenticated: true });
     } catch (cause) { await drop(req.portalId); throw cause; }
     finally { req.body = undefined; entry.busy = false; }
@@ -162,7 +163,7 @@ export function createApp({ createSession, maxSessions = 8, secureCookie = false
     try {
       const data = await entry.portal.reports();
       entry.expires = now() + SESSION_TTL;
-      cookie(res, req.portalId);
+      cookie(res, req.portalId, SESSION_TTL, entry.persistent);
       res.json(data);
     } finally { entry.busy = false; }
   });
