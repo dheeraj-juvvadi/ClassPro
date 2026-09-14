@@ -133,9 +133,19 @@ func TestExpiredCapacityReclaimedAndRatesPruned(t *testing.T) {
 	server.config.MaxSessions = 1
 	cookie := perform(server, "POST", "/api/challenge", `{}`, nil, server.config.Origin).Result().Cookies()[0]
 	server.sessions[cookie.Value].expires = time.Now().Add(-time.Second)
-	if perform(server, "POST", "/api/challenge", `{}`, nil, server.config.Origin).Code != 200 { t.Fatal("expired capacity not reclaimed") }
-	if backend.calls["close"] != 1 || len(server.sessions) != 1 { t.Fatal("expired worker not closed") }
-	for index := 0; index < 4096; index++ { server.rates[string(rune(index))] = rate{until: time.Now().Add(-time.Second)} }
-	if !server.allowRate("new-client") { t.Fatal("expired rate entries blocked new client") }
-	if len(server.rates) > 2 { t.Fatal("rate map not pruned") }
+	if perform(server, "POST", "/api/challenge", `{}`, nil, server.config.Origin).Code != 200 {
+		t.Fatal("expired capacity not reclaimed")
+	}
+	if backend.calls["close"] != 1 || len(server.sessions) != 1 {
+		t.Fatal("expired worker not closed")
+	}
+	for index := 0; index < 4096; index++ {
+		server.rates[string(rune(index))] = rate{until: time.Now().Add(-time.Second)}
+	}
+	if !server.allowRate("new-client") {
+		t.Fatal("expired rate entries blocked new client")
+	}
+	if len(server.rates) > 2 {
+		t.Fatal("rate map not pruned")
+	}
 }

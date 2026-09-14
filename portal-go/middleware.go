@@ -67,9 +67,13 @@ func (server *Server) allowRate(key string) bool {
 	value, exists := server.rates[key]
 	if !exists && len(server.rates) >= 4096 {
 		for address, previous := range server.rates {
-			if !now.Before(previous.until) { delete(server.rates, address) }
+			if !now.Before(previous.until) {
+				delete(server.rates, address)
+			}
 		}
-		if len(server.rates) >= 4096 { return false }
+		if len(server.rates) >= 4096 {
+			return false
+		}
 	}
 	if now.After(value.until) {
 		value = rate{until: now.Add(time.Minute)}

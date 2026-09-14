@@ -1,5 +1,22 @@
 # ClassPro revamp deployment
 
+## Verified deployment: 2026-09-14
+
+Commit `82e43073c8eacd085576170a31cb7a04ed68c8d1` was pushed to
+`revamp/main`. Vercel deployment `dpl_HSStQp2WBXXT5aGEL9FzFSQvyWPv` is ready at
+`https://revamp-tracker.vercel.app`. Render deployment
+`dep-dajsjgtg1s2s73c1g270` is live on the existing `goscraper` free service.
+
+Production checks returned: `/health` 200, proxied `/api/session` 200 with
+`authenticated:false`, unauthenticated `/api/reports` 401, and an untrusted-origin
+challenge request 403. A permitted-origin challenge returned 200 with a CAPTCHA
+image, demonstrating deployed Chromium and upstream access. Its temporary
+session was then deleted successfully. No credentials were submitted; a complete
+real login/report/logout cycle is still an acceptance check, not a claimed result.
+
+The final published stylesheet was compared byte-for-byte with the approved
+local file. Subsequent Go hardening changes require their own tested release.
+
 ## Existing accounts and destinations
 
 - Publish to `revamp` (`dheeraj-juvvadi/revamp-tracker`), branch `main`.

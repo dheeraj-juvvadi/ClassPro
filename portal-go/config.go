@@ -58,7 +58,9 @@ func configFromEnv() (Config, error) {
 			return config, fmt.Errorf("invalid TRUSTED_PROXY_CIDRS")
 		}
 		prefix, _ := network.Mask.Size()
-		if prefix == 0 { return config, fmt.Errorf("TRUSTED_PROXY_CIDRS cannot trust every address") }
+		if prefix == 0 {
+			return config, fmt.Errorf("TRUSTED_PROXY_CIDRS cannot trust every address")
+		}
 		config.TrustedProxies = append(config.TrustedProxies, network)
 	}
 	return config, nil

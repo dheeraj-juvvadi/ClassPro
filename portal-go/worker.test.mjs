@@ -73,3 +73,22 @@ test('worker serializes a single browser context', async t => {
   release();
   assert.equal((await pending).status, 200);
 });
+
+test('stuck close is bounded and cannot release leaked browser capacity', async t => {
+  let failures = 0;
+  const worker = createWorker({ token, maxSessions: 1, closeTimeoutMs: 15,
+    onCloseTimeout: () => { failures++; },
+    createSession: () => ({ async open() { return 'image'; }, async close() { await new Promise(() => {}); } }),
+  });
+  worker.server.listen(0, '127.0.0.1');
+  await once(worker.server, 'listening');
+  t.after(async () => { worker.server.closeAllConnections(); await new Promise(resolve => worker.server.close(resolve)); await worker.close(); });
+  const rpc = (action, session) => fetch(`http://127.0.0.1:${worker.server.address().port}/rpc`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, session, payload: {} }),
+  });
+  await rpc('challenge', firstSession);
+  await rpc('close', firstSession);
+  assert.equal(failures, 1);
+  assert.equal((await rpc('challenge', secondSession)).status, 503);
+});

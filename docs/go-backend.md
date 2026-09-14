@@ -47,6 +47,8 @@ expiration. Health is process liveness, **not** a browser/upstream readiness cla
 ## Security and efficiency
 
 - Cookies are host-only, HttpOnly, Secure, SameSite=Strict and path `/`.
+  The name is `classpro_go_session`, separate from Node's `portal_session` so
+  local ports 8080 and 3100 do not overwrite one another's browser sessions.
   Remember-me controls browser persistence, never server session lifetime.
   Challenge lifetime is two minutes; authenticated lifetime is thirty minutes.
 - Every API mutation requires `Origin` exactly equal to `APP_ORIGIN` including
@@ -55,6 +57,11 @@ expiration. Health is process liveness, **not** a browser/upstream readiness cla
 - JSON bodies are limited to 8 KiB; login field lengths and CAPTCHA syntax are
   validated and unknown fields rejected. Headers, reads, writes, worker calls,
   session count and concurrent browser work are bounded.
+  Expired sessions are reclaimed on full-pool admission and by a bounded reaper.
+  Go cleanup calls have a four-second deadline; worker browser close has a
+  three-second deadline. A stuck browser close terminates the production worker
+  and supervisor so the platform can restart cleanly instead of accumulating
+  unreachable contexts. This loses in-memory sessions and requires sign-in again.
 - Default capacity is four sessions, two operations and thirty API requests per
   minute per client IP. Rate state is capped at 4096 IPs. Login admission does not
   create unbounded browser contexts or queues. One operation runs per session;
@@ -70,6 +77,8 @@ expiration. Health is process liveness, **not** a browser/upstream readiness cla
   right-to-left chain parsing, stopping at the nearest untrusted address. Never
   configure `0.0.0.0/0` or `::/0`. Without correct platform proxy ranges, users can
   share the proxy's conservative rate bucket; do not "fix" this by trusting all XFF.
+  Trust-all CIDRs are rejected at startup. A full rate map prunes expired entries
+  immediately rather than waiting for the periodic reaper.
 - Security headers include CSP, HSTS in secure mode, nosniff, frame denial,
   no-referrer and disabled camera/microphone/geolocation. API responses are
   no-store; only public OCR assets receive day-long caching. Static root must be
@@ -111,6 +120,11 @@ Only explicit HTTP localhost development can disable Secure cookies. Production
 requires HTTPS `APP_ORIGIN` with no trailing slash. Set origin to the actual
 browser origin, not the internal container URL. Reverse-proxy `/api` and assets
 under that same origin if frontend hosting is separate. No wildcard origins.
+
+For supervised local startup, build a binary and set `PORTAL_GO_BINARY` to its
+absolute path, then run `node portal-go/start.mjs` from repository root with the
+same origin/static environment above. The supervisor creates the ephemeral
+worker token itself; no token needs to appear in command arguments or logs.
 
 Build the optional combined container from **repository root**:
 
@@ -161,3 +175,13 @@ memory on the selected plan, verify trusted proxy ranges, and confirm frontend
 CSP/OCR compatibility. No real authenticated Go flow or Docker build was claimed
 by the local test suite. The existing Node service remains the live harness path
 until that acceptance check passes.
+
+Local follow-up verification: Go and the private worker are running on 8080/3101
+with an ephemeral supervisor-generated token. The local Playwright Chromium
+bundle had a missing framework; setting `PORTAL_BROWSER_PATH` to the installed
+system Chrome executable resolved browser launch. A real upstream challenge
+request returned 200 with an image, then DELETE session returned 200. No account
+credentials were used, and no CAPTCHA/cookie content was logged. GET/HEAD health,
+POST health rejection, session inspection and static root also passed. This
+verifies browser/challenge connectivity, not authenticated reports or production
+container compatibility. The Node service on 3100 remains unchanged.

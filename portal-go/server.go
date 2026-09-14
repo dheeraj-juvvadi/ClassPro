@@ -90,7 +90,9 @@ func (server *Server) acquire() bool {
 
 func (server *Server) call(action string, entry *session, payload []byte) reply {
 	timeout := server.config.Timeout
-	if action == "close" { timeout = min(timeout, 4*time.Second) }
+	if action == "close" {
+		timeout = min(timeout, 4*time.Second)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	return server.worker.Call(ctx, action, entry.id, payload)
@@ -129,7 +131,10 @@ func (server *Server) Reap(ctx context.Context) {
 
 func (server *Server) reclaimExpired() {
 	server.mu.Lock()
-	if len(server.sessions) < server.config.MaxSessions { server.mu.Unlock(); return }
+	if len(server.sessions) < server.config.MaxSessions {
+		server.mu.Unlock()
+		return
+	}
 	for token, entry := range server.sessions {
 		if !entry.busy && time.Now().After(entry.expires) && server.acquire() {
 			entry.busy = true

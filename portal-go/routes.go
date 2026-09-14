@@ -42,7 +42,9 @@ func (server *Server) route(writer http.ResponseWriter, request *http.Request) {
 			return
 		}
 	}
-	if request.URL.Path == "/api/challenge" { server.reclaimExpired() }
+	if request.URL.Path == "/api/challenge" {
+		server.reclaimExpired()
+	}
 	server.mu.Lock()
 	entry := server.lookup(request)
 	if request.URL.Path == "/api/session" && request.Method == "GET" {
