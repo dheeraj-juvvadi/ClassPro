@@ -2,6 +2,18 @@
 
 ## Backend-only packaging and request diagnostics
 
+The current adapter succeeded locally with both automatic and manual CAPTCHA on
+2026-09-14. Local SRM responses redirected with HTTP 302; Render returned its login
+page with HTTP 200 and `LOGIN_REJECTED`. Both environments reported matching submitted
+fields, security telemetry, and a headless user agent. This does not support blaming
+OCR or the headless identifier alone.
+
+The next controlled deployment replaces Playwright's Chromium 145 with official
+Chrome for Testing 152.0.7977.82, from the same build family as working local Chrome
+152.0.7977.84. The exact local patch is not published in Chrome for Testing. Browser
+startup logs report version/platform/headless mode. Linux and Render egress remain
+different, so this is a diagnostic deployment, not a verified authentication fix.
+
 The Render Docker build now copies only the Go API, Node worker, portal adapter,
 parser, and their runtime dependencies. Its Docker-specific context allowlist
 excludes the frontend, OCR weights, development files, and unrelated project code.

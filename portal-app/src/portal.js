@@ -15,6 +15,10 @@ async function browser() {
     args: process.env.PORTAL_BROWSER_COMPAT !== '0'
       ? ['--disable-blink-features=AutomationControlled'] : [],
   })
+    .then(instance => {
+      console.log(JSON.stringify({ event: 'portal_browser_started', version: instance.version(), platform: process.platform, headless: process.env.HEADED !== '1' }));
+      return instance;
+    })
     .catch(error => { browserPromise = null; throw error; });
   const instance = await browserPromise;
   if (!instance.isConnected()) { browserPromise = null; return browser(); }
