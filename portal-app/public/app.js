@@ -3,6 +3,8 @@
 const $ = (id) => document.getElementById(id);
 let authenticated = false;
 let busy = false;
+let manualCaptcha = false;
+let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
 const signInParticles = createSignInParticles($('sign-in'));
 const loginPreparation = createLoginPreparation({ prepare: async () => {
@@ -37,6 +39,9 @@ function syncControls() {
   $('account').disabled = busy;
   $('password').disabled = busy;
   $('remember').disabled = busy;
+  $('manual-captcha-toggle').disabled = busy;
+  $('manual-captcha-refresh').disabled = busy;
+  $('manual-captcha-answer').disabled = busy || !manualCaptcha;
   $('login-form').setAttribute('aria-busy', String(busy));
 }
 
@@ -216,15 +221,63 @@ async function loadReports() {
   }
 }
 
+async function loadManualChallenge() {
+  manualChallengeAt = 0;
+  $('manual-captcha-answer').value = '';
+  $('manual-captcha-image').hidden = true;
+  $('manual-captcha-status').textContent = 'Loading code…';
+  try {
+    const challenge = await api('/api/challenge', { method: 'POST', body: '{}' }, true);
+    if (challenge.authenticated) { showReports(); await loadReports(); return; }
+    if (typeof challenge.image !== 'string' || !challenge.image.startsWith('data:image/')) throw new Error('Could not load the verification image. Try New code.');
+    $('manual-captcha-image').src = challenge.image;
+    $('manual-captcha-image').hidden = false;
+    manualChallengeAt = Date.now();
+    $('manual-captcha-status').textContent = 'Enter the code, then sign in.';
+  } catch (error) {
+    $('manual-captcha-status').textContent = 'Code unavailable. Try New code.';
+    throw error;
+  }
+}
+
+$('manual-captcha-toggle').addEventListener('click', () => run(async () => {
+  manualCaptcha = !manualCaptcha;
+  manualChallengeAt = 0;
+  loginPreparation.clear();
+  $('manual-captcha').hidden = !manualCaptcha;
+  $('manual-captcha-answer').required = manualCaptcha;
+  $('manual-captcha-toggle').setAttribute('aria-expanded', String(manualCaptcha));
+  $('manual-captcha-toggle').textContent = manualCaptcha ? 'Use automatic verification' : 'Enter CAPTCHA manually';
+  message('login-message');
+  if (manualCaptcha) await loadManualChallenge();
+}));
+$('manual-captcha-refresh').addEventListener('click', () => run(loadManualChallenge));
+
 $('login-form').addEventListener('submit', (event) => {
   event.preventDefault();
   if (!$('login-form').reportValidity()) return;
   run(async () => {
     message('login-message');
     signInParticles.start();
-    await window.portalOcr.preload();
+    if (!manualCaptcha) await window.portalOcr.preload();
     signInParticles.stage('Connecting to SRM…', .4);
     let data;
+    if (manualCaptcha) {
+      if (!manualChallengeAt || Date.now() - manualChallengeAt >= 90000) {
+        await loadManualChallenge();
+        throw new Error('Enter the new code, then sign in again.');
+      }
+      const answer = $('manual-captcha-answer').value;
+      manualChallengeAt = 0;
+      try {
+        data = await api('/api/login/client', { method: 'POST', body: JSON.stringify({ account: $('account').value.trim(), password: $('password').value, answer, remember: $('remember').checked }) }, true);
+      } catch (error) {
+        $('manual-captcha-image').hidden = true;
+        $('manual-captcha-answer').value = '';
+        $('manual-captcha-status').textContent = 'This code is no longer active. Select New code to retry.';
+        throw error;
+      }
+    } else {
     try {
     for (let attempt = 0; attempt < 2; attempt++) {
       const prepared = await loginPreparation.take();
@@ -243,6 +296,7 @@ $('login-form').addEventListener('submit', (event) => {
     }
     } catch (error) {
       throw error;
+    }
     }
     if (data.authenticated !== true) {
       throw new Error(data.error?.message || 'Sign in could not be confirmed. Please try again.');
