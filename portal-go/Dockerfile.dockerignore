@@ -19,3 +19,4 @@
 !portal-app/src/portal-console.js
 !portal-app/src/credential-integrity.js
 !portal-app/src/fingerprint-handshake.js
+!portal-app/src/portal-network.js

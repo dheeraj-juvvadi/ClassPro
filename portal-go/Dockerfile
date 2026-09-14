@@ -20,6 +20,7 @@ COPY portal-app/src/portal.js portal-app/src/parsers.js portal-app/src/login-dia
 COPY portal-app/src/portal-response.js portal-app/src/portal-console.js ./portal-app/src/
 COPY portal-app/src/credential-integrity.js ./portal-app/src/
 COPY portal-app/src/fingerprint-handshake.js ./portal-app/src/
+COPY portal-app/src/portal-network.js ./portal-app/src/
 COPY portal-go/worker.mjs portal-go/start.mjs ./portal-go/
 COPY --from=build /portal-go /usr/local/bin/portal-go
 RUN mkdir -p /home/node/.cache && chown -R node:node /home/node

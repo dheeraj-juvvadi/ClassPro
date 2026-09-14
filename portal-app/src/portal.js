@@ -4,6 +4,7 @@ import { parseAttendance, parseMarks, parseComponents, PortalError } from './par
 import { observeLogin } from './login-diagnostics.js';
 import { inspectPortalResponse, verifyProtectedPage } from './portal-response.js';
 import { capturePortalConsole } from './portal-console.js';
+import { trackPortalNetwork } from './portal-network.js';
 
 const ORIGIN = 'https://sp.srmist.edu.in';
 const BASE = `${ORIGIN}/srmiststudentportal/`;
@@ -32,10 +33,12 @@ export class PortalSession {
   cache = null;
   async open() {
     this.clientDiagnostics?.close();
+    this.networkDiagnostics?.close();
     await this.context?.close();
     this.context = await (await browser()).newContext(process.env.PORTAL_TIMEZONE ? { timezoneId: process.env.PORTAL_TIMEZONE } : {});
     this.page = await this.context.newPage();
     this.clientDiagnostics = capturePortalConsole(this.page);
+    this.networkDiagnostics = trackPortalNetwork(this.page);
     this.page.setDefaultTimeout(15000);
     this.page.setDefaultNavigationTimeout(30000);
     await this.page.goto(LOGIN, { waitUntil: 'domcontentloaded' });
@@ -85,6 +88,7 @@ export class PortalSession {
       } catch {}
       secrets.push(...(this.challengeCookies || []).map(cookie => cookie.value));
       log?.({ event: 'portal_client_events', events: this.clientDiagnostics?.drain(secrets) || [] });
+      await this.networkDiagnostics?.report(log);
       observation.close();
     }
   }
@@ -221,6 +225,7 @@ export class PortalSession {
     return result;
   }
   async close() {
+    this.networkDiagnostics?.close();
     this.clientDiagnostics?.close();
     this.challengeCookies = null;
     this.authenticated = false;

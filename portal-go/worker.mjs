@@ -135,6 +135,7 @@ async function run(action, payload, entry, fresh, log) {
   if (action === 'challenge') {
     if (portal.authenticated) return { status: 200, body: { authenticated: true } };
     const image = fresh ? await portal.open() : await portal.refreshChallenge();
+    await portal.networkDiagnostics?.report(log);
     entry.expires = Date.now() + 120000;
     return { status: 200, body: { image } };
   }
