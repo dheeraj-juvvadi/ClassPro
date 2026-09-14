@@ -1,0 +1,92 @@
+# ClassPro revamp deployment
+
+## Existing accounts and destinations
+
+- Publish to `revamp` (`dheeraj-juvvadi/revamp-tracker`), branch `main`.
+- `origin` is the original ClassPro repository; do not push revamp changes there.
+- The existing Vercel project is `revamp-tracker`; its production domain is
+  `https://revamp-tracker.vercel.app`. The local project link is under
+  `portal-app/public/.vercel` and must remain untracked.
+- The user selected replacement of the existing ClassPro backend: Render
+  `goscraper` (`srv-d01a1gje5dus73e1qgh0`) at
+  `https://goscraper-quf1.onrender.com`. Keep its free plan and assigned hostname.
+  The unrelated `youtube-clipper` service must remain untouched.
+- The previous proposed `revamp-tracker-backend.onrender.com` hostname had no
+  service and returned 404. The frontend rewrite now targets `goscraper`.
+- Vercel also has the legacy `class-pro` project and its aliases. This release
+  publishes the UI to `revamp-tracker`; replacing legacy frontend aliases is a
+  separate coordinated cutover. Updating the shared backend changes the legacy
+  app's API compatibility, so do not describe that old frontend as verified.
+
+## Release gate
+
+Deployment preparation is authorized; publication waits for the coordinating
+agent's UI-ready signal and an explicit reviewed file list. Another agent owns
+`portal-go`, while the UI agent owns `portal-app/public`.
+
+Before publishing:
+
+1. Confirm the UI and backend agents have finished writing and provide their
+   verification results. Review the exact staged diff, including existing user
+   changes. Never use a blanket `git add .`.
+2. Exclude credentials, `.env` files, local provider links, diagnostics, temporary
+   exports, caches and build products. Include required licensed runtime assets.
+3. Verify `revamp/main` has not advanced; integrate remote changes without force
+   pushing. Commit only the agreed release files, then push `main` to `revamp`.
+4. Update only the existing `goscraper` Render service on the free plan. Use
+   `portal-go/Dockerfile` with repository-root Docker context. Auto-deploy is
+   disabled so a GitHub push alone cannot publish an unreviewed backend change.
+   Trigger the deployment explicitly after the release commit is approved.
+5. Confirm Render reports the expected commit as live and the health endpoint
+   succeeds. The UI API rewrite must use `https://goscraper-quf1.onrender.com`.
+6. Deploy the approved static directory through its existing Vercel project:
+   `cd portal-app/public && vercel deploy --prod`.
+7. Check the production page, API proxy, secure cookies, rejected origins,
+   unauthenticated protected requests, and the agreed login flow. A passing
+   health check alone does not verify authentication or upstream SRM access.
+
+## Secrets and account access
+
+Render access was verified through its official HTTPS API. The session-supplied
+credential is stored outside this repository in an owner-readable local file;
+it is never part of a Blueprint, command argument, deployment document or log.
+Do not copy local credential or MCP configuration into the repository.
+
+Supabase account login and schema setup are owned by the separate Supabase
+agent. Require that agent's confirmed project and server/client key boundaries
+before wiring environment variables. Never ship a Supabase service-role key
+to the static frontend.
+
+## Go runtime contract
+
+`portal-go/start.mjs` starts the public Go listener and the Node portal adapter
+in one container. The adapter binds only `127.0.0.1:3101`; only the Go listener
+uses Render's `PORT`. The startup process generates a shared random worker token
+in memory if none was provisioned. Both child processes receive the same token;
+it is not sent to the frontend. Child-process failure shuts down the container.
+
+`APP_ORIGIN` is exactly `https://revamp-tracker.vercel.app` with no trailing slash.
+HTTPS cookies are the default. `WORKER_URL` is `http://127.0.0.1:3101`,
+`MAX_SESSIONS=2`, `MAX_CONCURRENT=1`, and `RATE_PER_MINUTE=30`. Do not set
+`ALLOW_INSECURE_LOCAL` in production or blindly trust all proxy CIDRs.
+The gateway also has access to static assets inside the container; the primary
+frontend remains the existing Vercel project with same-origin API rewrites.
+
+## Health checks and free-tier limits
+
+Reserve `GET /health` for minimal unauthenticated process liveness with no user
+data or configuration details. It must not launch Chromium, contact SRM, query
+Supabase or refresh sessions. Render can use this route as its native health
+check. Confirm the Go implementation before configuring an external monitor.
+
+The monitor URL is `https://goscraper-quf1.onrender.com/health`.
+A FastCron check may alert on an
+unexpected status with a finite timeout, but must not run a perpetual keepalive
+to bypass Render's idle sleep. Free services can cold-start and lose ephemeral
+in-memory sessions; report these behaviors honestly.
+
+Keep work request-driven: cache reports for a bounded interval, coalesce
+duplicate upstream requests, cap browser concurrency and sessions, and avoid
+background polling. Render free hours are running-instance hours; fewer API
+calls do not directly multiply the monthly allowance. No paid service, disk or
+plan upgrade is authorized.

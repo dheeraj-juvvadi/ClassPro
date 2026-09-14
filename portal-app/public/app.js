@@ -54,7 +54,7 @@ async function run(action) {
     busy = false;
     syncControls();
     signInParticles.stop();
-    $('refresh').textContent = 'Sync';
+    $('refresh').textContent = '↻ Retry';
     $('logout').textContent = 'Sign out';
     $('report-content').setAttribute('aria-busy', 'false');
   }
@@ -173,6 +173,8 @@ function renderMarks(report) {
     content.append(node('h3', 'assessment-heading', 'Assessment details'));
     if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
     const components = Array.isArray(course.components) ? course.components : [];
+    const metadata = node('span', 'course-result-count', `${components.length} ${components.length === 1 ? 'assessment' : 'assessments'}`);
+    summary.querySelector('.course-heading').append(metadata);
     if (!components.length && !course.detailsError) content.append(node('p', 'quiet', 'No assessment details are available yet.'));
     for (const component of components) {
       const row = node('div', 'assessment-row');
@@ -190,7 +192,7 @@ function renderMarks(report) {
 
 async function loadReports() {
   if (designPreview) return;
-  $('refresh').textContent = 'Refreshing…';
+  $('refresh').textContent = 'Retrying…';
   $('report-content').setAttribute('aria-busy', 'true');
   message('reports-message', 'Loading your reports…');
   if (!$('attendance-content').childElementCount) {
@@ -204,11 +206,11 @@ async function loadReports() {
     classproHome.update(reports.attendance);
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
-    message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. You can try refreshing again.' : 'Reports updated.');
+    message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Retry.' : '');
   } catch (error) {
     for (const kind of ['attendance', 'marks']) {
       const container = $(`${kind}-content`);
-      if (container.firstElementChild?.textContent === `Loading ${kind}…`) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Refresh reports to try again.'));
+      if (container.firstElementChild?.textContent === `Loading ${kind}…`) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Retry to try again.'));
     }
     throw error;
   }

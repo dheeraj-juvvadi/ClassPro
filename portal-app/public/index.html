@@ -77,10 +77,10 @@
       <div class="page-heading">
         <div>
           <p class="eyebrow">Your academic record</p>
-          <h1 id="reports-title" tabindex="-1">Academic overview</h1>
+          <div class="report-title-row"><h1 id="reports-title" tabindex="-1">Academic overview</h1><button id="refresh" type="button" aria-label="Retry loading reports">↻ Retry</button></div>
           <p id="updated-at" class="quiet">Your attendance and marks.</p>
         </div>
-        <div class="report-actions"><button id="calculate-attendance" type="button">Calculate ↗</button><button id="refresh" class="primary" type="button">Sync</button></div>
+        <div class="report-actions"><button id="calculate-attendance" type="button">Calculate ↗</button></div>
       </div>
       <p id="reports-message" class="message" role="status" aria-live="polite" hidden></p>
       <div id="report-content" aria-busy="false">

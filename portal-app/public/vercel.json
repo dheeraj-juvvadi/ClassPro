@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://revamp-tracker-backend.onrender.com/api/:path*"
+      "destination": "https://goscraper-quf1.onrender.com/api/:path*"
     }
   ]
 }

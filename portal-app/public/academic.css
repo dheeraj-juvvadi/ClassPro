@@ -1,4 +1,4 @@
-.planner .botanical-backdrop { background-image: url('/floral-screenprint.svg'); }
+.planner .botanical-backdrop { background-image: url('/floral-screenprint.svg'); clip-path: inset(0 0 calc(100% - 90px) 0); }
 .planner main { background: #191b19; border: 1px solid #3b4035; border-radius: 24px; padding-top: 22px; margin-bottom: 28px; }
 .planner .site-header { color: #f1eee3; }
 .planner #planner-menu { position: relative; }
@@ -13,6 +13,11 @@
 #planner-nav svg { width: 17px; height: 17px; stroke-width: 1.4; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
 .planner .page-heading { align-items: flex-start; flex-direction: column; gap: 20px; margin: 3px 0 28px; }
 .planner .page-heading .eyebrow { display: none; }
+.planner .page-heading > div:first-child { width: 100%; }
+.report-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.report-title-row #refresh { flex-shrink: 0; padding: 6px 0 6px 8px; min-height: 44px; border: 0; background: transparent; color: #b8bdaa; font-size: 12px; font-weight: 500; }
+.report-title-row #refresh:hover { color: #e3e7d6; }
+.planner[data-page="marks"] .report-actions { display: none; }
 .planner .page-heading h1 { font-size: clamp(28px, 5vw, 38px); font-weight: 550; letter-spacing: -.055em; }
 .planner #updated-at { font-size: 11px; margin-top: 8px; }
 .report-actions { display: flex; justify-content: space-between; width: 100%; gap: 12px; }
@@ -42,6 +47,10 @@
 .planner .course-details { border: 1px solid #3b4035; background: #1c1e1b; border-radius: 17px; overflow: hidden; }
 .planner .course-details > summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 20px 18px; min-height: 92px; background: transparent; cursor: pointer; }
 .planner .course-heading { flex-direction: column-reverse; gap: 8px; }
+.planner .course-details .course-heading { flex-direction: column; gap: 6px; }
+.planner .course-details .course-title { order: 0; }
+.planner .course-details .course-code { order: 1; }
+.planner .course-result-count { order: 2; color: #969e8b; font-size: 10px; letter-spacing: 0; }
 .planner .course-title { font-size: 15px; font-weight: 550; letter-spacing: -.3px; }
 .planner .course-code { color: #a2aa97; font-size: 9px; }
 .planner .course-score { color: #f1eee3; font-size: 21px; font-weight: 500; letter-spacing: -.6px; white-space: nowrap; }
@@ -76,7 +85,7 @@ dialog input { font-size: 16px; }
 .projection-result strong { font-size: 36px; font-weight: 500; letter-spacing: -.06em; }
 .projection-result span { font-size: 12px; line-height: 1.6; }
 @media (max-width: 700px) {
-  .planner .botanical-backdrop { background-image: url('/floral-mobile.svg'); background-size: 100% 100%; }
+  .planner .botanical-backdrop { background-image: url('/floral-mobile.svg'); background-size: 100% 100%; clip-path: inset(0 0 calc(100% - 90px) 0); }
   .planner .site-header { padding: 13px 25px; min-height: 70px; }
   .planner main { margin: 0 13px 22px; padding: 18px 12px 105px; border-radius: 23px; }
   .planner .home-greeting { margin: 2px 0 24px; }

@@ -1,20 +1,24 @@
 services:
   - type: web
-    name: revamp-tracker-backend
+    name: goscraper
     runtime: docker
     repo: https://github.com/dheeraj-juvvadi/revamp-tracker
     branch: main
-    dockerfilePath: portal-app/Dockerfile.render
-    dockerContext: portal-app
+    dockerfilePath: portal-go/Dockerfile
+    dockerContext: .
     plan: free
     healthCheckPath: /health
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: NODE_ENV
         value: production
-      - key: COOKIE_SECURE
-        value: "1"
-      - key: CORS_ORIGIN
+      - key: APP_ORIGIN
         value: https://revamp-tracker.vercel.app
       - key: MAX_SESSIONS
         value: "2"
+      - key: MAX_CONCURRENT
+        value: "1"
+      - key: RATE_PER_MINUTE
+        value: "30"
+      - key: WORKER_URL
+        value: http://127.0.0.1:3101
