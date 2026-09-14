@@ -91,9 +91,11 @@ export class PortalSession {
       this.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
       this.page.locator('#btnLogin').click(),
     ]);
-    if (process.env.PORTAL_SUBMISSION_TRANSPORT === 'http') {
+    if (['http', 'fasthttp'].includes(process.env.PORTAL_SUBMISSION_TRANSPORT)) {
       const { submitThroughHttp } = await import('./submission-transport.js');
-      await submitThroughHttp(this.page, submit, log);
+      const forward = process.env.PORTAL_SUBMISSION_TRANSPORT === 'fasthttp'
+        ? (await import('./fast-submission.js')).forwardWithFastHttp : undefined;
+      await submitThroughHttp(this.page, submit, log, forward);
     } else {
       await submit();
     }

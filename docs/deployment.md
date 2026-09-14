@@ -1,5 +1,21 @@
 # ClassPro revamp deployment
 
+## fasthttp submission release
+
+Local port 8084 authenticated using browser-prepared Student Portal fields sent
+through Go fasthttp 1.58.0. SRM returned 302 in 243 ms; login completed in about
+1.9 seconds and reports in 0.93 seconds. Five attendance and four marks courses
+loaded without report/detail errors. Hosted authentication remains unverified.
+
+The image defaults to `PORTAL_SUBMISSION_TRANSPORT=fasthttp` and explicitly installs
+and updates CA certificates. TLS certificate verification remains enabled. The
+Go transport listens only on loopback (default port 3105), requires the private
+worker token, and forwards only to Student Portal's fixed LoginServlet URL.
+It sends the prepared body once without following redirects or retrying login;
+the browser receives the response for normal navigation and report fetching.
+Set `PORTAL_SUBMISSION_TRANSPORT=http` to restore Playwright HTTP forwarding.
+No Academia/Zoho JSON-token mode or failed direct-only adapter is included.
+
 ## Hybrid submission release
 
 The 2026-09-14 local control at port 8083 authenticated with automatic CAPTCHA,

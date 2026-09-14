@@ -21,6 +21,13 @@ func main() {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	if os.Getenv("PORTAL_SUBMISSION_TRANSPORT") == "fasthttp" {
+		transport, err := startFastTransport("127.0.0.1:"+env("FAST_TRANSPORT_PORT", "3105"), config.WorkerToken)
+		if err != nil {
+			log.Fatal("Cannot start private fasthttp transport")
+		}
+		defer transport.Close()
+	}
 	app := NewServer(config, newBridge(config))
 	go app.Reap(ctx)
 	server := &http.Server{Addr: config.Addr, Handler: observeRequests(http.TimeoutHandler(app, 100*time.Second, `{"error":{"code":"TIMEOUT","message":"Request timed out."}}`), logger),
