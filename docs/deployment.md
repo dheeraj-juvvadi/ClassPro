@@ -1,5 +1,27 @@
 # ClassPro revamp deployment
 
+## Login research and continuity check (2026-09-14)
+
+- Original ClassPro `backend/src/handlers/login.go` targets Academia/Zoho
+  `academia.srmist.edu.in/accounts/signin.ac`. The current adapter targets
+  `sp.srmist.edu.in/srmiststudentportal/LoginServlet`; prior hosting success is
+  not a verification of this different upstream authentication flow.
+- https://github.com/microsoft/playwright/issues/37158 discusses CI-only login
+  failures and recommends traces/reproduction; it does not establish an SRM fix.
+- https://stackoverflow.com/questions/78862156 has a Cloud Run job/timeout fix;
+  our observed HTTP 200 login rejection is not that timeout symptom.
+- https://render.com/docs/outbound-ip-addresses documents regional shared IP
+  ranges. This does not prove SRM blocks Render or binds sessions to an IP.
+- https://github.com/coderaarav12/srm_student_portal_scraper describes a direct
+  HTTP Student Portal implementation. Its README is not live acceptance evidence;
+  no source or fabricated telemetry was copied into this app.
+
+UTC was confirmed working locally; the optional `PORTAL_TIMEZONE` override only
+supports controlled diagnostics and is not set in production. Session diagnostics
+now compare the in-memory cookies captured after CAPTCHA loading against the actual
+login request, returning only continuity booleans. They also report whether the
+login response sets a new JSESSIONID. No cookie values or hashes are logged.
+
 ## Expanded temporary login diagnostics
 
 Browser `classproDiagnostics` retains the latest 30 request summaries in memory:

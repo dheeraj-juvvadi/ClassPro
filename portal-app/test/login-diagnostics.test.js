@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { summarizeSubmission, observeLogin } from '../src/login-diagnostics.js';
+import { summarizeSubmission, observeLogin, compareSessionCookies } from '../src/login-diagnostics.js';
 import { EventEmitter } from 'node:events';
 
 test('submission diagnostics expose only booleans and detect altered fields', () => {
@@ -48,4 +48,15 @@ test('submission detects security-field differences without exposing values', ()
   assert.equal(result.domainProofMatches, true);
   assert.equal(result.fingerprintTokenPresent, true);
   assert.doesNotMatch(JSON.stringify(result), /secret|student|ABCD/);
+});
+
+test('session continuity distinguishes replacement and duplicate cookies without logging tokens', () => {
+  const cookies = [{ name: 'JSESSIONID', value: 'private-original' }, { name: 'route', value: 'private-route' }];
+  const stable = compareSessionCookies(cookies, 'JSESSIONID=private-original; route=private-route');
+  assert.equal(stable.sameSession, true);
+  assert.equal(stable.allChallengeCookiesPreserved, true);
+  assert.equal(compareSessionCookies(cookies, 'JSESSIONID=private-new').sameSession, false);
+  assert.equal(compareSessionCookies(cookies, '').submittedSessionPresent, false);
+  assert.equal(compareSessionCookies(cookies, 'JSESSIONID=private-original; JSESSIONID=other').duplicateSession, true);
+  assert.doesNotMatch(JSON.stringify(stable), /private-|JSESSIONID/);
 });

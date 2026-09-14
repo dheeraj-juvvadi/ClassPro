@@ -30,7 +30,7 @@ export class PortalSession {
   cache = null;
   async open() {
     await this.context?.close();
-    this.context = await (await browser()).newContext();
+    this.context = await (await browser()).newContext(process.env.PORTAL_TIMEZONE ? { timezoneId: process.env.PORTAL_TIMEZONE } : {});
     this.page = await this.context.newPage();
     this.page.setDefaultTimeout(15000);
     this.page.setDefaultNavigationTimeout(30000);
@@ -50,6 +50,7 @@ export class PortalSession {
       const image = document.querySelector('#secure_captcha');
       return image?.complete && image.naturalWidth > 0;
     });
+    this.challengeCookies = await this.context.cookies(`${ORIGIN}/srmiststudentportal/LoginServlet`);
     return `data:image/png;base64,${(await img.screenshot()).toString('base64')}`;
   }
   async prepareCaptcha(answer) {
@@ -62,7 +63,7 @@ export class PortalSession {
     if (this.authenticated) return { authenticated: true };
     if (!this.page) throw new PortalError('SESSION_EXPIRED', 'Load a fresh CAPTCHA first.', 401);
     const observation = await observeLogin(this.page, {
-      account: account.trim().replace(/@srmist\.edu\.in$/i, ''), password, captcha,
+      account: account.trim().replace(/@srmist\.edu\.in$/i, ''), password, captcha, challengeCookies: this.challengeCookies,
     }, log);
     try {
       const result = await this.submitLogin(account, password, captcha);
@@ -186,6 +187,7 @@ export class PortalSession {
     return result;
   }
   async close() {
+    this.challengeCookies = null;
     this.authenticated = false;
     this.cache = null;
     await this.context?.close();

@@ -45,6 +45,8 @@ export async function observeLogin(page, expected, log) {
   let scriptErrors = 0;
   let failedRequests = 0;
   let upstreamCookiesPresent = false;
+  let sessionContinuity = null;
+  let responseSetsSessionCookie = false;
   const headerReads = [];
   const redirects = [];
   const onFailure = () => { failedRequests++; };
@@ -52,7 +54,10 @@ export async function observeLogin(page, expected, log) {
   const onRequest = request => {
     if (request.method() !== 'POST' || !request.isNavigationRequest() || new URL(request.url()).origin !== 'https://sp.srmist.edu.in') return;
     const headers = request.headers();
-    headerReads.push(request.allHeaders().then(all => { upstreamCookiesPresent = Boolean(all.cookie); }).catch(() => {}));
+    headerReads.push(request.allHeaders().then(all => {
+      upstreamCookiesPresent = Boolean(all.cookie);
+      sessionContinuity = compareSessionCookies(expected.challengeCookies || [], all.cookie || '');
+    }).catch(() => {}));
     submission = summarizeSubmission(request.postData() || '', expected, fields, headers.origin, headers.referer, headers['user-agent']);
   };
   const onResponse = response => {
@@ -65,7 +70,12 @@ export async function observeLogin(page, expected, log) {
       if (redirects.length < 8) redirects.push({ location, status: response.status() });
     }
     if (response.request().method() === 'POST' && response.request().isNavigationRequest()
-      && new URL(response.url()).origin === 'https://sp.srmist.edu.in') responseStatus = response.status();
+      && new URL(response.url()).origin === 'https://sp.srmist.edu.in') {
+      responseStatus = response.status();
+      headerReads.push(response.headersArray().then(headers => {
+        responseSetsSessionCookie = headers.some(header => header.name.toLowerCase() === 'set-cookie' && /^JSESSIONID=/i.test(header.value));
+      }).catch(() => {}));
+    }
   };
   page.on('request', onRequest);
   page.on('response', onResponse);
@@ -93,6 +103,7 @@ export async function observeLogin(page, expected, log) {
         upstream_status: responseStatus, telemetry_ready: fields.telemetryReady,
         page_age_seconds: fields.pageAgeSeconds, timezone: fields.timezone,
         cookies_enabled: fields.cookieEnabled, upstream_cookies_present: upstreamCookiesPresent,
+        session_continuity: sessionContinuity, response_sets_session_cookie: responseSetsSessionCookie,
         failed_requests: failedRequests, redirects, response_state: responseState,
         script_errors: scriptErrors, submission_observed: submission !== null, ...submission });
     },
@@ -102,5 +113,21 @@ export async function observeLogin(page, expected, log) {
       page.off('pageerror', onError);
       page.off('requestfailed', onFailure);
     },
+  };
+}
+
+export function compareSessionCookies(challengeCookies, cookieHeader) {
+  const submitted = cookieHeader.split(';').map(part => {
+    const separator = part.indexOf('=');
+    return { name: part.slice(0, separator).trim(), value: part.slice(separator + 1) };
+  });
+  const initial = challengeCookies.filter(cookie => cookie.name === 'JSESSIONID');
+  const current = submitted.filter(cookie => cookie.name === 'JSESSIONID');
+  return {
+    challengeSessionPresent: initial.length > 0,
+    submittedSessionPresent: current.length > 0,
+    sameSession: initial.length === 1 && current.length === 1 && initial[0].value === current[0].value,
+    duplicateSession: initial.length > 1 || current.length > 1,
+    allChallengeCookiesPreserved: challengeCookies.length > 0 && challengeCookies.every(cookie => submitted.some(value => value.name === cookie.name && value.value === cookie.value)),
   };
 }
