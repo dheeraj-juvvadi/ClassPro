@@ -66,10 +66,10 @@ export class PortalSession {
     }, log);
     try {
       const result = await this.submitLogin(account, password, captcha);
-      observation.finish(result.authenticated ? 'authenticated' : result.error.code);
+      await observation.finish(result.authenticated ? 'authenticated' : result.error.code);
       return result;
     } catch (error) {
-      observation.finish(error.name === 'TimeoutError' ? 'timeout' : 'failed');
+      await observation.finish(error.name === 'TimeoutError' ? 'timeout' : 'failed');
       throw error;
     } finally { observation.close(); }
   }

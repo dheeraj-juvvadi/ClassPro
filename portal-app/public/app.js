@@ -107,16 +107,27 @@ function showReports() {
 }
 
 async function api(path, options = {}, login = false) {
+  const clientTrace = crypto.randomUUID();
+  const started = performance.now();
+  const loginMode = manualCaptcha ? 'manual' : 'automatic';
+  const record = (details) => {
+    const entry = { time: new Date().toISOString(), path, method: options.method || 'GET', clientTrace, loginMode, durationMs: Math.round(performance.now() - started), ...details };
+    window.classproDiagnostics = [...(window.classproDiagnostics || []), entry].slice(-30);
+    console.info('classpro_request', entry);
+    if (login) $('request-trace').textContent = `Request ${entry.requestId || clientTrace} · ${entry.status || entry.failure}`;
+  };
   let response;
   try {
     response = await fetch(path, {
       credentials: 'same-origin', cache: 'no-store', ...options,
-      headers: { 'Content-Type': 'application/json', ...options.headers },
+      headers: { 'Content-Type': 'application/json', 'X-Client-Trace': clientTrace, 'X-Login-Mode': loginMode, ...options.headers },
       signal: AbortSignal.timeout(login || path === '/api/reports' && (!options.method || options.method === 'GET') ? 120000 : 45000)
     });
   } catch (error) {
+    record({ failure: error.name === 'TimeoutError' ? 'timeout' : 'network_error' });
     throw new Error(error.name === 'TimeoutError' ? 'The request took too long. Please try again.' : 'Could not connect. Check your connection and try again.');
   }
+  record({ status: response.status, requestId: response.headers.get('x-request-id'), vercelId: response.headers.get('x-vercel-id'), vercelCache: response.headers.get('x-vercel-cache') });
   if (response.status === 401 && !login) {
     showLogin('Your session has expired. Please sign in again.', true);
     throw Object.assign(new Error('Session expired'), { expired: true });

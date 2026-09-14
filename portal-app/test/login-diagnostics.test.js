@@ -30,10 +30,22 @@ test('observation removes request listeners and never logs page errors or URLs',
   const logs = [];
   const observer = await observeLogin(page, {}, record => logs.push(record));
   page.emit('pageerror', new Error('private-password'));
-  observer.finish('LOGIN_REJECTED');
+  await observer.finish('LOGIN_REJECTED');
   observer.close();
   assert.equal(logs[0].script_errors, 1);
   assert.equal(logs[0].submission_observed, false);
   assert.doesNotMatch(JSON.stringify(logs), /private-password/);
-  for (const event of ['request', 'response', 'pageerror']) assert.equal(page.listenerCount(event), 0);
+  for (const event of ['request', 'response', 'pageerror', 'requestfailed']) assert.equal(page.listenerCount(event), 0);
+});
+
+test('submission detects security-field differences without exposing values', () => {
+  const expected = { account: 'student', password: 'secret', captcha: 'ABCD' };
+  const body = new URLSearchParams({ username: 'student', password: 'secret', captcha: 'ABCD', ph_random: 'trap-secret', fpPayload: 'payload-secret', fpToken: 'token-secret', domain: Buffer.from('ni.ude.tsimrs.ps').toString('base64') });
+  body.append('username', 'extra-secret');
+  const result = summarizeSubmission(body.toString(), expected, { domain: 'domain' });
+  assert.equal(result.honeypotEmpty, false);
+  assert.equal(result.duplicateAccount, true);
+  assert.equal(result.domainProofMatches, true);
+  assert.equal(result.fingerprintTokenPresent, true);
+  assert.doesNotMatch(JSON.stringify(result), /secret|student|ABCD/);
 });

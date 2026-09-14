@@ -57,6 +57,7 @@
 .garden-login .test-diagnostics summary::-webkit-details-marker { display: none; }
 .garden-login #login-message { margin: .65rem 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: .75rem; line-height: 1.65; white-space: pre-line; }
 .garden-login #login-message.error { color: #e2aa96; }
+.garden-login #request-trace { overflow-wrap: anywhere; font-size: .6875rem; }
 .garden-login #manual-captcha-toggle, .garden-login #manual-captcha-refresh { min-height: 44px; padding: .5rem 0; border: 0; background: transparent; color: #b9c0ad; font: inherit; font-size: .75rem; text-align: left; cursor: pointer; }
 .garden-login .captcha-image-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
 .garden-login #manual-captcha-image { max-width: 65%; height: auto; border-radius: 3px; }

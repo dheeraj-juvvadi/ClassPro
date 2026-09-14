@@ -1,5 +1,20 @@
 # ClassPro revamp deployment
 
+## Expanded temporary login diagnostics
+
+Browser `classproDiagnostics` retains the latest 30 request summaries in memory:
+route, mode, timing, status, client trace, Render request ID, and Vercel response ID.
+Connection details shows the last login request ID. Vercel uses an external rewrite,
+not a serverless function; these are browser/proxy response records, not Vercel
+function logs. Render validates the diagnostic headers before recording them.
+
+Portal diagnostics now include boolean cookie transmission, duplicate credential
+fields, honeypot emptiness, fingerprint-field presence, domain-proof matching,
+redirect categories/statuses, page age, timezone, failed-request count, and fixed
+response-text categories. No raw HTML, error text, form values, cookies, tokens,
+credentials, or account identifiers are retained. Chrome 152 also failed remotely;
+the browser version change did not resolve authentication.
+
 ## Backend-only packaging and request diagnostics
 
 The current adapter succeeded locally with both automatic and manual CAPTCHA on

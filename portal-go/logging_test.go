@@ -23,6 +23,8 @@ func TestRequestLogsExcludeSensitiveInput(t *testing.T) {
 	request.Header.Set("Cookie", "private-cookie")
 	request.Header.Set("Authorization", "Bearer private-token")
 	request.Header.Set("X-Request-ID", "private-client-id")
+	request.Header.Set("X-Client-Trace", "private-trace")
+	request.Header.Set("X-Login-Mode", "private-mode")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != 401 || len(response.Header().Get("X-Request-ID")) != 64 {
@@ -33,6 +35,17 @@ func TestRequestLogsExcludeSensitiveInput(t *testing.T) {
 	}
 	if !strings.Contains(output.String(), `"status":401`) || !strings.Contains(output.String(), "http_request") {
 		t.Fatal("missing request log")
+	}
+}
+
+func TestDiagnosticTraceValidation(t *testing.T) {
+	if safeDiagnosticID("12345678-1234-1234-1234-123456789abc") == "" {
+		t.Fatal("valid trace rejected")
+	}
+	for _, value := range []string{"password-secret", strings.Repeat("a", 100), "\nforged"} {
+		if safeDiagnosticID(value) != "" {
+			t.Fatal("unsafe trace accepted")
+		}
 	}
 }
 

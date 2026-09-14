@@ -4,11 +4,21 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
 
 type requestIDKey struct{}
+
+var diagnosticID = regexp.MustCompile(`^[a-f0-9-]{36}$`)
+
+func safeDiagnosticID(value string) string {
+	if diagnosticID.MatchString(value) {
+		return value
+	}
+	return ""
+}
 
 type responseLog struct {
 	http.ResponseWriter
@@ -49,6 +59,11 @@ func logRoute(path string) string {
 func observeRequests(next http.Handler, logger *slog.Logger) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		started := time.Now()
+		clientTrace := safeDiagnosticID(request.Header.Get("X-Client-Trace"))
+		loginMode := request.Header.Get("X-Login-Mode")
+		if loginMode != "manual" && loginMode != "automatic" {
+			loginMode = "unknown"
+		}
 		requestID := randomID()
 		writer.Header().Set("X-Request-ID", requestID)
 		response := &responseLog{ResponseWriter: writer}
@@ -79,6 +94,10 @@ func observeRequests(next http.Handler, logger *slog.Logger) http.Handler {
 				method = "OTHER"
 			}
 			logger.Log(ctx, level, "http_request", "request_id", requestID, "method", method,
+				"client_trace", clientTrace, "login_mode", loginMode,
+				"session_cookie_present", strings.Contains(request.Header.Get("Cookie"), cookieName+"="),
+				"origin_present", request.Header.Get("Origin") != "",
+				"fetch_site_same_origin", request.Header.Get("Sec-Fetch-Site") == "same-origin",
 				"route", logRoute(request.URL.Path), "status", response.status,
 				"duration_ms", time.Since(started).Milliseconds(), "bytes", response.bytes)
 		}()
