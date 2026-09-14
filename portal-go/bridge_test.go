@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -10,6 +11,33 @@ import (
 	"testing"
 	"time"
 )
+
+func TestBridgePreservesCredentialCharacters(t *testing.T) {
+	password := "  synthetic&+=%<>\"'\\é🙂  "
+	account := "student@srmist.edu.in"
+	upstream := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		var message struct {
+			Payload struct{ Account, Password, Answer string }
+		}
+		if json.NewDecoder(request.Body).Decode(&message) != nil {
+			t.Error("invalid bridge JSON")
+		}
+		if message.Payload.Account != account || message.Payload.Password != password || message.Payload.Answer != "Ab12" {
+			t.Error("bridge changed credentials")
+		}
+		writer.Header().Set("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(`{"authenticated":true}`))
+	}))
+	defer upstream.Close()
+	backend := newBridge(Config{WorkerURL: upstream.URL, WorkerToken: "private-token", MaxConcurrent: 1, Timeout: time.Second})
+	payload, _ := json.Marshal(map[string]string{"account": account, "password": password, "answer": "Ab12"})
+	if !validPayload("/api/login/client", payload) {
+		t.Fatal("valid credentials rejected")
+	}
+	if backend.Call(context.Background(), "login", randomID(), payload).Status != 200 {
+		t.Fatal("bridge failed")
+	}
+}
 
 func TestBridgeNeverFollowsRedirectOrLeaksWorkerErrors(t *testing.T) {
 	for _, kind := range []string{"redirect", "error", "invalid", "oversized"} {

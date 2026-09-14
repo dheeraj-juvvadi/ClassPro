@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 export async function forwardWithFastHttp(route) {
   const port = process.env.FAST_TRANSPORT_PORT || '3105';
   if (!/^\d{1,5}$/.test(port) || Number(port) < 1 || Number(port) > 65535) throw new Error('Invalid transport port');
@@ -5,7 +7,7 @@ export async function forwardWithFastHttp(route) {
   const response = await fetch(`http://127.0.0.1:${port}/submit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.WORKER_TOKEN}` },
-    body: JSON.stringify({ body: request.postData(), headers: await request.allHeaders() }),
+    body: JSON.stringify({ body: request.postData(), bodyDigest: createHash('sha256').update(request.postData() || '').digest('hex'), headers: await request.allHeaders() }),
     signal: AbortSignal.timeout(35000),
   });
   if (!response.ok) throw new Error('Go HTTP transport failed');

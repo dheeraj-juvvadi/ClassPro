@@ -63,11 +63,11 @@ export class PortalSession {
     await field.fill('');
     await field.pressSequentially(answer, { delay: 90 });
   }
-  async login(account, password, captcha, log) {
+  async login(account, password, captcha, log, integrity) {
     if (this.authenticated) return { authenticated: true };
     if (!this.page) throw new PortalError('SESSION_EXPIRED', 'Load a fresh CAPTCHA first.', 401);
     const observation = await observeLogin(this.page, {
-      account: account.trim().replace(/@srmist\.edu\.in$/i, ''), password, captcha, challengeCookies: this.challengeCookies,
+      account: account.trim().replace(/@srmist\.edu\.in$/i, ''), password, captcha, integrity, challengeCookies: this.challengeCookies,
     }, log);
     try {
       const result = await this.submitLogin(account, password, captcha, log);

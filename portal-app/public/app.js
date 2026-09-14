@@ -264,9 +264,17 @@ $('manual-captcha-toggle').addEventListener('click', () => run(async () => {
 }));
 $('manual-captcha-refresh').addEventListener('click', () => run(loadManualChallenge));
 
+async function submitCredentials(credentials, answer) {
+  const integrity = await createCredentialIntegrity(credentials.account, credentials.password, answer);
+  return api('/api/login/client', {
+    method: 'POST', body: JSON.stringify({ ...credentials, answer, integrity }),
+  }, true);
+}
+
 $('login-form').addEventListener('submit', (event) => {
   event.preventDefault();
   if (!$('login-form').reportValidity()) return;
+  const credentials = { account: $('account').value.trim(), password: $('password').value, remember: $('remember').checked };
   run(async () => {
     message('login-message');
     signInParticles.start();
@@ -281,7 +289,7 @@ $('login-form').addEventListener('submit', (event) => {
       const answer = $('manual-captcha-answer').value;
       manualChallengeAt = 0;
       try {
-        data = await api('/api/login/client', { method: 'POST', body: JSON.stringify({ account: $('account').value.trim(), password: $('password').value, answer, remember: $('remember').checked }) }, true);
+        data = await submitCredentials(credentials, answer);
       } catch (error) {
         $('manual-captcha-image').hidden = true;
         $('manual-captcha-answer').value = '';
@@ -299,10 +307,7 @@ $('login-form').addEventListener('submit', (event) => {
         throw new Error('Your device could not confidently read this verification. Please retry.');
       }
       signInParticles.stage('Signing in…', .72);
-      data = await api('/api/login/client', {
-      method: 'POST',
-      body: JSON.stringify({ account: $('account').value.trim(), password: $('password').value, answer: prediction.answer, remember: $('remember').checked })
-    }, true);
+      data = await submitCredentials(credentials, prediction.answer);
       break;
     }
     } catch (error) {

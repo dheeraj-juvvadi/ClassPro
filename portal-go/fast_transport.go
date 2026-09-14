@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"log/slog"
 	"net"
@@ -29,8 +31,9 @@ func fastTransportHandler(token string, client fastSubmitter) http.Handler {
 			return
 		}
 		var input struct {
-			Body    string            `json:"body"`
-			Headers map[string]string `json:"headers"`
+			Body       string            `json:"body"`
+			BodyDigest string            `json:"bodyDigest"`
+			Headers    map[string]string `json:"headers"`
 		}
 		decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 65536))
 		decoder.DisallowUnknownFields()
@@ -56,6 +59,15 @@ func fastTransportHandler(token string, client fastSubmitter) http.Handler {
 		}
 		outgoing.Header.Set("Accept-Encoding", "identity")
 		outgoing.SetBodyString(input.Body)
+		if input.BodyDigest != "" {
+			digest := sha256.Sum256(outgoing.Body())
+			matched := subtle.ConstantTimeCompare([]byte(hex.EncodeToString(digest[:])), []byte(input.BodyDigest)) == 1
+			slog.Info("credential_integrity", "stage", "fasthttp_outbound_body", "body_match", matched)
+			if !matched {
+				send(writer, failure(400, "INTEGRITY_MISMATCH", "Submission body changed."))
+				return
+			}
+		}
 		started := time.Now()
 		err := client.DoTimeout(outgoing, response, 30*time.Second)
 		if err != nil {

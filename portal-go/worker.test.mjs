@@ -40,6 +40,20 @@ test('worker rejects unauthenticated access and unknown operations', async t => 
   assert.equal(app.opened(), 0);
 });
 
+test('worker passes special characters and password whitespace unchanged', async t => {
+  const password = '  synthetic&+=%<>"\'\\é🙂  ';
+  let matched = false;
+  const app = await fixture(t, { async login(account, suppliedPassword, answer) {
+    matched = account === 'student@srmist.edu.in' && suppliedPassword === password && answer === 'Ab12';
+    return { authenticated: true };
+  } });
+  await app.rpc('challenge');
+  const response = await app.rpc('login', firstSession, { account:'student@srmist.edu.in', password, answer:'Ab12' });
+  assert.equal(response.status, 200);
+  assert.equal(matched, true);
+  assert.doesNotMatch(JSON.stringify(app.logs), /synthetic|student@srmist/);
+});
+
 test('worker preserves challenge, prepare, login and logout contracts', async t => {
   const app = await fixture(t);
   assert.deepEqual(await (await app.rpc('challenge')).json(), { image: 'image' });

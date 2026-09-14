@@ -154,7 +154,7 @@ async function run(action, payload, entry, fresh, log) {
   if (![payload.account, payload.password].every(value => typeof value === 'string' && value.trim() && value.length <= 256)) {
     return { status: 400, body: errorBody('INVALID_REQUEST', 'Enter your NetID and password.') };
   }
-  const result = await portal.login(payload.account, payload.password, payload.answer, log);
+  const result = await portal.login(payload.account, payload.password, payload.answer, log, payload.integrity);
   if (!result.authenticated) return { status: 401, body: { authenticated: false, error: result.error || errorBody('LOGIN_FAILED', 'Student Portal did not complete sign-in.').error } };
   entry.expires = Date.now() + 1800000;
   return { status: 200, body: { authenticated: true } };

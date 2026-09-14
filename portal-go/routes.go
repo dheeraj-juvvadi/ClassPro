@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -40,6 +41,15 @@ func (server *Server) route(writer http.ResponseWriter, request *http.Request) {
 		if !validPayload(request.URL.Path, payload) {
 			send(writer, failure(400, "INVALID_REQUEST", "Check your sign-in details and try again."))
 			return
+		}
+		if request.URL.Path == "/api/login/client" {
+			integrity := checkCredentialIntegrity(payload)
+			requestID, _ := request.Context().Value(requestIDKey{}).(string)
+			slog.Info("credential_integrity", "stage", "render_ingress", "request_id", requestID, "checks", integrity)
+			if integrity["provided"] && (!integrity["account_match"] || !integrity["password_match"] || !integrity["answer_match"]) {
+				send(writer, failure(400, "INTEGRITY_MISMATCH", "Sign-in data changed in transit. Please reload and retry."))
+				return
+			}
 		}
 	}
 	if request.URL.Path == "/api/challenge" {
@@ -120,7 +130,13 @@ func validPayload(path string, payload []byte) bool {
 		return false
 	}
 	for key := range fields {
-		if key != "account" && key != "password" && key != "answer" && key != "remember" {
+		if key != "account" && key != "password" && key != "answer" && key != "remember" && key != "integrity" {
+			return false
+		}
+	}
+	if value, exists := fields["integrity"]; exists {
+		var proof credentialIntegrity
+		if json.Unmarshal(value, &proof) != nil || !validIntegrity(proof) {
 			return false
 		}
 	}

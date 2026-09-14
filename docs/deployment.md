@@ -1,5 +1,20 @@
 # ClassPro revamp deployment
 
+## Credential integrity diagnostic
+
+The frontend snapshots credentials at submit time before asynchronous challenge
+work and creates per-attempt salted SHA-256 comparisons for normalized NetID,
+password, and CAPTCHA answer. Proofs travel inside the existing HTTPS login body
+only; neither proofs nor credentials are logged. This is a diagnostic checksum,
+not authentication, encryption, or protection against a malicious intermediary.
+
+`credential_integrity` logs contain only booleans at `render_ingress` and
+`prepared_srm_request`. The private fasthttp bridge also compares the original
+prepared POST body against the outgoing bytes and logs `body_match`. Ingress or
+final-body mismatch stops forwarding. Older clients without proofs remain valid,
+with `provided:false`. Browser input typed incorrectly or changed before clicking
+Sign in is outside this check. No integrity proof is sent to SRM.
+
 ## Portal alert and client-event diagnostics
 
 SRM client diagnostics attach before initial navigation and collect at most 24

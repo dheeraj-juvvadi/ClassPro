@@ -1,3 +1,5 @@
+import { checkIntegrity } from './credential-integrity.js';
+
 export function summarizeSubmission(body, expected, fields, origin, referer, userAgent) {
   const form = new URLSearchParams(body);
   let telemetry = null;
@@ -54,6 +56,8 @@ export async function observeLogin(page, expected, log) {
   const onRequest = request => {
     if (request.method() !== 'POST' || !request.isNavigationRequest() || new URL(request.url()).origin !== 'https://sp.srmist.edu.in') return;
     const headers = request.headers();
+    const form = new URLSearchParams(request.postData() || '');
+    log({ event: 'credential_integrity', stage: 'prepared_srm_request', checks: checkIntegrity(expected.integrity, form.get('username') || '', form.get('password') || '', form.get('captcha') || '') });
     headerReads.push(request.allHeaders().then(all => {
       upstreamCookiesPresent = Boolean(all.cookie);
       sessionContinuity = compareSessionCookies(expected.challengeCookies || [], all.cookie || '');
