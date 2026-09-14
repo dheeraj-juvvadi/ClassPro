@@ -12,3 +12,4 @@
 !portal-app/src/portal.js
 !portal-app/src/parsers.js
 !portal-app/src/login-diagnostics.js
+!portal-app/src/submission-transport.js

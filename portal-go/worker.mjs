@@ -161,6 +161,9 @@ async function run(action, payload, entry, fresh, log) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const submissionTransport = process.env.PORTAL_SUBMISSION_TRANSPORT || 'browser';
+  if (!['browser', 'http'].includes(submissionTransport)) throw new Error('Unknown submission transport');
+  console.log(JSON.stringify({ event: 'portal_worker_started', submission_transport: submissionTransport }));
   const { PortalSession, closeBrowser } = await import('../portal-app/src/portal.js');
   const worker = createWorker({ token: process.env.WORKER_TOKEN, createSession: () => new PortalSession(),
     maxSessions: Number(process.env.MAX_SESSIONS || 4), maxConcurrent: Number(process.env.MAX_CONCURRENT || 2), onCloseTimeout: () => process.exit(1),

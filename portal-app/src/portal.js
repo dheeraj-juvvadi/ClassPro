@@ -66,7 +66,7 @@ export class PortalSession {
       account: account.trim().replace(/@srmist\.edu\.in$/i, ''), password, captcha, challengeCookies: this.challengeCookies,
     }, log);
     try {
-      const result = await this.submitLogin(account, password, captcha);
+      const result = await this.submitLogin(account, password, captcha, log);
       await observation.finish(result.authenticated ? 'authenticated' : result.error.code);
       return result;
     } catch (error) {
@@ -74,7 +74,7 @@ export class PortalSession {
       throw error;
     } finally { observation.close(); }
   }
-  async submitLogin(account, password, captcha) {
+  async submitLogin(account, password, captcha, log) {
     if (this.authenticated) return { authenticated: true };
     if (!this.page) throw new PortalError('SESSION_EXPIRED', 'Load a fresh CAPTCHA first.', 401);
     // The portal observes keyboard events when constructing its submission payload.
@@ -87,10 +87,16 @@ export class PortalSession {
       await this.page.locator(selector).fill('');
       await this.page.locator(selector).pressSequentially(value, { delay: 90 });
     }
-    await Promise.all([
+    const submit = () => Promise.all([
       this.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
       this.page.locator('#btnLogin').click(),
     ]);
+    if (process.env.PORTAL_SUBMISSION_TRANSPORT === 'http') {
+      const { submitThroughHttp } = await import('./submission-transport.js');
+      await submitThroughHttp(this.page, submit, log);
+    } else {
+      await submit();
+    }
     const success = new URL(this.page.url()).origin === ORIGIN
       && await this.page.locator('#userHomePage #hdnFormId').count() > 0
       && await this.page.locator('#login_form').count() === 0;

@@ -1,5 +1,20 @@
 # ClassPro revamp deployment
 
+## Hybrid submission release
+
+The 2026-09-14 local control at port 8083 authenticated with automatic CAPTCHA,
+then loaded five attendance courses and four marks courses without report/detail
+errors. Chromium prepared SRM's native form; Playwright's HTTP transport forwarded
+the original POST once and returned its response to the browser. Login took about
+1.9 seconds and reports 0.77 seconds. This does not verify hosted authentication.
+
+The Render image now defaults `PORTAL_SUBMISSION_TRANSPORT=http`. Explicitly set
+it to `browser` to restore the previous transport. Worker startup logs announce
+the mode; `http_submission_transport` records share the login request ID. No
+automatic login retry or duplicate credential submission is added. Chromium is
+still used for form preparation and reports. The failed pure-Go experiment remains
+uncommitted and is excluded from this release. Vercel needs no update.
+
 ## Login research and continuity check (2026-09-14)
 
 - Original ClassPro `backend/src/handlers/login.go` targets Academia/Zoho
