@@ -15,3 +15,5 @@
 !portal-app/src/login-diagnostics.js
 !portal-app/src/submission-transport.js
 !portal-app/src/fast-submission.js
+!portal-app/src/portal-response.js
+!portal-app/src/portal-console.js

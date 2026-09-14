@@ -1,5 +1,24 @@
 # ClassPro revamp deployment
 
+## Portal alert and client-event diagnostics
+
+SRM client diagnostics attach before initial navigation and collect at most 24
+console log/info/debug/warning/error, page-error, failed-request, and HTTP-error
+records. Console message text is included up to 1000 characters after redacting
+known credentials, CAPTCHA answers, cookie values, hidden-field values, dynamic
+security values, URL paths/queries, and token-like strings. Console object arguments
+and raw HTML are not collected. This is best-effort diagnostic redaction, not a
+guarantee against arbitrary personal data printed by upstream code. Records appear
+as `portal_client_events` with the login request ID, including an empty list when
+no captured errors occurred. These are browser-side events, not SRM server logs.
+
+Login classification prioritizes visible server alerts and excludes static form
+validation text. An ambiguous response triggers at most one same-session GET of
+the protected shell, without resubmitting credentials. Success requires HTTP 200,
+same origin, a dashboard form marker, and absence of the login form. Explicit
+credential/CAPTCHA/security rejections do not trigger this fallback. Logs include
+`portal_response_classification` and, when attempted, `protected_page_check`.
+
 ## fasthttp submission release
 
 Local port 8084 authenticated using browser-prepared Student Portal fields sent

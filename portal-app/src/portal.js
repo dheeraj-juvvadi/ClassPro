@@ -2,6 +2,8 @@ import { chromium } from 'playwright';
 import { load } from 'cheerio';
 import { parseAttendance, parseMarks, parseComponents, PortalError } from './parsers.js';
 import { observeLogin } from './login-diagnostics.js';
+import { inspectPortalResponse, verifyProtectedPage } from './portal-response.js';
+import { capturePortalConsole } from './portal-console.js';
 
 const ORIGIN = 'https://sp.srmist.edu.in';
 const BASE = `${ORIGIN}/srmiststudentportal/`;
@@ -29,9 +31,11 @@ export class PortalSession {
   authenticated = false;
   cache = null;
   async open() {
+    this.clientDiagnostics?.close();
     await this.context?.close();
     this.context = await (await browser()).newContext(process.env.PORTAL_TIMEZONE ? { timezoneId: process.env.PORTAL_TIMEZONE } : {});
     this.page = await this.context.newPage();
+    this.clientDiagnostics = capturePortalConsole(this.page);
     this.page.setDefaultTimeout(15000);
     this.page.setDefaultNavigationTimeout(30000);
     await this.page.goto(LOGIN, { waitUntil: 'domcontentloaded' });
@@ -72,7 +76,17 @@ export class PortalSession {
     } catch (error) {
       await observation.finish(error.name === 'TimeoutError' ? 'timeout' : 'failed');
       throw error;
-    } finally { observation.close(); }
+    } finally {
+      const secrets = [account, account.trim().replace(/@srmist\.edu\.in$/i, ''), password, captcha];
+      try {
+        secrets.push(...(await this.context.cookies()).map(cookie => cookie.value));
+        secrets.push(...await this.page.locator('input[type="hidden"]').evaluateAll(inputs => inputs.map(input => input.value)));
+        secrets.push(...await this.page.evaluate(() => Object.values(window.SECURE_CONFIG || {}).filter(value => typeof value === 'string')));
+      } catch {}
+      secrets.push(...(this.challengeCookies || []).map(cookie => cookie.value));
+      log?.({ event: 'portal_client_events', events: this.clientDiagnostics?.drain(secrets) || [] });
+      observation.close();
+    }
   }
   async submitLogin(account, password, captcha, log) {
     if (this.authenticated) return { authenticated: true };
@@ -104,12 +118,17 @@ export class PortalSession {
       && await this.page.locator('#login_form').count() === 0;
     if (success) { this.authenticated = true; return { authenticated: true }; }
     if (await this.page.locator('#password').count()) await this.page.locator('#password').fill('');
-    const content = (await this.page.locator('body').innerText()).toLowerCase();
-    const limited = /concurrent|maximum.*session|session.*limit/.test(content);
-    const challenged = /invalid captcha|captcha[^\n]*(?:incorrect|mismatch|invalid)/.test(content);
-    const emptyId = /net\s*id should not be empty/.test(content);
-    const invalid = /invalid (?:net\s*id|password|credentials)|incorrect password/.test(content);
-    const code = limited ? 'SESSION_LIMIT' : challenged ? 'CAPTCHA_INVALID' : emptyId ? 'PORTAL_FORM_REJECTED' : invalid ? 'LOGIN_REJECTED' : 'LOGIN_FAILED';
+    const evidence = await inspectPortalResponse(this.page);
+    log?.({ event: 'portal_response_classification', ...evidence });
+    if (await verifyProtectedPage(this.page, evidence, log)) {
+      this.authenticated = true;
+      return { authenticated: true };
+    }
+    const code = evidence.code;
+    const limited = code === 'SESSION_LIMIT';
+    const challenged = code === 'CAPTCHA_INVALID';
+    const emptyId = code === 'PORTAL_FORM_REJECTED';
+    const invalid = code === 'LOGIN_REJECTED';
     const message = limited ? 'Student Portal reported a session limit. Sign out of its other sessions, then retry.'
       : challenged ? 'The CAPTCHA was not accepted. Try the new image.'
       : emptyId ? 'Student Portal rejected the submitted NetID field. The login adapter needs updating.'
@@ -195,6 +214,7 @@ export class PortalSession {
     return result;
   }
   async close() {
+    this.clientDiagnostics?.close();
     this.challengeCookies = null;
     this.authenticated = false;
     this.cache = null;
