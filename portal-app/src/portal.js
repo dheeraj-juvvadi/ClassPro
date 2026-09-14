@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import { load } from 'cheerio';
 import { parseAttendance, parseMarks, parseComponents, PortalError } from './parsers.js';
+import { observeLogin } from './login-diagnostics.js';
 
 const ORIGIN = 'https://sp.srmist.edu.in';
 const BASE = `${ORIGIN}/srmiststudentportal/`;
@@ -53,7 +54,22 @@ export class PortalSession {
     await field.fill('');
     await field.pressSequentially(answer, { delay: 90 });
   }
-  async login(account, password, captcha) {
+  async login(account, password, captcha, log) {
+    if (this.authenticated) return { authenticated: true };
+    if (!this.page) throw new PortalError('SESSION_EXPIRED', 'Load a fresh CAPTCHA first.', 401);
+    const observation = await observeLogin(this.page, {
+      account: account.trim().replace(/@srmist\.edu\.in$/i, ''), password, captcha,
+    }, log);
+    try {
+      const result = await this.submitLogin(account, password, captcha);
+      observation.finish(result.authenticated ? 'authenticated' : result.error.code);
+      return result;
+    } catch (error) {
+      observation.finish(error.name === 'TimeoutError' ? 'timeout' : 'failed');
+      throw error;
+    } finally { observation.close(); }
+  }
+  async submitLogin(account, password, captcha) {
     if (this.authenticated) return { authenticated: true };
     if (!this.page) throw new PortalError('SESSION_EXPIRED', 'Load a fresh CAPTCHA first.', 401);
     // The portal observes keyboard events when constructing its submission payload.
@@ -74,18 +90,6 @@ export class PortalSession {
       && await this.page.locator('#userHomePage #hdnFormId').count() > 0
       && await this.page.locator('#login_form').count() === 0;
     if (success) { this.authenticated = true; return { authenticated: true }; }
-    if (process.env.PORTAL_LOGIN_DIAGNOSTICS === '1') {
-      const diagnostics = await this.page.evaluate(() => {
-        const visible = e => !!e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden';
-        const alerts = [...document.querySelectorAll('[role="alert"], [role="dialog"], .alert, .modal, .invalid-feedback')]
-          .filter(visible).map(e => ({ tag: e.tagName, id: e.id, text: e.innerText.slice(0,500) }));
-        const lines = document.body.innerText.split('\n').map(s => s.trim())
-          .filter(s => /invalid|incorrect|expired|captcha|empty|security|failed|error/i.test(s));
-        return { alerts, lines, path: location.pathname };
-      });
-      const safe = JSON.stringify(diagnostics).split(password).join('[redacted]').split(account).join('[account]');
-      console.log(safe);
-    }
     if (await this.page.locator('#password').count()) await this.page.locator('#password').fill('');
     const content = (await this.page.locator('body').innerText()).toLowerCase();
     const limited = /concurrent|maximum.*session|session.*limit/.test(content);

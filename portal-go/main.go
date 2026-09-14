@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,6 +13,8 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 	config, err := configFromEnv()
 	if err != nil {
 		log.Fatal(err)
@@ -20,7 +23,7 @@ func main() {
 	defer stop()
 	app := NewServer(config, newBridge(config))
 	go app.Reap(ctx)
-	server := &http.Server{Addr: config.Addr, Handler: http.TimeoutHandler(app, 100*time.Second, `{"error":{"code":"TIMEOUT","message":"Request timed out."}}`),
+	server := &http.Server{Addr: config.Addr, Handler: observeRequests(http.TimeoutHandler(app, 100*time.Second, `{"error":{"code":"TIMEOUT","message":"Request timed out."}}`), logger),
 		ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 105 * time.Second,
 		IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16 * 1024}
 	go func() {
@@ -29,7 +32,7 @@ func main() {
 		defer cancel()
 		_ = server.Shutdown(shutdown)
 	}()
-	log.Print("ClassPro Go API listening")
+	logger.Info("api_started", "static_enabled", config.StaticDir != "", "max_sessions", config.MaxSessions, "max_concurrent", config.MaxConcurrent)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatal("HTTP listener failed")
 	}

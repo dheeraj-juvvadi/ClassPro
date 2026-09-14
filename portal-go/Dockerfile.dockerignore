@@ -1,0 +1,14 @@
+**
+!portal-go/
+!portal-go/*.go
+!portal-go/go.mod
+!portal-go/package.json
+!portal-go/package-lock.json
+!portal-go/worker.mjs
+!portal-go/start.mjs
+!portal-go/Dockerfile
+!portal-app/
+!portal-app/src/
+!portal-app/src/portal.js
+!portal-app/src/parsers.js
+!portal-app/src/login-diagnostics.js

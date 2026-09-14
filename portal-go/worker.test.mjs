@@ -8,6 +8,7 @@ const firstSession = 'a'.repeat(64);
 const secondSession = 'b'.repeat(64);
 
 async function fixture(t, overrides = {}) {
+  const logs = [];
   let opened = 0;
   let closed = 0;
   const worker = createWorker({ token, createSession: () => ({
@@ -19,7 +20,7 @@ async function fixture(t, overrides = {}) {
     async reports() { return { attendance: { data: [] }, marks: { data: [] } }; },
     async close() { closed++; },
     ...overrides,
-  }) });
+  }), logger: event => logs.push(event) });
   worker.server.listen(0, '127.0.0.1');
   await once(worker.server, 'listening');
   t.after(async () => { worker.server.closeAllConnections(); await new Promise(resolve => worker.server.close(resolve)); await worker.close(); });
@@ -28,7 +29,7 @@ async function fixture(t, overrides = {}) {
     method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, session, payload }),
   });
-  return { base, rpc, opened: () => opened, closed: () => closed };
+  return { base, rpc, logs, opened: () => opened, closed: () => closed };
 }
 
 test('worker rejects unauthenticated access and unknown operations', async t => {
@@ -57,6 +58,8 @@ test('worker strips unexpected exception messages and drops failed session', asy
   const response = await app.rpc('login', firstSession, { account: 'student', password: 'secret', answer: 'ABCD' });
   assert.equal(response.status, 502);
   assert.doesNotMatch(await response.text(), /password-secret|upstream body/);
+  assert.ok(app.logs.some(event => event.event === 'worker_error'));
+  assert.doesNotMatch(JSON.stringify(app.logs), /password-secret|upstream body/);
   assert.equal((await app.rpc('reports')).status, 401);
 });
 

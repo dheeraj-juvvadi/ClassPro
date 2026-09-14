@@ -89,11 +89,15 @@ func (server *Server) acquire() bool {
 }
 
 func (server *Server) call(action string, entry *session, payload []byte) reply {
+	return server.callContext(context.Background(), action, entry, payload)
+}
+
+func (server *Server) callContext(parent context.Context, action string, entry *session, payload []byte) reply {
 	timeout := server.config.Timeout
 	if action == "close" {
 		timeout = min(timeout, 4*time.Second)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
 	return server.worker.Call(ctx, action, entry.id, payload)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -9,7 +10,7 @@ import (
 func (server *Server) mutate(writer http.ResponseWriter, request *http.Request, entry *session, payload []byte) {
 	defer func() { <-server.slots }()
 	action := map[string]string{"/api/challenge": "challenge", "/api/challenge/prepare": "prepare", "/api/login/client": "login", "/api/session": "close"}[request.URL.Path]
-	response := server.call(action, entry, payload)
+	response := server.callContext(request.Context(), action, entry, payload)
 	var result struct {
 		Authenticated bool `json:"authenticated"`
 	}
@@ -88,7 +89,7 @@ func (server *Server) reports(writer http.ResponseWriter, request *http.Request,
 	pending := &flight{done: make(chan struct{})}
 	entry.busy, entry.inflight = true, pending
 	server.mu.Unlock()
-	response := server.call("reports", entry, nil)
+	response := server.callContext(context.WithoutCancel(request.Context()), "reports", entry, nil)
 	server.mu.Lock()
 	entry.busy, entry.inflight = false, nil
 	if response.Status == 200 {

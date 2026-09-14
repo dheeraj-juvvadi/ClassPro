@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 
 const environment = { ...process.env, WORKER_TOKEN: process.env.WORKER_TOKEN || randomBytes(32).toString('hex') };
 const children = [
-  spawn(process.execPath, ['portal-go/worker.mjs'], { env: environment, stdio: ['ignore', 'ignore', 'ignore'] }),
+  spawn(process.execPath, ['portal-go/worker.mjs'], { env: environment, stdio: ['ignore', 'inherit', 'inherit'] }),
   spawn(process.env.PORTAL_GO_BINARY || '/usr/local/bin/portal-go', [], { env: environment, stdio: ['ignore', 'inherit', 'inherit'] }),
 ];
 let stopping = false;

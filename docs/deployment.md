@@ -1,5 +1,27 @@
 # ClassPro revamp deployment
 
+## Backend-only packaging and request diagnostics
+
+The Render Docker build now copies only the Go API, Node worker, portal adapter,
+parser, and their runtime dependencies. Its Docker-specific context allowlist
+excludes the frontend, OCR weights, development files, and unrelated project code.
+Vercel owns frontend and browser OCR delivery. Render has no `STATIC_DIR` by default;
+`/` returns 404 while `/health` and `/api/*` remain available. Local harnesses may
+still set `STATIC_DIR` explicitly. Chromium remains required for SRM's native form.
+
+Render stdout includes JSON `http_request`, `authentication`, `worker_request`,
+`worker_error`, and `portal_submission` records. The API generates an
+`X-Request-ID` and forwards it to the private worker for correlation. Successful
+health probes are omitted to avoid repetitive logs. Request records include
+allowlisted route, method, status, duration, and byte count, never request bodies,
+query strings, NetIDs, passwords, cookies, session tokens, or CAPTCHA answers.
+
+Submission diagnostics record only boolean field-match checks, security-field
+presence, upstream status, script-error count, and outcome. They do not establish
+CAPTCHA acceptance or authenticated access unless SRM actually returns success.
+An authenticated production retry is still required to diagnose the reported
+rejection; model delivery and challenge preparation alone do not prove login.
+
 ## Verified deployment: 2026-09-14
 
 Final Go commit `7d61627044c42468dc92c3a2948a3f7bbba6b442` was pushed to

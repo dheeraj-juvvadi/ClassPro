@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -32,7 +33,37 @@ func newBridge(config Config) *bridge {
 	}}
 }
 
-func (backend *bridge) Call(ctx context.Context, action, session string, payload json.RawMessage) reply {
+func (backend *bridge) Call(ctx context.Context, action, session string, payload json.RawMessage) (result reply) {
+	started := time.Now()
+	requestID, _ := ctx.Value(requestIDKey{}).(string)
+	defer func() {
+		level := slog.LevelInfo
+		if result.Status >= 500 {
+			level = slog.LevelError
+		} else if result.Status >= 400 {
+			level = slog.LevelWarn
+		}
+		event := "worker_request"
+		if action == "login" {
+			event = "authentication"
+		}
+		var body struct {
+			Error struct {
+				Code string `json:"code"`
+			} `json:"error"`
+		}
+		_ = json.Unmarshal(result.Body, &body)
+		code := ""
+		switch body.Error.Code {
+		case "LOGIN_REJECTED", "LOGIN_FAILED", "CAPTCHA_INVALID", "PORTAL_FORM_REJECTED", "SESSION_LIMIT", "SESSION_EXPIRED", "PORTAL_UNAVAILABLE", "PORTAL_CHANGED", "INVALID_REQUEST", "CAPACITY", "BUSY":
+			code = body.Error.Code
+		default:
+			if result.Status >= 400 {
+				code = "UNKNOWN_ERROR"
+			}
+		}
+		slog.Log(ctx, level, event, "request_id", requestID, "action", action, "status", result.Status, "error_code", code, "duration_ms", time.Since(started).Milliseconds())
+	}()
 	if len(payload) == 0 {
 		payload = json.RawMessage(`{}`)
 	}
@@ -50,6 +81,7 @@ func (backend *bridge) Call(ctx context.Context, action, session string, payload
 	}
 	request.Header.Set("Authorization", "Bearer "+backend.token)
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Request-ID", requestID)
 	response, err := backend.client.Do(request)
 	if err != nil {
 		return unavailable()
