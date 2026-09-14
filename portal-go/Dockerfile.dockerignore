@@ -18,3 +18,4 @@
 !portal-app/src/portal-response.js
 !portal-app/src/portal-console.js
 !portal-app/src/credential-integrity.js
+!portal-app/src/fingerprint-handshake.js

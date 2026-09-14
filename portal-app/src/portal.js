@@ -101,6 +101,13 @@ export class PortalSession {
       await this.page.locator(selector).fill('');
       await this.page.locator(selector).pressSequentially(value, { delay: 90 });
     }
+    if (process.env.PORTAL_FINGERPRINT_HANDSHAKE === '1') {
+      if (process.env.PORTAL_SUBMISSION_TRANSPORT && process.env.PORTAL_SUBMISSION_TRANSPORT !== 'browser') {
+        throw new Error('Fingerprint experiment requires the browser submission transport');
+      }
+      const { prepareFingerprintToken } = await import('./fingerprint-handshake.js');
+      await prepareFingerprintToken(this.page, log);
+    }
     const submit = () => Promise.all([
       this.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
       this.page.locator('#btnLogin').click(),

@@ -1,5 +1,22 @@
 # ClassPro revamp deployment
 
+## Combined fingerprint and browser-transport experiment
+
+Set `PORTAL_FINGERPRINT_HANDSHAKE=1` and `PORTAL_SUBMISSION_TRANSPORT=browser`
+together. After typing, the page sends its real navigator properties, current
+timestamp, and SRM-issued fpNonce to `/fpToken` using the existing browser context.
+Only a valid returned token is assigned to the form. Failure stops submission.
+Manual CAPTCHA remains enabled. CAPTCHA, token, login, and reports use the same
+browser context; this removes the Go transport handoff, but does not guarantee a
+single TCP connection or static egress IP. No external proxy is configured.
+
+A credential-free probe confirmed `/fpToken` returns a token on the current
+portal. The older `/fpCToken` response did not match the expected token shape,
+so the existing native CAPTCHA loading flow is preserved. Tests validate real
+browser-property use, fixed same-origin target, token validation, and no token
+logging. Login acceptance still requires a hosted test. Roll back by disabling
+the handshake and setting submission transport to the prior `fasthttp` value.
+
 ## Manual CAPTCHA frontend
 
 The login page now requires manual CAPTCHA entry. It no longer loads the OCR

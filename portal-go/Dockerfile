@@ -19,6 +19,7 @@ COPY --from=browser /opt/chrome-linux64 /opt/chrome-linux64
 COPY portal-app/src/portal.js portal-app/src/parsers.js portal-app/src/login-diagnostics.js portal-app/src/submission-transport.js portal-app/src/fast-submission.js ./portal-app/src/
 COPY portal-app/src/portal-response.js portal-app/src/portal-console.js ./portal-app/src/
 COPY portal-app/src/credential-integrity.js ./portal-app/src/
+COPY portal-app/src/fingerprint-handshake.js ./portal-app/src/
 COPY portal-go/worker.mjs portal-go/start.mjs ./portal-go/
 COPY --from=build /portal-go /usr/local/bin/portal-go
 RUN mkdir -p /home/node/.cache && chown -R node:node /home/node
