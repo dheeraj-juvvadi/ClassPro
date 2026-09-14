@@ -2,10 +2,13 @@
 
 ## Verified deployment: 2026-09-14
 
-Commit `82e43073c8eacd085576170a31cb7a04ed68c8d1` was pushed to
-`revamp/main`. Vercel deployment `dpl_HSStQp2WBXXT5aGEL9FzFSQvyWPv` is ready at
+Final Go commit `7d61627044c42468dc92c3a2948a3f7bbba6b442` was pushed to
+`revamp/main` and confirmed live on Render. Vercel deployment
+`dpl_HSStQp2WBXXT5aGEL9FzFSQvyWPv` is ready at
 `https://revamp-tracker.vercel.app`. Render deployment
-`dep-dajsjgtg1s2s73c1g270` is live on the existing `goscraper` free service.
+`dep-dajsm5oae00c73b8qtlg` is live on the existing `goscraper` free service.
+The frontend snapshot is from `82e4307`; later commits change only the Go
+backend, deployment records and Supabase artifacts, not the frontend.
 
 Production checks returned: `/health` 200, proxied `/api/session` 200 with
 `authenticated:false`, unauthenticated `/api/reports` 401, and an untrusted-origin
@@ -15,7 +18,11 @@ session was then deleted successfully. No credentials were submitted; a complete
 real login/report/logout cycle is still an acceptance check, not a claimed result.
 
 The final published stylesheet was compared byte-for-byte with the approved
-local file. Subsequent Go hardening changes require their own tested release.
+local file. Health, session, real Chromium challenge and DELETE cleanup checks
+were repeated successfully after the final Go hardening release became live.
+The Supabase owner's handoff confirms both migrations applied remotely on the
+existing project; see `docs/supabase.md`. Application persistence remains disabled
+pending a verified stable student identity and restricted runtime credentials.
 
 ## Existing accounts and destinations
 
@@ -37,9 +44,9 @@ local file. Subsequent Go hardening changes require their own tested release.
 
 ## Release gate
 
-Deployment preparation is authorized; publication waits for the coordinating
-agent's UI-ready signal and an explicit reviewed file list. Another agent owns
-`portal-go`, while the UI agent owns `portal-app/public`.
+The coordinating agent approved the UI and final Go release. For subsequent
+releases, confirm each owner's ready signal and an explicit reviewed file list.
+The backend owner maintains `portal-go`; the UI owner maintains `portal-app/public`.
 
 Before publishing:
 

@@ -1,0 +1,29 @@
+project_id = "classpro-revamp"
+
+[api]
+enabled = false
+
+[db]
+port = 54322
+major_version = 15
+
+[db.seed]
+enabled = false
+
+[studio]
+enabled = false
+
+[local_smtp]
+enabled = false
+
+[storage]
+enabled = false
+
+[auth]
+enabled = false
+
+[realtime]
+enabled = false
+
+[analytics]
+enabled = false
