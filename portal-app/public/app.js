@@ -3,22 +3,9 @@
 const $ = (id) => document.getElementById(id);
 let authenticated = false;
 let busy = false;
-let manualCaptcha = false;
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
 const signInParticles = createSignInParticles($('sign-in'));
-const loginPreparation = createLoginPreparation({ prepare: async () => {
-  const [challenge] = await Promise.all([
-    api('/api/challenge', { method: 'POST', body: '{}' }, true),
-    window.portalOcr.preload(),
-  ]);
-  if (challenge.authenticated) return challenge;
-  const prediction = await window.portalOcr.solve(challenge.image);
-  if (prediction.confidence >= 90 && prediction.minCharConfidence >= 80) {
-    await api('/api/challenge/prepare', { method: 'POST', body: JSON.stringify({ answer: prediction.answer }) }, true);
-  }
-  return { prediction };
-} });
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -39,9 +26,8 @@ function syncControls() {
   $('account').disabled = busy;
   $('password').disabled = busy;
   $('remember').disabled = busy;
-  $('manual-captcha-toggle').disabled = busy;
   $('manual-captcha-refresh').disabled = busy;
-  $('manual-captcha-answer').disabled = busy || !manualCaptcha;
+  $('manual-captcha-answer').disabled = busy;
   $('login-form').setAttribute('aria-busy', String(busy));
 }
 
@@ -79,6 +65,10 @@ function showLogin(text = '', error = false) {
   $('reports-view').hidden = true;
   $('logout').hidden = true;
   $('login-form').reset();
+  manualChallengeAt = 0;
+  $('manual-captcha-image').hidden = true;
+  $('manual-captcha-answer').value = '';
+  $('manual-captcha-status').textContent = 'Select New code, enter the CAPTCHA, then sign in.';
   $('attendance-content').replaceChildren();
   $('marks-content').replaceChildren();
   $('attendance-count').textContent = '';
@@ -93,7 +83,7 @@ function showLogin(text = '', error = false) {
 function showReports() {
   document.body.classList.remove('garden-login');
   document.body.classList.add('planner');
-  loginPreparation.clear();
+  manualChallengeAt = 0;
   authenticated = true;
   $('password').value = '';
   $('startup').hidden = true;
@@ -109,7 +99,7 @@ function showReports() {
 async function api(path, options = {}, login = false) {
   const clientTrace = crypto.randomUUID();
   const started = performance.now();
-  const loginMode = manualCaptcha ? 'manual' : 'automatic';
+  const loginMode = 'manual';
   const record = (details) => {
     const entry = { time: new Date().toISOString(), path, method: options.method || 'GET', clientTrace, loginMode, durationMs: Math.round(performance.now() - started), ...details };
     window.classproDiagnostics = [...(window.classproDiagnostics || []), entry].slice(-30);
@@ -251,17 +241,6 @@ async function loadManualChallenge() {
   }
 }
 
-$('manual-captcha-toggle').addEventListener('click', () => run(async () => {
-  manualCaptcha = !manualCaptcha;
-  manualChallengeAt = 0;
-  loginPreparation.clear();
-  $('manual-captcha').hidden = !manualCaptcha;
-  $('manual-captcha-answer').required = manualCaptcha;
-  $('manual-captcha-toggle').setAttribute('aria-expanded', String(manualCaptcha));
-  $('manual-captcha-toggle').textContent = manualCaptcha ? 'Use automatic verification' : 'Enter CAPTCHA manually';
-  message('login-message');
-  if (manualCaptcha) await loadManualChallenge();
-}));
 $('manual-captcha-refresh').addEventListener('click', () => run(loadManualChallenge));
 
 async function submitCredentials(credentials, answer) {
@@ -278,41 +257,21 @@ $('login-form').addEventListener('submit', (event) => {
   run(async () => {
     message('login-message');
     signInParticles.start();
-    if (!manualCaptcha) await window.portalOcr.preload();
     signInParticles.stage('Connecting to SRM…', .4);
     let data;
-    if (manualCaptcha) {
-      if (!manualChallengeAt || Date.now() - manualChallengeAt >= 90000) {
-        await loadManualChallenge();
-        throw new Error('Enter the new code, then sign in again.');
-      }
-      const answer = $('manual-captcha-answer').value;
-      manualChallengeAt = 0;
-      try {
-        data = await submitCredentials(credentials, answer);
-      } catch (error) {
-        $('manual-captcha-image').hidden = true;
-        $('manual-captcha-answer').value = '';
-        $('manual-captcha-status').textContent = 'This code is no longer active. Select New code to retry.';
-        throw error;
-      }
-    } else {
+    if (!manualChallengeAt || Date.now() - manualChallengeAt >= 90000) {
+      await loadManualChallenge();
+      throw new Error('Enter the new code, then sign in again.');
+    }
+    const answer = $('manual-captcha-answer').value;
+    manualChallengeAt = 0;
     try {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const prepared = await loginPreparation.take();
-      if (prepared.authenticated) { data = prepared; break; }
-      const prediction = prepared.prediction;
-      if (prediction.confidence < 90 || prediction.minCharConfidence < 80) {
-        if (attempt === 0) continue;
-        throw new Error('Your device could not confidently read this verification. Please retry.');
-      }
-      signInParticles.stage('Signing in…', .72);
-      data = await submitCredentials(credentials, prediction.answer);
-      break;
-    }
+      data = await submitCredentials(credentials, answer);
     } catch (error) {
+      $('manual-captcha-image').hidden = true;
+      $('manual-captcha-answer').value = '';
+      $('manual-captcha-status').textContent = 'This code is no longer active. Select New code to retry.';
       throw error;
-    }
     }
     if (data.authenticated !== true) {
       throw new Error(data.error?.message || 'Sign in could not be confirmed. Please try again.');

@@ -1,5 +1,16 @@
 # ClassPro revamp deployment
 
+## Manual CAPTCHA frontend
+
+The login page now requires manual CAPTCHA entry. It no longer loads the OCR
+controller or automatic preparation script, performs model inference, or calls
+the CAPTCHA preparation endpoint. New code explicitly loads a challenge; expired
+or rejected challenges require a fresh code. Credential integrity checks remain.
+Existing authenticated-session restoration is unchanged. The backend still types
+NetID, password, and CAPTCHA with the existing 90 ms per-character delay before
+submission; this frontend change does not alter Render's browser configuration.
+The local browser check fetched a real CAPTCHA with no OCR runtime loaded.
+
 ## Credential integrity diagnostic
 
 The frontend snapshots credentials at submit time before asynchronous challenge

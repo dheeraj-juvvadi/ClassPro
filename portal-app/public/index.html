@@ -13,8 +13,6 @@
   <link rel="stylesheet" href="/login.css">
   <link rel="stylesheet" href="/home.css">
   <link rel="stylesheet" href="/academic.css">
-  <script src="/client-ocr.js" defer></script>
-  <script src="/login-preparation.js" defer></script>
   <script src="/sign-in-particles.js" defer></script>
   <script src="/attendance-math.js" defer></script>
   <script src="/home-model.js" defer></script>
@@ -57,16 +55,15 @@
             <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox">Keep me signed in</label>
             <a href="https://ssp.srmist.edu.in/resetpassword/" target="_blank" rel="noopener noreferrer">Forgot password?</a>
           </div>
-          <button id="manual-captcha-toggle" type="button" aria-expanded="false" aria-controls="manual-captcha">Enter CAPTCHA manually</button>
-          <div id="manual-captcha" hidden>
+          <div id="manual-captcha">
             <div class="captcha-image-row"><img id="manual-captcha-image" width="175" height="46" alt="SRM verification code" hidden><button id="manual-captcha-refresh" type="button">New code</button></div>
             <label for="manual-captcha-answer">CAPTCHA · case-sensitive</label>
-            <input id="manual-captcha-answer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" pattern="[A-Za-z0-9]{4,8}" placeholder="Enter the code shown" disabled>
+            <input id="manual-captcha-answer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" pattern="[A-Za-z0-9]{4,8}" placeholder="Enter the code shown" required>
             <p id="manual-captcha-status" class="quiet" role="status" aria-live="polite"></p>
           </div>
           <button id="sign-in" type="submit" class="primary"><canvas class="sign-in-particles" aria-hidden="true"></canvas><span id="sign-in-label">Sign in</span><span class="sign-in-arrow" aria-hidden="true">→</span></button>
           <span id="sign-in-status" class="sign-in-status" role="status" aria-live="polite" aria-atomic="true"></span>
-          <details class="test-diagnostics"><summary>Connection details</summary><p id="ocr-status" class="quiet" role="status" aria-live="polite"></p><p id="request-trace" class="quiet" role="status" aria-live="polite"></p></details>
+          <details class="test-diagnostics"><summary>Connection details</summary><p id="request-trace" class="quiet" role="status" aria-live="polite"></p></details>
           <p id="login-message" class="message" role="status" aria-live="polite" hidden></p>
         </form>
       </div>
