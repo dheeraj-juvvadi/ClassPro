@@ -81,10 +81,21 @@ globalThis.academicUI = (() => {
     const index = Math.max(0, courses.indexOf(course));
     selector.value = index;
     selectCourse(index);
+    get('projection-period').textContent = '';
     get('projection-dialog').showModal();
   }
   get('projection-course').addEventListener('change', event => selectCourse(Number(event.target.value)));
   get('calculate-attendance').addEventListener('click', () => open());
   get('close-projection').addEventListener('click', () => get('projection-dialog').close());
-  return { renderAttendance, margin, clear() { courses = []; selected = null; get('projection-dialog').close(); } };
+  function plan(code, hours) {
+    const course = courses.find(entry => entry.code === code);
+    if (!course) return;
+    open(course);
+    if (Number.isInteger(hours) && hours > 0 && hours <= 99) {
+      controls.miss.set(hours);
+      get('projection-period').textContent = `What if you miss this ${hours}-hour period? Adjust the hours below. Your records stay unchanged.`;
+    } else get('projection-period').textContent = `This period lasts ${hours} hours. Enter your institution’s counted attendance hours below; partial hours are not rounded automatically.`;
+    refreshCalculation();
+  }
+  return { renderAttendance, margin, plan, clear() { courses = []; selected = null; get('projection-dialog').close(); } };
 })();

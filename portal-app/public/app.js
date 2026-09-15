@@ -5,7 +5,6 @@ let authenticated = false;
 let busy = false;
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
-const signInParticles = createSignInParticles($('sign-in'));
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -44,7 +43,8 @@ async function run(action) {
   } finally {
     busy = false;
     syncControls();
-    signInParticles.stop();
+    $('sign-in-label').textContent = 'Sign in';
+    $('sign-in').removeAttribute('data-loading');
     $('refresh').textContent = '↻ Retry';
     $('logout').textContent = 'Sign out';
     $('report-content').setAttribute('aria-busy', 'false');
@@ -209,7 +209,7 @@ async function loadReports() {
     const reports = await api('/api/reports');
     renderAttendance(reports.attendance);
     renderMarks(reports.marks);
-    classproHome.update(reports.attendance);
+    classproHome.update(reports.attendance, reports.schedule);
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Retry.' : '');
@@ -256,8 +256,8 @@ $('login-form').addEventListener('submit', (event) => {
   const credentials = { account: $('account').value.trim(), password: $('password').value, remember: $('remember').checked };
   run(async () => {
     message('login-message');
-    signInParticles.start();
-    signInParticles.stage('Connecting to SRM…', .4);
+    $('sign-in').setAttribute('data-loading', '');
+    $('sign-in-status').textContent = 'Connecting to SRM…';
     let data;
     if (!manualChallengeAt || Date.now() - manualChallengeAt >= 90000) {
       await loadManualChallenge();
@@ -276,8 +276,7 @@ $('login-form').addEventListener('submit', (event) => {
     if (data.authenticated !== true) {
       throw new Error(data.error?.message || 'Sign in could not be confirmed. Please try again.');
     }
-    signInParticles.stage('Signed in', 1);
-    signInParticles.stop();
+    $('sign-in-status').textContent = 'Signed in';
     showReports();
     await loadReports();
   });

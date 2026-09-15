@@ -38,12 +38,11 @@
   padding: 9px 12px 9px 20px;
   border-radius: 28px;
   background: #1b211b;
-  transition: background-color 180ms ease, color 180ms ease;
+  transition: none;
 }
 .garden-login #sign-in:hover:not(:disabled) { background: #222a20; color: #f1eee3; }
 .garden-login #sign-in:active:not(:disabled) { background: #293225; }
 .garden-login #sign-in[data-loading] { opacity: 1; cursor: progress; }
-.sign-in-particles { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; opacity: .72; pointer-events: none; }
 #sign-in-label { position: relative; font-size: .8125rem; font-weight: 600; }
 .sign-in-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .garden-login #sign-in[data-loading] .sign-in-arrow { background: #c0ce9c; }

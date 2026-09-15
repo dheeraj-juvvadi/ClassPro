@@ -22,7 +22,11 @@ async function browser() {
       console.log(JSON.stringify({ event: 'portal_browser_started', version: instance.version(), platform: process.platform, headless: process.env.HEADED !== '1' }));
       return instance;
     })
-    .catch(error => { browserPromise = null; throw error; });
+    .catch(error => {
+      browserPromise = null;
+      console.log(JSON.stringify({ event: 'portal_browser_launch_failed', detail: String(error.message).replace(/https?:\/\/\S+/g, '[url]').slice(0,3000) }));
+      throw error;
+    });
   const instance = await browserPromise;
   if (!instance.isConnected()) { browserPromise = null; return browser(); }
   return instance;

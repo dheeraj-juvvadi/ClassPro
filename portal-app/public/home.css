@@ -28,6 +28,24 @@
 .insight-card.neutral { background: #343a30; color: #e6eadc; }
 .insight-card:hover { outline: 1px solid #f1eee380; outline-offset: 2px; }
 .day-timeline { margin-top: 30px; }
+.calendar-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: .8rem; }
+.calendar-heading > div { display: flex; gap: 4px; }
+.calendar-heading button { min-width: 44px; min-height: 44px; padding: 8px; background: transparent; color: #f1eee3; }
+.calendar-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 10px 0; }
+.calendar-week button { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 0; min-height: 82px; padding: 10px 2px; border: 1px solid #43493d; border-radius: 12px; background: #222620; color: #d9dfd0; }
+.calendar-week button span:first-child { font-size: .625rem; }
+.calendar-week button span:nth-child(2) { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.calendar-week button span:last-child { font-size: .55rem; max-width: 100%; overflow-wrap: anywhere; }
+.calendar-week button[aria-pressed="true"] { background: #c5d4a7; color: #233020; border-color: #c5d4a7; }
+.calendar-week button[aria-current="date"] span:nth-child(2) { text-decoration: underline; text-underline-offset: 4px; }
+.calendar-week button[data-kind="holiday"] span:last-child { font-weight: 750; }
+#schedule-source { font-size: .7rem; line-height: 1.6; margin: 12px 0; }
+.schedule-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+.schedule-filters > div { min-width: 0; }
+.schedule-filters label { margin-top: 0; font-size: .7rem; }
+.schedule-filters select { width: 100%; min-height: 44px; font-size: .8rem; }
+.period-plan { display: block; min-height: 44px; margin-top: 5px; padding: 8px 0; background: transparent; color: #c5d4a7; font-size: .7rem; text-decoration: underline; text-underline-offset: 3px; }
+.period-plan:hover { background: transparent; color: #f1eee3; }
 .timeline-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 15px; margin-bottom: 21px; }
 .timeline-heading h2 { font-size: 1rem; font-weight: 500; letter-spacing: -.03em; }
 .timeline-heading > span { color: var(--planner-muted); font-size: .65rem; }

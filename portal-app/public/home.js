@@ -2,11 +2,17 @@
 
 globalThis.classproHome = (() => {
   const model = globalThis.classproHomeModel;
+  const planner = globalThis.classproScheduleModel;
   const storageKey = 'classpro-weekly-schedule-v1';
   let schedule = [];
   let attendance = [];
   let preview = false;
   let reportError = '';
+  let reportedSchedule = null;
+  let scheduleInvalid = false;
+  let selectedDate = null;
+  const filters = { allocation: '', batch: '' };
+  const source = () => reportedSchedule || schedule;
   const get = identifier => document.getElementById(identifier);
   const element = (tag, className, text) => {
     const result = document.createElement(tag);
@@ -14,11 +20,34 @@ globalThis.classproHome = (() => {
     if (text !== undefined) result.textContent = text;
     return result;
   };
-  const now = () => preview ? new Date(2026, 8, 14, 9, 48) : new Date();
+  const now = () => preview ? new Date(2026, 8, 14, 9, 48) : planner.clock(reportedSchedule?.timezone || 'Asia/Kolkata');
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
     if (Array.isArray(saved)) schedule = saved.filter(entry => model.valid(entry)).slice(0, 100);
   } catch {}
+
+  function describe(date) {
+    const state = planner.dayState(source(), date);
+    if (state.kind === 'holiday') return { ...state, label: state.label || 'Holiday', short: 'Holiday' };
+    if (state.kind === 'teaching') return { ...state, label: state.dayOrder ? `Day order ${state.dayOrder}` : 'Teaching day · day order unavailable', short: state.dayOrder ? `DO ${state.dayOrder}` : 'Class day' };
+    if (state.kind === 'manual') return { ...state, label: 'Manual weekly plan · holidays and day orders unverified', short: 'Manual' };
+    return { ...state, label: 'Calendar unavailable for this date', short: 'Unknown' };
+  }
+  const calendar = createScheduleCalendar({ container: get('schedule-calendar'), date: now(), describe,
+    onSelect(date) { selectedDate = date; render(); } });
+
+  function updateFilters() {
+    for (const field of ['allocation', 'batch']) {
+      const select = get(`${field}-filter`);
+      const values = [...new Set((reportedSchedule?.entries || schedule).map(entry => entry[field]).filter(Boolean))].sort();
+      select.replaceChildren(new Option(`All ${field === 'batch' ? 'batches' : 'allocations'}`, ''), ...values.map(value => new Option(value, value)));
+      if (!values.includes(filters[field])) filters[field] = '';
+      select.value = filters[field];
+      select.disabled = !values.length;
+    }
+  }
+  for (const field of ['allocation', 'batch']) get(`${field}-filter`).addEventListener('change', event => { filters[field] = event.target.value; render(); });
+  updateFilters();
 
   function page(destination, focus = true) {
     document.body.dataset.page = destination;
@@ -40,26 +69,29 @@ globalThis.classproHome = (() => {
     const date = now();
     get('home-title').textContent = date.getHours() < 12 ? 'Good morning.' : date.getHours() < 17 ? 'Good afternoon.' : 'Good evening.';
     get('home-date').textContent = new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
-    const classes = model.today(schedule, date);
+    const day = selectedDate || date;
+    const classes = planner.classes(source(), day, filters);
     const minute = date.getHours() * 60 + date.getMinutes();
-    const nextIndex = classes.findIndex(entry => model.minutes(entry.end) > minute);
-    const next = classes[nextIndex];
+    const next = planner.next(source(), date, filters);
+    const sameDay = next && planner.key(next.date) === planner.key(date);
+    const nextClasses = next ? planner.classes(source(), next.date, filters) : [];
+    const nextIndex = nextClasses.findIndex(entry => entry.start === next?.start && entry.code === next?.code);
     const card = get('next-class-card');
     card.replaceChildren();
     const top = element('div', 'next-class-top');
-    top.append(element('span', 'planner-eyebrow', 'Next class'));
-    const ongoing = next && model.minutes(next.start) <= minute;
-    top.append(element('span', 'class-countdown', next ? ongoing ? 'Ongoing' : `Starts in ${model.minutes(next.start) - minute} min` : ''));
+    top.append(element('span', 'planner-eyebrow', next?.unknown ? 'Next known class' : 'Next class'));
+    const ongoing = sameDay && model.minutes(next.start) <= minute;
+    top.append(element('span', 'class-countdown', next ? ongoing ? 'Ongoing' : sameDay ? `Starts in ${model.minutes(next.start) - minute} min` : next.date.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' }) : ''));
     card.append(top);
-    const title = element('h2', '', next?.title || (schedule.length ? 'You’re done for today.' : 'Make room for your day.'));
+    const title = element('h2', '', next?.title || (reportedSchedule ? 'No next class confirmed.' : schedule.length ? 'No upcoming classes.' : 'Make room for your day.'));
     title.id = 'next-class-title';
     card.append(title);
     if (next) {
       card.append(element('p', 'class-time', `${next.start} → ${next.end}`));
       card.append(element('p', 'class-room', next.room));
-    } else card.append(element('p', 'class-room', schedule.length ? 'Your next class will appear here.' : 'Add your weekly schedule to see what’s next.'));
+    } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Add your manual weekly schedule to see what’s next.'));
     const bottom = element('div', 'next-class-bottom');
-    const following = classes[nextIndex + 1];
+    const following = nextClasses[nextIndex + 1];
     bottom.append(element('p', '', next && following ? `Next · ${following.title} · ${following.start}` : next ? 'Last class of the day' : 'Your weekly planner'));
     const action = element('button', 'class-arrow', '↗');
     action.type = 'button';
@@ -68,7 +100,11 @@ globalThis.classproHome = (() => {
     bottom.append(action);
     card.append(bottom);
     renderInsights(classes);
-    renderTimeline(classes, minute);
+    const state = describe(day);
+    get('today-title').textContent = planner.key(day) === planner.key(date) ? 'Today’s classes' : day.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'short' });
+    get('schedule-source').textContent = `${scheduleInvalid ? 'Schedule report unavailable. ' : ''}${state.label}${next?.unknown ? ' · Gaps before the next known class are unverified.' : ''}`;
+    renderTimeline(classes, planner.key(day) === planner.key(date) ? minute : -1);
+    calendar.today(date);
   }
 
   function renderInsights(classes) {
@@ -102,9 +138,21 @@ globalThis.classproHome = (() => {
       const course = attendance.find(subject => subject.code === entry.code);
       const insight = course && model.insight(course);
       row.append(times, description, element('span', `timeline-status ${ongoing ? 'healthy' : insight?.tone || ''}`, ongoing ? 'Ongoing' : insight?.percentage || ''));
+      if (course) {
+        const hours = (model.minutes(entry.end) - model.minutes(entry.start)) / 60;
+        const plan = element('button', 'period-plan', `Plan ${hours}h ↗`);
+        plan.type = 'button';
+        plan.setAttribute('aria-label', `Plan attendance for ${entry.title}, ${hours} hours`);
+        plan.addEventListener('click', () => academicUI.plan(course.code, hours));
+        description.append(plan);
+      }
+      if (entry.allocation || entry.batch) description.append(element('p', '', [entry.allocation, entry.batch].filter(Boolean).join(' · ')));
       list.append(row);
     }
-    if (!classes.length) list.append(element('li', 'home-empty', schedule.length ? 'No classes scheduled today.' : 'Your timetable starts with your first class.'));
+    if (!classes.length) {
+      const state = describe(selectedDate || now());
+      list.append(element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No verified calendar for this date. Open Schedule to view available periods or set up a manual plan.' : 'No classes for this date and filter selection.'));
+    }
   }
 
   function saveSchedule(next) {
@@ -124,18 +172,20 @@ globalThis.classproHome = (() => {
   function renderSchedule() {
     const list = get('schedule-entries');
     list.replaceChildren();
-    for (const [index, entry] of schedule.entries()) {
+    get('schedule-form').hidden = Boolean(reportedSchedule);
+    get('schedule-help').textContent = reportedSchedule ? 'Reported timetable. Calendar dates appear only when supplied by your provider. Allocation and batch filters apply on Home.' : 'Manual weekly plan, saved on this device. Holidays and day orders are unavailable. Add one entry for the full class duration.';
+    for (const [index, entry] of (reportedSchedule?.entries || schedule).entries()) {
       const row = element('li', 'schedule-entry');
-      const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][entry.day];
-      row.append(element('span', '', `${day} · ${entry.start}–${entry.end} · ${entry.title}`));
+      const day = entry.dayOrder ? `Day order ${entry.dayOrder}` : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][entry.day];
+      row.append(element('span', '', [day, `${entry.start}–${entry.end}`, entry.title, entry.allocation, entry.batch].filter(Boolean).join(' · ')));
       const remove = element('button', '', '×');
       remove.type = 'button';
       remove.setAttribute('aria-label', `Remove ${entry.title}, ${day} ${entry.start}`);
       remove.addEventListener('click', () => saveSchedule(schedule.filter((entry, position) => position !== index)));
-      row.append(remove);
+      if (!reportedSchedule) row.append(remove);
       list.append(row);
     }
-    if (!schedule.length) list.append(element('li', 'quiet', 'No classes added yet.'));
+    if (!(reportedSchedule?.entries || schedule).length) list.append(element('li', 'quiet', 'No classes added yet.'));
   }
 
   function openSchedule() {
@@ -175,10 +225,15 @@ globalThis.classproHome = (() => {
 
   return {
     enter() { render(); page('home'); },
-    clear() { attendance = []; reportError = ''; },
-    update(report) {
+    clear() { attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); updateFilters(); },
+    update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];
       reportError = report?.error?.message || '';
+      reportedSchedule = planner.normalize(scheduleReport);
+      scheduleInvalid = scheduleReport != null && !reportedSchedule;
+      selectedDate = null;
+      updateFilters();
+      calendar.reset(now());
       render();
     },
     preview() {

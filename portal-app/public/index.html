@@ -13,9 +13,10 @@
   <link rel="stylesheet" href="/login.css">
   <link rel="stylesheet" href="/home.css">
   <link rel="stylesheet" href="/academic.css">
-  <script src="/sign-in-particles.js" defer></script>
   <script src="/attendance-math.js" defer></script>
   <script src="/home-model.js" defer></script>
+  <script src="/schedule-model.js" defer></script>
+  <script src="/schedule-calendar.js" defer></script>
   <script src="/home.js" defer></script>
   <script src="/quantity-stepper.js" defer></script>
   <script src="/academic-ui.js" defer></script>
@@ -61,7 +62,7 @@
             <input id="manual-captcha-answer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" pattern="[A-Za-z0-9]{4,8}" placeholder="Enter the code shown" required>
             <p id="manual-captcha-status" class="quiet" role="status" aria-live="polite"></p>
           </div>
-          <button id="sign-in" type="submit" class="primary"><canvas class="sign-in-particles" aria-hidden="true"></canvas><span id="sign-in-label">Sign in</span><span class="sign-in-arrow" aria-hidden="true">→</span></button>
+          <button id="sign-in" type="submit" class="primary"><span id="sign-in-label">Sign in</span><span class="sign-in-arrow" aria-hidden="true">→</span></button>
           <span id="sign-in-status" class="sign-in-status" role="status" aria-live="polite" aria-atomic="true"></span>
           <details class="test-diagnostics"><summary>Connection details</summary><p id="request-trace" class="quiet" role="status" aria-live="polite"></p></details>
           <p id="login-message" class="message" role="status" aria-live="polite" hidden></p>
@@ -74,6 +75,12 @@
       <article id="next-class-card" class="next-class-card" aria-labelledby="next-class-title"></article>
       <section class="attendance-insights" aria-label="Attendance at a glance" id="home-insights"></section>
       <section class="day-timeline" aria-labelledby="today-title">
+        <div id="schedule-calendar"></div>
+        <p id="schedule-source" class="quiet" role="status"></p>
+        <div class="schedule-filters">
+          <div><label for="allocation-filter">Allocation</label><select id="allocation-filter"><option value="">All allocations</option></select></div>
+          <div><label for="batch-filter">Batch</label><select id="batch-filter"><option value="">All batches</option></select></div>
+        </div>
         <div class="timeline-heading"><h2 id="today-title">Today’s classes</h2><span id="today-count"></span></div>
         <ol id="today-classes"></ol>
       </section>
@@ -109,7 +116,7 @@
   </nav>
   <dialog id="schedule-dialog" aria-labelledby="schedule-title">
     <div class="schedule-heading"><h2 id="schedule-title">Weekly schedule</h2><button id="close-schedule" type="button" aria-label="Close schedule">×</button></div>
-    <p class="quiet">Saved on this device. Add one entry for the full class duration.</p>
+    <p class="quiet" id="schedule-help">Manual weekly plan, saved on this device. Holidays and day orders are unavailable. Add one entry for the full class duration.</p>
     <ul id="schedule-entries"></ul>
     <form id="schedule-form">
       <label for="schedule-day">Day</label><select id="schedule-day"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select>
@@ -124,6 +131,7 @@
   <dialog id="projection-dialog" aria-labelledby="projection-title">
     <div class="schedule-heading"><h2 id="projection-title">A little room to plan.</h2><button id="close-projection" type="button" aria-label="Close calculator">×</button></div>
     <p class="quiet">Explore your attendance at a 75% target. This won’t change your records.</p>
+    <p class="quiet" id="projection-period" role="status"></p>
     <label for="projection-course">Subject</label><select id="projection-course"></select>
     <div class="projection-control"><span>Hours to attend</span><div id="projection-attend"></div></div>
     <div class="projection-control"><span>Hours to miss</span><div id="projection-miss"></div></div>

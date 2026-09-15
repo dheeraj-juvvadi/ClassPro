@@ -47,3 +47,20 @@ CAPTCHA timestamp age. It emits on challenge completion and after login.
 No login is needed to compare initial page and CAPTCHA behavior. It does not
 reveal Render's source IP as observed by SRM, prove backend session validity,
 or identify an upstream load-balancer node hidden behind one public IP.
+
+## First deployed comparison
+
+Release `dbd756b` was confirmed live on Render. A credential-free challenge probe
+returned 200 and its session was deleted. Render DNS and the observed response
+destination both were `103.4.223.143`, matching local DNS. All three downloaded
+guard scripts matched freshly downloaded local files byte-for-byte by SHA-256.
+TLS was 1.2 with a Sectigo certificate for `*.srmist.edu.in`. The login response
+Date was 323 ms behind receipt; script responses were under one second behind.
+CAPTCHA Date was 3.218 seconds behind receipt, consistent with transfer/scheduling
+delay but not sufficient to identify its source. Challenge age at inspection was
+8.467 seconds. The expected form action and all four guard configuration fields
+were present, and the CAPTCHA used a blob URL.
+
+This probe found no different public destination, guard-script version, or gross
+server clock offset on Render. It did not authenticate or expose SRM-side policy,
+session storage, internal load-balancer routing, or the client IP SRM observes.
