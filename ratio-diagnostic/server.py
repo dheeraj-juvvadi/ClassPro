@@ -19,6 +19,9 @@ from fastapi.staticfiles import StaticFiles
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "upstream"))
 import main as upstream
+from observe import events, instrument, record
+
+upstream.PortalSession = instrument(upstream.PortalSession)
 
 spec = importlib.util.spec_from_file_location("tinyocr_adapter", ROOT.parent / "portal-python/ocr.py")
 ocr = importlib.util.module_from_spec(spec)
@@ -27,7 +30,10 @@ spec.loader.exec_module(ocr)
 
 async def solve_image(image):
     try:
-        return True, await asyncio.to_thread(ocr.solve, image), 200
+        started = time.monotonic()
+        answer = await asyncio.to_thread(ocr.solve, image)
+        record({"stage": "ocr", "completed": bool(answer), "duration_ms": round((time.monotonic() - started) * 1000)})
+        return True, answer, 200
     except Exception:
         return False, "OCR unavailable", 503
 
@@ -76,8 +82,13 @@ def report(data):
 
 
 async def invoke(request, path, payload):
-    with contextlib.redirect_stdout(io.StringIO()):
-        response = await request.app.state.client.post(path, json=payload)
+    captured = []
+    token = events.set(captured)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            response = await request.app.state.client.post(path, json=payload)
+    finally:
+        events.reset(token)
     data = response.json()
     detail = data.get("detail", "") if isinstance(data, dict) else ""
     category = "accepted" if response.status_code == 200 else "unclassified"
@@ -87,7 +98,7 @@ async def invoke(request, path, payload):
         elif "credentials" in detail.lower():
             category = "upstream_credentials_classification"
     print(json.dumps({"event": "ratio_diagnostic", "route": path,
-                      "status": response.status_code, "classification": category}), flush=True)
+                      "status": response.status_code, "classification": category, "evidence": captured}), flush=True)
     return response, data
 
 

@@ -29,8 +29,18 @@ This diagnostic supports Student Portal only, not Academia or schedule mapping.
 
 Render Dockerfile: `ratio-diagnostic/Dockerfile`, build context repository root.
 Required environment: `APP_ORIGIN=https://revamp-tracker.vercel.app`.
+The Docker image sets `OCR_ASSET_DIR`; the startup command uses Render's `PORT`
+or 8080. `TINYOCR_URL` and `TINYOCR_API_KEY` are unused by the local model helper.
+Do not set `HMAC_SECRET` for this internal ASGI setup: upstream would require a
+signature from the compatibility layer. Public requests retain origin checks.
+Vercel uses the existing static rewrite and needs no backend URL environment key.
 Health: `GET /health` returns `backend: ratio-diagnostic`.
 Rollback: restore Render Dockerfile to `portal-go/Dockerfile` and redeploy.
 The existing frontend rewrites and original backend files remain unchanged.
+
+`observe.py` adds read-only HTTPX hooks without modifying upstream form submission
+or failure classification. Logs include OCR completion/duration, cookie continuity
+booleans, form-field presence and fixed alert categories. Cookie values, passwords,
+CAPTCHA answers, dynamic field names and raw responses are never logged.
 
 Tests: `PYTHONPATH=ratio-diagnostic python -m unittest discover -s ratio-diagnostic -p 'test_*.py'`.

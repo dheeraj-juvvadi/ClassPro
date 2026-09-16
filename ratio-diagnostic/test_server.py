@@ -5,6 +5,8 @@ from unittest.mock import patch
 os.environ["APP_ORIGIN"] = "http://localhost:8089"
 import httpx
 import server
+from observe import events, instrument
+from core.portal_client import PortalSession
 
 
 class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
@@ -58,3 +60,19 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
         response = await server.app.state.client.post("/portal/login", json={"username": "test"})
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json()["detail"], "captcha required")
+
+    async def test_observer_never_changes_response_or_exposes_secrets(self):
+        session = instrument(PortalSession)()
+        captured = []
+        token = events.set(captured)
+        try:
+            body = '<script>const hint="invalid captcha";</script><div role="alert">Invalid credentials</div>'
+            response = httpx.Response(200, text=body,
+                                      request=httpx.Request("POST", "https://portal.test/LoginServlet"))
+            await session.observe_response(response)
+            self.assertEqual(response.text, body)
+            self.assertEqual(captured[-1]["alert_classification"], "credentials_rejected")
+            self.assertNotIn("hint", str(captured))
+        finally:
+            events.reset(token)
+            await session.client.aclose()

@@ -4,5 +4,6 @@
 ratio-diagnostic/**/__pycache__/
 !portal-python/
 !portal-python/ocr.py
+!portal-python/protocol_evidence.py
 !portal-python/model/
 !portal-python/model/**

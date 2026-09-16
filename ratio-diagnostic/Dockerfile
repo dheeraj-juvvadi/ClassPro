@@ -5,6 +5,7 @@ COPY ratio-diagnostic/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY ratio-diagnostic /app/ratio-diagnostic
 COPY portal-python/ocr.py /app/portal-python/ocr.py
+COPY portal-python/protocol_evidence.py /app/portal-python/protocol_evidence.py
 COPY portal-python/model /app/portal-python/model
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OCR_ASSET_DIR=/app/portal-python/model
 USER 65534:65534
