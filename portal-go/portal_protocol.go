@@ -49,27 +49,33 @@ func (entry *directSession) protocolLogin(ctx context.Context, input authInput) 
 	fields.Set("telemetryPayload", base64.StdEncoding.EncodeToString(encodedTelemetry))
 	data, response, err := entry.request(ctx, "POST", portalSubmitPath, fields, nil)
 	if err != nil {
+		protocolEvidence(ctx, "login_response", response, nil, true)
 		return unavailable()
 	}
 	document, err := goquery.NewDocumentFromReader(strings.NewReader(string(data)))
 	if err != nil {
+		protocolEvidence(ctx, "login_response", response, nil, false)
 		return unavailable()
 	}
+	classification := protocolEvidence(ctx, "login_response", response, document, false)
 	if response.StatusCode == 200 && document.Find("#login_form").Length() == 0 && document.Find("#userHomePage #hdnFormId").Length() > 0 {
 		entry.authenticated = true
 		return jsonReply(200, map[string]bool{"authenticated": true})
 	}
-	alert := strings.ToLower(document.Find(".alert, [role=alert], #errorMessage").Text())
-	if strings.Contains(alert, "captcha") {
+	if classification == "captcha_rejected" {
 		return failure(401, "CAPTCHA_INVALID", "SRM rejected the verification code. Load a new code.")
 	}
 	protected, protectedResponse, protectedErr := entry.request(ctx, "GET", portalShellPath, nil, nil)
+	if protectedErr != nil || protectedResponse.StatusCode != 200 {
+		protocolEvidence(ctx, "protected_page", protectedResponse, nil, protectedErr != nil)
+	}
 	if protectedErr == nil && protectedResponse.StatusCode == 200 {
 		page, parseErr := goquery.NewDocumentFromReader(strings.NewReader(string(protected)))
+		protocolEvidence(ctx, "protected_page", protectedResponse, page, parseErr != nil)
 		if parseErr == nil && page.Find("#userHomePage #hdnFormId").Length() > 0 && page.Find("#login_form").Length() == 0 {
 			entry.authenticated = true
 			return jsonReply(200, map[string]bool{"authenticated": true})
 		}
 	}
-	return failure(401, "LOGIN_REJECTED", "SRM did not accept the sign-in. Check your Student Portal credentials.")
+	return failure(401, "LOGIN_REJECTED", "Student Portal did not establish a session. The cause has not been confirmed.")
 }

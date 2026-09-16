@@ -95,7 +95,7 @@ func observeRequests(next http.Handler, logger *slog.Logger) http.Handler {
 			}
 			logger.Log(ctx, level, "http_request", "request_id", requestID, "method", method,
 				"client_trace", clientTrace, "login_mode", loginMode,
-				"session_cookie_present", strings.Contains(request.Header.Get("Cookie"), cookieName+"="),
+				"session_cookie_present", requestHasSessionCookie(request),
 				"origin_present", request.Header.Get("Origin") != "",
 				"fetch_site_same_origin", request.Header.Get("Sec-Fetch-Site") == "same-origin",
 				"route", logRoute(request.URL.Path), "status", response.status,
@@ -103,4 +103,13 @@ func observeRequests(next http.Handler, logger *slog.Logger) http.Handler {
 		}()
 		next.ServeHTTP(response, request.WithContext(ctx))
 	})
+}
+
+func requestHasSessionCookie(request *http.Request) bool {
+	for _, name := range []string{cookieName, "__Host-classpro_state_0", "classpro_state_0"} {
+		if cookie, err := request.Cookie(name); err == nil && cookie.Value != "" {
+			return true
+		}
+	}
+	return false
 }
