@@ -7,6 +7,7 @@ import sys
 from core.portal_client import PortalSession, PortalClient
 from ocr import solve
 from selectolax.parser import HTMLParser
+from protocol_evidence import ProtocolEvidence
 
 
 def error(code, message, status=401):
@@ -18,11 +19,23 @@ class Adapter:
         self.session = PortalSession()
         self.authenticated = False
         self.events = []
+        self.protocol = ProtocolEvidence()
+        self.session.client.event_hooks["request"] = [self.request_evidence]
         self.session.client.event_hooks["response"] = [self.evidence]
+
+    async def request_evidence(self, request):
+        try:
+            record = self.protocol.request(request, self.session)
+            if record:
+                self.events.append(record)
+        except Exception:
+            self.events.append({"stage": "request_structure", "diagnostic_failed": True})
 
     async def fresh_session(self):
         await self.session.client.aclose()
         self.session = PortalSession()
+        self.protocol = ProtocolEvidence()
+        self.session.client.event_hooks["request"] = [self.request_evidence]
         self.session.client.event_hooks["response"] = [self.evidence]
 
     async def evidence(self, response):
