@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import '../public/attendance-math.js';
 import '../public/home-model.js';
 import '../public/schedule-model.js';
@@ -8,6 +9,18 @@ const model = globalThis.classproScheduleModel;
 const slot = { code: 'SYN', title: 'Synthetic course', room: 'Test room', start: '10:30', end: '11:30', dayOrder: 'A' };
 const report = (entries = [slot], calendar = []) => ({ timezone: 'Asia/Kolkata', entries, calendar });
 const teaching = { date: '2026-09-15', kind: 'teaching', dayOrder: 'A' };
+
+test('Ratio-D calendar descriptions do not invalidate the entire schedule', () => {
+  const raw = JSON.parse(readFileSync(new URL('../../ratio-diagnostic/data/calendar_data.json', import.meta.url), 'utf8'));
+  const calendar = raw.filter(row => /^[1-5]$/.test(row.order)).map(row => {
+    const date = new Date(row.date);
+    return { date: model.key(date), kind: 'teaching', dayOrder: row.order, label: row.description };
+  });
+  assert.ok(calendar.some(day => day.label.length > 100));
+  const normalized = model.normalize(report([], calendar));
+  assert.ok(normalized);
+  assert.equal(model.dayState(normalized, new Date(2026, 8, 16)).dayOrder, '3');
+});
 
 test('schedule contract rejects malformed dates, ambiguous recurrence and duplicate dates', () => {
   assert.ok(model.normalize(report()));

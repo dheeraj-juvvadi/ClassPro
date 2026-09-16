@@ -23,7 +23,7 @@ globalThis.classproScheduleModel = (() => {
     const calendar = input.calendar.filter(day => day && parse(day.date)
       && ['teaching', 'holiday'].includes(day.kind)
       && (day.dayOrder === undefined || label(day.dayOrder))
-      && (day.label === undefined || label(day.label)));
+      && (day.label === undefined || typeof day.label === 'string' && day.label.trim().length > 0 && day.label.length <= 1000));
     if (entries.length !== input.entries.length || calendar.length !== input.calendar.length) return null;
     if (new Set(calendar.map(day => day.date)).size !== calendar.length) return null;
     return { timezone: input.timezone, entries, calendar, calendarSource: input.calendarSource };
