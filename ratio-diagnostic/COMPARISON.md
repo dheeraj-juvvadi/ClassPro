@@ -50,3 +50,35 @@ cookies, CAPTCHA answers and student records must remain absent from logs.
 
 Raw sanitized captures are local-only under `/tmp/classpro-deep-local.log`
 and `/tmp/classpro-deep-render.json`; do not commit production log captures.
+
+## Instrumented user sign-ins
+
+Two local login requests succeeded, after two and three OCR attempts respectively.
+The hosted automatic request failed on all four attempts; two subsequent manual
+requests also failed. All hosted LoginServlet alerts classified as credentials
+rejection. Local failed attempts classified as CAPTCHA rejection before success.
+
+Both environments passed browser-to-backend account/password/answer integrity
+checks, and outbound parsed form credentials equaled received credentials.
+The automatic form-structure/token records compared equal: field order/roles,
+no duplicates, cookie continuity, nonce match, domain token, interaction token,
+two-second elapsed time, and recorded synthetic telemetry. This verifies each
+request's transport integrity, not equality of credentials across separate logins.
+
+Local success: HTTP 302, session cookie rotated, then authenticated report fetch.
+Hosted failure: HTTP 200 login HTML with credentials-rejection alert and no new
+session cookie. Destination/certificate/TLS negotiation and request header names
+matched. The different response headers/body are consequences of these different
+responses, not evidence that compression caused rejection.
+
+Hosted automatic login used about 0.119 CPU-seconds over 11.987 wall-seconds.
+Peak process RSS was about 103 MiB; cgroup memory.current about 71.5 MiB against
+a 512 MiB limit (these counters have different accounting). Requests completed
+without captured transport errors. CPU-throttle counters were unavailable in
+this capture, so throttling is not ruled out by those counters. These measurements
+do not support a crash or memory exhaustion as the cause of the observed rejection.
+
+The first observed behavioral divergence remains SRM's LoginServlet response.
+Unmeasured differences still include outgoing network identity, full TLS
+ClientHello fingerprint, and unrecorded server-side policy/state. None is proven
+to be causal. Further identical login retries alone will not resolve that gap.
