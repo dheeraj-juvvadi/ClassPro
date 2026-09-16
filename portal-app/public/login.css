@@ -7,7 +7,7 @@
 }
 
 .garden-login { font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
-.garden-login .brand { background: transparent; border-radius: 0; font-weight: 750; text-shadow: 0 0 8px #f1efe640, 0 0 22px #d5dda926; }
+.garden-login .brand { background: transparent; border-radius: 0; font-weight: 750; text-shadow: 0 0 5px #f1efe622, 0 0 14px #d5dda914; }
 .garden-login .login-layout { max-width: 336px; }
 .garden-login .login-card { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .garden-login .login-card h1 { font-family: inherit; font-size: 2.5rem; font-weight: 500; line-height: 1.15; letter-spacing: -.055em; color: #f1eee3; }
