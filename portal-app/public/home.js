@@ -48,6 +48,7 @@ globalThis.classproHome = (() => {
   updateFilters();
 
   function page(destination, focus = true) {
+    const previousPage = document.body.dataset.page;
     document.body.dataset.page = destination;
     get('home-view').hidden = destination !== 'home';
     get('reports-view').hidden = destination === 'home';
@@ -59,6 +60,7 @@ globalThis.classproHome = (() => {
       else button.removeAttribute('aria-current');
     }
     get('reports-title').textContent = destination === 'marks' ? 'Your marks.' : 'Your attendance.';
+    if (previousPage !== destination) anonFeedback.enter(get(destination === 'home' ? 'home-view' : 'reports-view'));
     if (focus) get(destination === 'home' ? 'home-title' : 'reports-title').focus();
     get('planner-menu').open = false;
   }

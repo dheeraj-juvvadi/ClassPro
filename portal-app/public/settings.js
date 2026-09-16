@@ -11,6 +11,8 @@ globalThis.anonSettings = (() => {
   function apply() {
     document.body.dataset.accent = ['sand', 'clay'].includes(prefs.theme) ? prefs.theme : 'sage';
     get('settings-theme').value = document.body.dataset.accent;
+    get('settings-haptics').checked = prefs.haptics !== false;
+    anonFeedback.setHaptics(prefs.haptics !== false);
     get('settings-notifications').checked = prefs.notifications === true && globalThis.Notification?.permission === 'granted';
     const name = prefs.name || report.profile?.name || '';
     get('settings-name').textContent = name || 'Your space.';
@@ -50,8 +52,9 @@ globalThis.anonSettings = (() => {
   }
   get('settings-profile-form').addEventListener('submit', event => {
     event.preventDefault(); prefs.name = get('settings-display-name').value.trim().slice(0, 60);
-    save(); apply(); tell('Display name saved on this browser.');
+    save(); apply(); tell('Display name saved on this browser.'); anonFeedback.success('Name saved.');
   });
+  get('settings-haptics').addEventListener('change', event => { prefs.haptics = event.target.checked; anonFeedback.setHaptics(prefs.haptics); save(); });
   get('settings-theme').addEventListener('change', event => { prefs.theme = event.target.value; save(); apply(); });
   get('settings-notifications').addEventListener('change', async event => {
     const checked = event.target.checked;
@@ -66,7 +69,10 @@ globalThis.anonSettings = (() => {
   get('settings-sync').addEventListener('click', async () => {
     if (get('settings-sync').disabled) return;
     tell('');
-    try { await loadReports({ force: true }); tell('Your data is up to date.'); }
+    try { const data = await loadReports({ force: true });
+      if (data?.warnings?.length || data?.attendance?.error || data?.marks?.error) tell('Some data could not refresh. Your last data is still available.');
+      else { tell('Your data is up to date.'); anonFeedback.success('All up to date.'); }
+    }
     catch (error) { tell(error.message || 'Could not sync. Try again.'); }
 
   });
@@ -78,6 +84,7 @@ globalThis.anonSettings = (() => {
   return { update, clear() {
     report = {}; storageKey = ''; prefs = {}; previous = null;
     document.body.dataset.accent = 'sage';
+    anonFeedback.setHaptics(true);
     for (const id of ['settings-name', 'settings-program', 'settings-message']) get(id).replaceChildren();
     get('settings-display-name').value = '';
   } };

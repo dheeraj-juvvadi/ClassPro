@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
+  <link rel="stylesheet" href="/interaction-feedback.css?v=7a01ad117a">
+  <script src="/interaction-feedback.js?v=57200f9f85" defer></script>
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
   <script src="/home-model.js?v=1adde8e762" defer></script>
@@ -27,7 +29,7 @@
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
   <script src="/course-details.js?v=c862a2bd04" defer></script>
   <script src="/greeting.js?v=f5ef206ccf" defer></script>
-  <script src="/home.js?v=8b2e3902a7" defer></script>
+  <script src="/home.js?v=a5ce70b1df" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=fd8c3b7f24" defer></script>
   <script src="/date-attendance.js?v=9e8de7e9ee" defer></script>
@@ -37,8 +39,8 @@
   <script src="/auth-client.js?v=2f54a42c87" defer></script>
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=9b80137deb" defer></script>
-  <script src="/settings.js?v=9ddf317c63" defer></script>
-  <script src="/app.js?v=c4ee630800" defer></script>
+  <script src="/settings.js?v=37dad414bc" defer></script>
+  <script src="/app.js?v=5b49107b94" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -151,9 +153,10 @@
 
   </dialog>
   <dialog id="login-fallback-dialog" aria-labelledby="login-fallback-title">
+    <p class="fallback-kicker">Another way in</p>
     <h2 id="login-fallback-title">Academia is unavailable right now</h2>
     <p id="login-fallback-message" class="quiet">Please sign in with Student Portal to fetch your attendance and marks.</p>
-    <p class="quiet">Your Student Portal password may be different. You can connect Academia later from Settings.</p>
+    <p class="fallback-note">Use your Student Portal password. You can connect Academia later from Settings.</p>
     <button id="use-student-portal" type="button">Sign in with Student Portal</button>
     <button id="retry-academia" type="button">Try Academia again</button>
   </dialog>
@@ -165,6 +168,7 @@
     <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
     <h3 class="settings-section-title">Your preferences</h3>
     <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="clay">Clay</option></select></label>
+    <label class="settings-row" for="settings-haptics"><span>Touch feedback<small>Gentle taps on supported devices.</small></span><input id="settings-haptics" type="checkbox" role="switch" checked></label>
     <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
     <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg> Sync</button></div>
     <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 48 hours of inactivity. Signing out deletes that session.</p><p>Your display preferences stay in this browser. Artwork is cached for reuse. Notifications contain no grades or personal details.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
@@ -201,5 +205,6 @@
     <p class="quiet">Unselected teaching days from today through your last leave date count as attended. Past dates allow OD corrections only, capped at recorded absences. These are projections; your records stay unchanged.</p>
     <div id="projection-result" aria-live="polite" aria-atomic="true"></div>
   </dialog>
+  <div id="action-feedback" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

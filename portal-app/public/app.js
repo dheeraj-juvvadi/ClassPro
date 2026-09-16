@@ -66,6 +66,7 @@ function showLogin(text = '', error = false) {
   dateAttendance.clear();
   providerConnections.clear();
   anonSettings.clear();
+  anonFeedback.clear();
   reportFingerprint = {};
   nextAutoSync = 0;
   authenticated = false;
@@ -285,6 +286,7 @@ $('use-student-portal').addEventListener('click', () => {
   $('login-fallback-dialog').close();
   classproAuth.usePortal();
   message('login-message', 'Use your Student Portal password to continue.');
+  anonFeedback.enter($('login-form'));
 });
 $('retry-academia').addEventListener('click', () => {
   $('login-fallback-dialog').close();
@@ -313,9 +315,9 @@ $('login-form').addEventListener('submit', (event) => {
       try {
         data = await classproAuth.login(api, credentials);
       } catch (error) {
-        if ($('login-provider').value === 'academia' && error.status !== 401 && !['SERVER_BUSY', 'CAPACITY'].includes(error.code)) {
-          $('login-fallback-title').textContent = error.status >= 500 ? 'Academia is unavailable right now' : 'Could not connect to Academia';
-          $('login-fallback-message').textContent = `${error.message} Please sign in with Student Portal to fetch your attendance and marks.`;
+        if ($('login-provider').value === 'academia' && !['SERVER_BUSY', 'CAPACITY', 'CAPTCHA_REQUIRED', 'CAPTCHA_INVALID'].includes(error.code)) {
+          $('login-fallback-title').textContent = error.status >= 500 ? 'Academia isn’t responding.' : error.status === 401 ? 'Academia sign-in didn’t complete.' : 'Couldn’t reach Academia.';
+          $('login-fallback-message').textContent = error.status === 401 ? 'Check your Academia details and try again, or continue with Student Portal for attendance and marks.' : 'You can still get your attendance and marks. Continue with Student Portal.';
           $('password').value = '';
           $('login-fallback-dialog').showModal();
           return;
@@ -326,6 +328,7 @@ $('login-form').addEventListener('submit', (event) => {
       if (data.authenticated !== true) throw new Error('Sign-in could not be confirmed.');
       showReports();
       await loadReports();
+      anonFeedback.success('You’re in.');
       return;
     }
     if (!manualChallengeAt || Date.now() - manualChallengeAt >= 90000) {
@@ -362,7 +365,10 @@ document.addEventListener('visibilitychange', resumeSync);
 // This timer only checks the clock. Requests occur at the scheduled IST slots.
 setInterval(resumeSync, 15000);
 
-$('refresh').addEventListener('click', () => run(() => loadReports({ force: true })));
+$('refresh').addEventListener('click', () => run(async () => {
+  const data = await loadReports({ force: true });
+  if (data && !data.attendance?.error && !data.marks?.error && !data.warnings?.length) anonFeedback.success('All up to date.');
+}));
 $('logout').addEventListener('click', () => run(async () => {
   if (designPreview) { location.href = '/'; return; }
   $('logout').textContent = 'Signing out…';

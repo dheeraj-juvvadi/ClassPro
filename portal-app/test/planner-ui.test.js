@@ -41,6 +41,14 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#use-student-portal').click();
   assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
   assert.equal(await page.locator('#account').inputValue(), 'synthetic');
+  await page.evaluate(() => classproAuth.configure({ authMode: 'http' }));
+  await page.route('**/api/login/client', route => route.fulfill({ status: 401, json: { error: { code: 'LOGIN_REJECTED', message: 'Sign-in rejected.' } } }));
+  await page.locator('#password').fill('test-password');
+  await page.locator('#sign-in').click();
+  await page.locator('#login-fallback-dialog').waitFor({ state: 'visible' });
+  assert.match(await page.locator('#login-fallback-title').innerText(), /sign-in didn’t complete/);
+  assert.doesNotMatch(await page.locator('#login-fallback-title').innerText(), /unavailable|isn’t responding/);
+  await page.locator('#retry-academia').click();
   await page.goto(`${origin}/?preview=home`);
   await page.locator('#home-view').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#planner-nav button').count(), 3);
@@ -195,5 +203,15 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.match(await page.locator('.attendance-change.positive').textContent(), /\+1.8%/);
   await page.evaluate(() => renderAttendance({ data: [{ code: 'CS', title: 'Computing', present: 7, conducted: 10, absent: 3, change24h: { points: -10 } }] }));
   assert.match(await page.locator('.attendance-change.negative').textContent(), /-10%/);
+  await page.evaluate(() => {
+    globalThis.hapticCalls = [];
+    Object.defineProperty(navigator, 'vibrate', { configurable: true, value: pattern => { hapticCalls.push(pattern); return true; } });
+    anonFeedback.setHaptics(false);
+    anonFeedback.success('Saved.');
+  });
+  assert.equal(await page.evaluate(() => hapticCalls.length), 0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.evaluate(() => { anonFeedback.setHaptics(true); anonFeedback.success('Saved.'); });
+  assert.equal(await page.evaluate(() => hapticCalls.length), 0);
   assert.deepEqual(failures, []);
 });
