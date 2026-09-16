@@ -25,5 +25,7 @@ not end the server session. Feedback opens GitHub; Anon submits nothing itself.
 Validation covers connection state visibility, name/theme updates, persistence,
 change logging, reset and layouts at 320, 390 and 1280 CSS pixels.
 
-Settings uses Anon’s floral cover, warm olive surfaces, cream text, sage controls
-and restrained dividers. Neutral gray panels and the Slate accent were removed.
+Settings has its own composition: charcoal foundation, cream profile note with a
+small original line-drawn flower, clay and muted olive connection tiles, and open
+preference rows. The calendar banner is not reused. Sage is limited to status
+accents rather than covering the surface. Existing Settings behavior is retained.

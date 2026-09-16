@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 150" fill="none">
+<title>Pressed flower</title>
+<path d="M48 140C53 104 40 77 53 43M49 117C30 106 23 91 20 81M49 98C65 90 74 79 79 64" stroke="#aa9b7a" stroke-width="1.5"/>
+<path d="M44 114C23 117 13 104 16 88C29 88 42 95 44 114ZM53 95C57 75 72 71 83 76C79 90 68 98 53 95Z" fill="#848f70"/>
+<g stroke="#dab59c" stroke-width="1.3"><path d="M54 42C34 38 29 23 38 16C48 12 57 26 54 42Z"/><path d="M54 42C51 23 60 9 70 14C81 22 67 39 54 42Z"/><path d="M54 42C73 30 87 36 84 47C80 59 62 53 54 42Z"/><path d="M54 42C65 54 62 69 51 66C40 62 45 49 54 42Z"/><path d="M54 42C37 51 23 45 27 35C32 26 46 32 54 42Z"/></g>
+<circle cx="54" cy="42" r="4" fill="#d4bc81"/>
+</svg>
