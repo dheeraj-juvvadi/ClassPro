@@ -95,3 +95,21 @@ Today’s classes share one compact agenda; period planning buttons and connecti
 source labels were removed. The standalone timetable view is deferred; its menu
 entry and the next-class arrow now lead to Attendance. The month calendar and
 attendance date calculator remain available.
+
+## Attendance change and Sunday sync
+
+Automatic sync skips Sundays in Asia/Kolkata in both browser and backend.
+Saturday's last slot leads to Monday 08:00. Cached startup reads and explicit
+sign-in are allowed; manual Sync uses force=1 and works on Sundays.
+
+Successful attendance readings are saved with the encrypted session, bounded to
+200 observations / 3 days. Reports include per-course change24h only when a
+baseline exists at or up to two hours before the 24-hour comparison point.
+No missing baseline is fabricated. The displayed signed percentage is a change
+in percentage points, with the precise explanation in its accessible label.
+Warnings/errors are not sampled. Observations persist across server restarts
+for remembered sessions; they are removed with session logout/expiry.
+
+Both Sync buttons share a rotating SVG control. It remains visible for at least
+650ms for fast responses and respects reduced-motion preferences. No new API
+requests are introduced by the delta or greeting display.

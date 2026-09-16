@@ -81,3 +81,6 @@ ChatGPT personality help page returned HTTP 403 during this review.
 27. Late visit?
 28. Tomorrow already?
 
+
+Latest adjustment: append the user's display name to every selected short line,
+e.g. “Still here, Dheeraj?”. Lines already containing the name do not repeat it.
