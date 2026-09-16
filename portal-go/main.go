@@ -35,6 +35,13 @@ func main() {
 			log.Fatal(err)
 		}
 		app.httpAuth = newHTTPAuth(codec)
+		if os.Getenv("PORTAL_CLIENT") == "ratio-python" {
+			app.ratio = true
+			ratio := newRatioWorker()
+			app.worker = ratio
+			defer ratio.shutdown()
+			go app.Reap(ctx)
+		}
 	} else {
 		go app.Reap(ctx)
 	}

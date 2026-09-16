@@ -30,6 +30,7 @@ type rate struct {
 }
 
 type Server struct {
+	ratio    bool
 	httpAuth *httpAuth
 	config   Config
 	worker   worker

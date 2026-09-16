@@ -106,6 +106,9 @@ func (server *Server) reports(writer http.ResponseWriter, request *http.Request,
 	close(pending.done)
 	server.mu.Unlock()
 	<-server.slots
+	if server.ratio && response.Status == 401 {
+		_ = server.call("close", entry, nil)
+	}
 	send(writer, response)
 }
 

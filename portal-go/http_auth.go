@@ -47,6 +47,9 @@ func (auth *httpAuth) entry(state *clientState) (*directSession, *transientJar) 
 }
 
 func (server *Server) statelessRoute(writer http.ResponseWriter, request *http.Request) {
+	if server.ratio && server.ratioDispatch(writer, request) {
+		return
+	}
 	auth := server.httpAuth
 	methods := map[string]string{"/api/session": "GET, DELETE", "/api/challenge": "POST", "/api/login/client": "POST", "/api/reports": "GET"}
 	allowed, exists := methods[request.URL.Path]

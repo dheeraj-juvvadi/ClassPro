@@ -48,6 +48,7 @@ yarn-error.log*
 next-env.d.ts
 
 /reference/
+/portal-python/**/__pycache__/
 
 # Million Lint
 .million

@@ -38,7 +38,7 @@ func (server *Server) route(writer http.ResponseWriter, request *http.Request) {
 			send(writer, failure(413, "INVALID_REQUEST", "Request is too large."))
 			return
 		}
-		if !validPayload(request.URL.Path, payload) {
+		if !(server.ratio && validRatioPayload(request.URL.Path, payload)) && !validPayload(request.URL.Path, payload) {
 			send(writer, failure(400, "INVALID_REQUEST", "Check your sign-in details and try again."))
 			return
 		}
@@ -60,7 +60,12 @@ func (server *Server) route(writer http.ResponseWriter, request *http.Request) {
 	if request.URL.Path == "/api/session" && request.Method == "GET" {
 		authenticated := entry != nil && entry.authenticated
 		server.mu.Unlock()
-		body, _ := json.Marshal(map[string]bool{"authenticated": authenticated})
+		var body []byte
+		if server.ratio {
+			body, _ = json.Marshal(map[string]any{"authenticated": authenticated, "provider": "portal", "authMode": "http", "serverAuto": true})
+		} else {
+			body, _ = json.Marshal(map[string]bool{"authenticated": authenticated})
+		}
 		send(writer, reply{200, body})
 		return
 	}

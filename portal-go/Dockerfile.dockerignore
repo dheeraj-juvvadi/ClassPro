@@ -8,6 +8,13 @@
 !portal-go/worker.mjs
 !portal-go/start.mjs
 !portal-go/Dockerfile
+!portal-python/
+!portal-python/**
+portal-python/**/__pycache__/
+!portal-app/public/
+!portal-app/public/ocr/
+!portal-app/public/ocr/portal-alnum.onnx
+!portal-app/public/ocr/charset.json
 !portal-app/
 !portal-app/src/
 !portal-app/src/portal.js

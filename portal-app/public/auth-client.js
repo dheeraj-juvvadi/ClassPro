@@ -8,11 +8,13 @@ globalThis.classproAuth = (() => {
   let movements = 0;
   let challengeAt = 0;
   let prediction = '';
+  let serverAuto = false;
   const element = id => document.getElementById(id);
   const provider = () => element('login-provider').value;
   const clearChallenge = () => {
     challengeAt = 0;
     prediction = '';
+    serverAuto = false;
     element('manual-captcha-answer').value = '';
     element('manual-captcha-answer').required = false;
     element('manual-captcha-image').hidden = true;
@@ -69,6 +71,8 @@ globalThis.classproAuth = (() => {
       throw new Error('Could not load SRM verification. Please retry.');
     }
     element('manual-captcha-image').src = result.image;
+    serverAuto = result.serverAuto === true && automatic;
+    if (serverAuto) return;
     if (automatic) {
       element('sign-in-status').textContent = 'Reading verification code…';
       try {
@@ -84,7 +88,7 @@ globalThis.classproAuth = (() => {
   async function login(api, credentials) {
     if (!challengeAt || Date.now() - challengeAt >= 90000) await prepare(api, true);
     const answer = prediction || element('manual-captcha-answer').value;
-    if (provider() === 'portal' && !answer) return null;
+    if (provider() === 'portal' && !answer && !serverAuto) return null;
     const integrity = await createCredentialIntegrity(credentials.account, credentials.password, answer);
     try {
       const result = await api('/api/login/client', { method: 'POST', body: JSON.stringify({
