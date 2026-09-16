@@ -3,6 +3,8 @@
 const $ = (id) => document.getElementById(id);
 let authenticated = false;
 let busy = false;
+let reportLoad = null;
+let lastReportSync = 0;
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
 
@@ -201,7 +203,13 @@ function renderMarks(report) {
   if (data.length) container.append(list);
 }
 
-async function loadReports() {
+function loadReports() {
+  if (reportLoad) return reportLoad;
+  reportLoad = fetchReports().finally(() => { reportLoad = null; });
+  return reportLoad;
+}
+
+async function fetchReports() {
   if (designPreview) return;
   $('refresh').textContent = 'Retrying…';
   $('report-content').setAttribute('aria-busy', 'true');
@@ -217,9 +225,11 @@ async function loadReports() {
     classproHome.update(reports.attendance, reports.schedule);
     academicSummary.update(reports);
     providerConnections.update(reports);
+    lastReportSync = Date.now();
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Retry.' : '');
+    return reports;
   } catch (error) {
     for (const kind of ['attendance', 'marks']) {
       const container = $(`${kind}-content`);
@@ -296,6 +306,15 @@ $('login-form').addEventListener('submit', (event) => {
     await loadReports();
   });
 });
+
+function resumeSync() {
+  if (!authenticated || busy || designPreview || document.hidden || $('connect-dialog').open || Date.now() - lastReportSync < 60000) return;
+  run(loadReports);
+}
+window.addEventListener('focus', resumeSync);
+window.addEventListener('online', resumeSync);
+document.addEventListener('visibilitychange', resumeSync);
+setInterval(resumeSync, 5 * 60 * 1000);
 
 $('refresh').addEventListener('click', () => run(loadReports));
 $('logout').addEventListener('click', () => run(async () => {

@@ -38,6 +38,8 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.match(await page.locator('#next-class-card').innerText(), /81.8%/);
   assert.equal(await page.locator('#schedule-form').count(), 0);
   await page.evaluate(() => providerConnections.update({ connections: { portal: { connected: true } } }));
+  assert.equal(await page.getByRole('button', { name: 'Connect Student Portal', exact: true }).count(), 0);
+  assert.match(await page.locator('#provider-connections').innerText(), /Student Portal connected/);
   await page.getByRole('button', { name: 'Connect Academia', exact: true }).click();
   const providerRequests = [];
   await page.route('**/api/challenge', route => {
@@ -50,12 +52,24 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   });
   await page.locator('#connect-account').fill('synthetic');
   await page.locator('#connect-password').fill('test-password');
+  await page.evaluate(() => {
+    globalThis.savedLoadReports = loadReports;
+    loadReports = async () => { throw new Error('Reports could not refresh. Try again.'); };
+  });
   await page.locator('#connect-submit').click();
-  await page.locator('#connect-dialog').waitFor({ state: 'hidden' });
+  await page.getByText('Reports could not refresh. Try again.', { exact: true }).waitFor();
+  assert.equal(await page.locator('#connect-dialog').isVisible(), true);
   assert.equal(providerRequests.length, 2);
   assert.equal(providerRequests[0].provider, 'academia');
   assert.equal(providerRequests[1].provider, 'academia');
   assert.equal(await page.locator('#connect-password').inputValue(), '');
+  await page.evaluate(() => { loadReports = async () => ({ connections: { academia: { connected: true } }, schedule: { entries: [] } }); });
+  await page.locator('#connect-password').fill('test-password');
+  await page.locator('#connect-submit').click();
+  await page.getByText('Academia connected, but it returned no timetable. Your attendance is still available. Close this dialog to continue.', { exact: true }).waitFor();
+  assert.equal(await page.locator('#connect-dialog').isVisible(), true);
+  await page.locator('#close-connect').click();
+  await page.evaluate(() => { loadReports = globalThis.savedLoadReports; });
   await page.getByRole('button', { name: 'Attendance', exact: true }).click();
   assert.equal(await page.locator('#monthly-attendance tbody tr').count(), 2);
   await page.getByRole('button', { name: 'Home', exact: true }).click();

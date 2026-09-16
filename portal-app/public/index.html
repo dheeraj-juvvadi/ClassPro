@@ -65,7 +65,7 @@
             <button id="password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button>
           </div>
           <div class="login-options">
-            <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox">Keep me signed in</label>
+            <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox" checked>Keep me signed in for 2 days</label>
             <a href="https://ssp.srmist.edu.in/resetpassword/" target="_blank" rel="noopener noreferrer">Forgot password?</a>
           </div>
           <div id="manual-captcha">
@@ -146,7 +146,7 @@
       <p id="connect-message" role="status" class="quiet"></p>
       <button id="connect-submit" type="submit">Connect</button>
     </form>
-    <p class="quiet">Credentials stay in this server session for automatic reconnection. Signing out or session expiry removes them.</p>
+    <p class="quiet">Remembered sessions are encrypted on the server for automatic reconnection for 2 days of inactivity. Signing out removes this session.</p>
   </dialog>
   <footer class="site-footer">Anon <span>Student Portal</span></footer>
   <dialog id="projection-dialog" aria-labelledby="projection-title">

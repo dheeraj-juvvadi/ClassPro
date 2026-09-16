@@ -8,8 +8,15 @@ globalThis.providerConnections = (() => {
     const container = get('provider-connections'); container.replaceChildren();
     for (const provider of ['academia', 'portal']) {
       const state = report.connections?.[provider];
+      if (state?.connected && !state.expired) {
+        const status = document.createElement('span');
+        status.className = 'provider-connected';
+        status.textContent = `${label(provider)} connected`;
+        container.append(status);
+        continue;
+      }
       const button = document.createElement('button'); button.type = 'button';
-      button.textContent = `${state?.connected && !state.expired ? 'Reconnect' : 'Connect'} ${label(provider)}`;
+      button.textContent = `${state?.expired ? 'Reconnect' : 'Connect'} ${label(provider)}`;
       button.addEventListener('click', () => {
         selected = provider;
         get('connect-title').textContent = `Connect ${label(provider)}`;
@@ -39,10 +46,16 @@ globalThis.providerConnections = (() => {
         await api('/api/challenge', { method: 'POST', body: JSON.stringify({ provider: selected }) }, true);
         challengeReady = true;
       }
-      await api('/api/login/client', { method: 'POST', body: JSON.stringify({ provider: selected, account, password, answer: get('connect-answer').value }) }, true);
+      const result = await api('/api/login/client', { method: 'POST', body: JSON.stringify({ provider: selected, account, password, answer: get('connect-answer').value }) }, true);
+      if (result.authenticated !== true) throw new Error('The server did not confirm this connection. Please retry.');
       get('connect-password').value = '';
-      get('connect-dialog').close();
-      await loadReports();
+      get('connect-message').textContent = `${label(selected)} signed in. Loading reports…`;
+      const reports = await loadReports();
+      if (!reports?.connections?.[selected]?.connected) throw new Error('Sign-in finished, but the connection could not be confirmed. Refresh reports and retry.');
+      get('connect-message').textContent = selected === 'academia' && !reports.schedule?.entries?.length
+        ? 'Academia connected, but it returned no timetable. Your attendance is still available. Close this dialog to continue.'
+        : `${label(selected)} connected. Your reports are updated. Close this dialog to continue.`;
+      challengeReady = false;
     } catch (error) {
       if (error.code === 'CAPTCHA_REQUIRED' && /^data:image\/(png|jpeg);base64,/.test(error.image || '')) {
         get('connect-captcha').hidden = false; get('connect-image').src = error.image;
