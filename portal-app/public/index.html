@@ -14,17 +14,17 @@
   <link rel="stylesheet" href="/home.css?v=b88f426dd1">
   <link rel="stylesheet" href="/academic.css?v=f97bbc9778">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
-  <link rel="stylesheet" href="/calendar-timetable.css?v=5c9ec5beaf">
+  <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
   <script src="/home-model.js?v=1adde8e762" defer></script>
   <script src="/schedule-model.js?v=59f9ae9285" defer></script>
   <script src="/schedule-calendar.js?v=80e858b0a7" defer></script>
-  <script src="/academic-calendar.js?v=b570ae30b9" defer></script>
+  <script src="/academic-calendar.js?v=37102b4930" defer></script>
   <script src="/timetable-svg.js?v=3a65e623cc" defer></script>
   <script src="/course-details.js?v=c862a2bd04" defer></script>
   <script src="/greeting.js?v=71ab6ab926" defer></script>
-  <script src="/home.js?v=81b17e339a" defer></script>
+  <script src="/home.js?v=5267c81667" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=fd8c3b7f24" defer></script>
   <script src="/date-attendance.js?v=9e8de7e9ee" defer></script>
@@ -33,7 +33,7 @@
   <script src="/client-ocr.js?v=7a543e9229" defer></script>
   <script src="/auth-client.js?v=2f54a42c87" defer></script>
   <script src="/report-sync.js?v=82b2d514be" defer></script>
-  <script src="/app.js?v=02971a6ef7" defer></script>
+  <script src="/app.js?v=f432a4d2dd" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -133,7 +133,11 @@
     <button type="button" data-page="marks"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 21V11m7 10V3m7 18V7"/></svg>Marks</button>
   </nav>
   <dialog id="calendar-dialog" aria-labelledby="calendar-title">
-    <div class="schedule-heading"><h2 id="calendar-title">Academic calendar</h2><button id="close-calendar" type="button" aria-label="Close calendar">×</button></div>
+    <div class="calendar-cover">
+      <img id="calendar-art" data-src="/calendar-garden.eefc609c1c.svg" alt="" width="1000" height="320" decoding="async">
+      <div><p class="planner-eyebrow">Your academic year</p><h2 id="calendar-title">The calendar.</h2><p>Day orders, dates &amp; days off.</p></div>
+      <button id="close-calendar" type="button" aria-label="Close calendar">×</button>
+    </div>
     <div id="academic-calendar"></div>
   </dialog>
   <dialog id="schedule-dialog" aria-labelledby="schedule-title">

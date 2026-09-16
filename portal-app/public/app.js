@@ -90,6 +90,8 @@ function showLogin(text = '', error = false) {
 }
 
 function showReports() {
+  const calendarArt = $('calendar-art');
+  if (!calendarArt.hasAttribute('src')) calendarArt.src = calendarArt.dataset.src;
   document.body.classList.remove('garden-login');
   document.body.classList.add('planner');
   manualChallengeAt = 0;

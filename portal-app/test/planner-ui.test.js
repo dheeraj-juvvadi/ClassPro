@@ -97,6 +97,18 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('.academic-month button').count(), 30);
   await page.locator('.academic-month button[data-date="2026-09-14"]').click();
   assert.match(await page.locator('.calendar-detail').innerText(), /Day order 1/);
+  assert.equal(await page.locator('.calendar-period').count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'View selected day classes' }).count(), 0);
+  assert.equal(await page.locator('#calendar-art').evaluate(img => img.complete && img.naturalWidth > 0), true);
+  await page.getByRole('button', { name: 'Next month', exact: true }).click();
+  assert.equal(await page.locator('.academic-month button').count(), 31);
+  assert.match(await page.locator('#calendar-month-title').innerText(), /October 2026/);
+  await page.getByRole('button', { name: 'Return to today', exact: true }).click();
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.equal(await page.locator('#calendar-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
+  }
+
   await page.locator('#close-calendar').click();
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-schedule').click();

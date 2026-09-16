@@ -30,3 +30,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Academic calendar: month grid, month shifting, selected-day clamping and day
+selection adapted from components/calender/month-picker-calendar.tsx in
+https://github.com/bidyut10/opensourceui (retrieved September 16, 2026).
+Adaptation uses native DOM buttons, Monday-first academic dates, Anon typography,
+calendar event states and a selected-date panel. Existing MIT notice above applies.

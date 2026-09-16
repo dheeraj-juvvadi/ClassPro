@@ -174,8 +174,7 @@ globalThis.classproHome = (() => {
     get('schedule-dialog').showModal();
   }
 
-  const monthCalendar = createAcademicCalendar({ container: get('academic-calendar'), source, now,
-    onSelect(date) { selectedDate = date; get('calendar-dialog').close(); calendar.reset(date); page('home'); render(); } });
+  const monthCalendar = createAcademicCalendar({ container: get('academic-calendar'), source, now });
   get('open-calendar').addEventListener('click', () => {
     get('planner-menu').open = false; monthCalendar.reset(); get('calendar-dialog').showModal();
   });

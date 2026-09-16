@@ -1,6 +1,20 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/proxy?__path=:path*" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api/proxy?__path=:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/calendar-garden.:hash.svg",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
   ]
 }
