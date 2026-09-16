@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
-  <link rel="stylesheet" href="/interaction-feedback.css?v=b7930f8bb0">
+  <link rel="stylesheet" href="/interaction-feedback.css?v=9965e94781">
   <script src="/interaction-feedback.js?v=57200f9f85" defer></script>
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
@@ -40,7 +40,7 @@
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=9b80137deb" defer></script>
   <script src="/settings.js?v=37dad414bc" defer></script>
-  <script src="/app.js?v=5b49107b94" defer></script>
+  <script src="/app.js?v=742ced0377" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -153,11 +153,11 @@
 
   </dialog>
   <dialog id="login-fallback-dialog" aria-labelledby="login-fallback-title">
-    <p class="fallback-kicker">Anon / Sign in</p>
-    <h2 id="login-fallback-title">Academia is unavailable right now</h2>
-    <p id="login-fallback-message" class="quiet">Please sign in with Student Portal to fetch your attendance and marks.</p>
-    <p class="fallback-note">Use your Student Portal password. You can connect Academia later from Settings.</p>
+    <div class="fallback-status"><span class="fallback-status-dot" aria-hidden="true"></span><h2 id="login-fallback-title">Academia isn’t responding.</h2></div>
+    <p class="fallback-headline">Let’s try<br><em>Student Portal.</em></p>
+    <p id="login-fallback-message">Your attendance and marks are available through Student Portal, too.</p>
     <button id="use-student-portal" type="button"><span>Sign in with Student Portal</span><span class="fallback-arrow" aria-hidden="true">↗</span></button>
+    <p class="fallback-note">You’ll need your Student Portal password.</p>
     <button id="retry-academia" type="button">Try Academia again</button>
   </dialog>
   <dialog id="accounts-dialog" aria-labelledby="accounts-title">

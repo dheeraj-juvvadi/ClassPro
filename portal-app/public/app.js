@@ -317,7 +317,7 @@ $('login-form').addEventListener('submit', (event) => {
       } catch (error) {
         if ($('login-provider').value === 'academia' && !['SERVER_BUSY', 'CAPACITY', 'CAPTCHA_REQUIRED', 'CAPTCHA_INVALID'].includes(error.code)) {
           $('login-fallback-title').textContent = error.status >= 500 ? 'Academia isn’t responding.' : error.status === 401 ? 'Academia sign-in didn’t complete.' : 'Couldn’t reach Academia.';
-          $('login-fallback-message').textContent = error.status === 401 ? 'Check your Academia details and try again, or continue with Student Portal for attendance and marks.' : 'You can still get your attendance and marks. Continue with Student Portal.';
+          $('login-fallback-message').textContent = error.status === 401 ? 'Check your Academia details, or use Student Portal to get your attendance and marks.' : 'Your attendance and marks are available through Student Portal, too.';
           $('password').value = '';
           $('login-fallback-dialog').showModal();
           return;

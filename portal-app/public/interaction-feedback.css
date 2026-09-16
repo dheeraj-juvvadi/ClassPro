@@ -1,14 +1,20 @@
 @font-face { font-family: 'Anon Editorial'; src: url('/Newsreader.ttf') format('truetype'); font-weight: 200 800; font-style: normal; font-display: swap; }
-#login-fallback-dialog { width: min(460px, calc(100% - 32px)); padding: 34px 30px 22px; background: #1b2019; border: 1px solid #4d5542; border-radius: 7px; color: #eee9d9; }
-#login-fallback-dialog .fallback-kicker { color: #b7c39f; font-size: 11px; text-transform: none; letter-spacing: 0; margin: 0 0 25px; }
-#login-fallback-dialog h2 { font-family: 'Anon Editorial', Georgia, serif; font-size: clamp(36px, 9vw, 47px); font-weight: 400; line-height: 1.02; letter-spacing: -.025em; max-width: 15ch; margin: 0; text-wrap: balance; }
-#login-fallback-dialog #login-fallback-message { color: #d2d6c4; font-size: 14px; line-height: 1.7; margin: 23px 0 13px; max-width: 35ch; }
-#login-fallback-dialog .fallback-note { color: #aeb89f; font-size: 12px; line-height: 1.65; margin: 0 0 24px; }
-#login-fallback-dialog #use-student-portal { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; background: transparent; color: #d1dfb5; border: 0; border-top: 1px solid #66745170; border-bottom: 1px solid #66745170; border-radius: 0; min-height: 68px; padding: 16px 0; margin: 12px 0 0; font-size: 15px; font-weight: 500; text-align: left; }
-#use-student-portal .fallback-arrow { font-size: 25px; font-weight: 400; }
-#login-fallback-dialog #use-student-portal:hover { color: #f0f2df; }
-#login-fallback-dialog #retry-academia { width: auto; display: block; background: transparent; color: #b3bea5; font-size: 12px; padding: 12px 0; margin-top: 5px; font-weight: 400; }
-#login-fallback-dialog button:focus-visible { outline: 2px solid #c5d4a7; outline-offset: 4px; }
+/* A single pale-sage sheet within the dark sign-in screen. */
+#login-fallback-dialog { width: min(448px, calc(100% - 32px)); padding: 30px 30px 20px; background: #d9dfc7; border: 0; border-radius: 20px 20px 6px 6px; color: #283122; box-shadow: 0 24px 80px #0005; }
+#login-fallback-dialog::backdrop { background: #10160dd9; }
+.fallback-status { display: flex; align-items: center; gap: 9px; }
+.fallback-status-dot { width: 5px; height: 5px; flex: 0 0 5px; border-radius: 50%; background: #826342; }
+#login-fallback-dialog h2 { font-family: Inter, sans-serif; font-size: 11px; font-weight: 500; line-height: 1.5; letter-spacing: 0; max-width: none; margin: 0; color: #5d664f; }
+#login-fallback-dialog .fallback-headline { font-family: 'Anon Editorial', Georgia, serif; font-size: clamp(38px, 10vw, 49px); font-weight: 400; line-height: 1.04; letter-spacing: -.035em; margin: 36px 0 22px; color: #293322; }
+.fallback-headline em { font-style: normal; color: #5d704b; }
+#login-fallback-dialog #login-fallback-message { font-size: 13px; line-height: 1.7; max-width: 31ch; color: #56624a; margin: 0 0 30px; }
+#login-fallback-dialog #use-student-portal { display: flex; align-items: center; justify-content: space-between; gap: 18px; width: 100%; padding: 17px 18px; min-height: 58px; margin: 0; background: #303d27; color: #f0f2e5; border: 0; border-radius: 9px; font-size: 13px; font-weight: 500; text-align: left; }
+#use-student-portal .fallback-arrow { font-size: 24px; font-weight: 400; line-height: 1; }
+#login-fallback-dialog #use-student-portal:hover { background: #3c4c31; }
+#login-fallback-dialog .fallback-note { color: #636f56; font-size: 10px; line-height: 1.6; text-align: center; margin: 10px 0 18px; }
+#login-fallback-dialog #retry-academia { display: block; width: auto; margin: 0 auto; min-height: 44px; padding: 10px; background: transparent; color: #4d5a41; font-size: 11px; font-weight: 400; text-decoration: underline; text-underline-offset: 4px; }
+#login-fallback-dialog button:focus-visible { outline: 2px solid #293b20; outline-offset: 4px; }
+@media (max-width: 360px) { #login-fallback-dialog { padding: 26px 23px 16px; } }
 #action-feedback { position: fixed; left: 50%; bottom: max(104px, calc(env(safe-area-inset-bottom) + 88px)); transform: translateX(-50%); max-width: calc(100% - 40px); width: max-content; padding: 12px 19px; background: #d4dec1; color: #283520; border-radius: 6px; font-size: 13px; font-weight: 500; z-index: 30; pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) {
   #login-fallback-dialog[open] { animation: fallback-enter 180ms ease-out; }
