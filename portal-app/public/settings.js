@@ -65,10 +65,10 @@ globalThis.anonSettings = (() => {
   });
   get('settings-sync').addEventListener('click', async () => {
     if (get('settings-sync').disabled) return;
-    get('settings-sync').disabled = true; get('settings-sync').classList.add('syncing'); tell('');
+    tell('');
     try { await loadReports({ force: true }); tell('Your data is up to date.'); }
     catch (error) { tell(error.message || 'Could not sync. Try again.'); }
-    finally { get('settings-sync').disabled = false; get('settings-sync').classList.remove('syncing'); }
+
   });
   get('settings-reset').addEventListener('click', () => {
     try { if (storageKey) localStorage.removeItem(storageKey); } catch {}

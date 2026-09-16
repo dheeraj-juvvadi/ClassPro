@@ -41,7 +41,18 @@ globalThis.academicUI = (() => {
         pair.append(create('dt', '', label), create('dd', '', value ?? '—'));
         counts.append(pair);
       }
-      bottom.append(counts, create('strong', 'attendance-percent', status.percentage));
+      const percentage = create('div', 'attendance-percentage-group');
+      percentage.append(create('strong', 'attendance-percent', status.percentage));
+      const delta = course.change24h?.points;
+      if (Number.isFinite(delta)) {
+        const amount = Number(delta.toFixed(1));
+        const change = create('span', `attendance-change ${amount > 0 ? 'positive' : amount < 0 ? 'negative' : 'unchanged'}`, `${amount > 0 ? '+' : ''}${amount}%`);
+        change.append(create('small', '', ' · 24h'));
+        change.title = `${delta > 0 ? '+' : ''}${delta} percentage points since the saved reading near 24 hours ago`;
+        change.setAttribute('aria-label', change.title);
+        percentage.append(change);
+      }
+      bottom.append(counts, percentage);
       card.append(heading, bottom);
       const details = [course.faculty, course.room, course.type, course.credits && `${course.credits} credits`].map(value => courseDetails.clean(value)).filter(Boolean);
       if (details.length) card.append(create('p', 'course-metadata', details.join(' · ')));

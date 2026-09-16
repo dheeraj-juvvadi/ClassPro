@@ -137,3 +137,11 @@ dialog input { font-size: 16px; }
 #planner-menu[open] > summary > span { transform: rotate(45deg); }
 #planner-menu > summary:hover { background: #2d3525; color: #f1eee3; }
 #planner-menu > summary:focus-visible { outline: 2px solid #c5d4a7; outline-offset: 3px; }
+.attendance-percentage-group { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.attendance-change { font-size: 12px; font-weight: 550; font-variant-numeric: tabular-nums; }
+.attendance-change.positive { color: #bddb91; }
+.attendance-change.negative { color: #efaa92; }
+.attendance-change.unchanged, .attendance-change small { color: #adb4a4; }
+.attendance-change small { font-size: 10px; font-weight: 400; }
+button .sync-icon { width: 19px; height: 19px; flex-shrink: 0; vertical-align: middle; transform-origin: center; }
+#settings-sync { display: inline-flex; align-items: center; gap: 7px; }

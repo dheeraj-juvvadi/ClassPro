@@ -171,5 +171,12 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('.settings-detail').filter({ hasText: 'Privacy & storage' }).locator('summary').click();
   await page.locator('#settings-reset').click();
   assert.equal(await page.locator('#settings-name').innerText(), 'Test Person');
+  await page.evaluate(() => {
+    document.querySelector('#accounts-dialog').close();
+    renderAttendance({ data: [{ code: 'CS', title: 'Computing', present: 9, conducted: 11, absent: 2, change24h: { points: 1.82 } }] });
+  });
+  assert.match(await page.locator('.attendance-change.positive').textContent(), /\+1.8%/);
+  await page.evaluate(() => renderAttendance({ data: [{ code: 'CS', title: 'Computing', present: 7, conducted: 10, absent: 3, change24h: { points: -10 } }] }));
+  assert.match(await page.locator('.attendance-change.negative').textContent(), /-10%/);
   assert.deepEqual(failures, []);
 });

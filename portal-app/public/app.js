@@ -24,7 +24,7 @@ function message(id, text = '', error = false) {
 }
 
 function syncControls() {
-  for (const id of ['sign-in', 'password-toggle', 'refresh', 'logout']) $(id).disabled = busy;
+  for (const id of ['sign-in', 'password-toggle', 'refresh', 'logout']) $(id).disabled = busy || (id === 'refresh' && $(id).classList.contains('syncing'));
   $('account').disabled = busy;
   $('password').disabled = busy;
   $('remember').disabled = busy;
@@ -218,9 +218,7 @@ function loadReports(options = {}) {
 
 async function fetchReports({ cacheOnly = false, force = false, silent = false } = {}) {
   if (designPreview) return;
-  $('refresh').classList.add('syncing');
-  $('refresh').setAttribute('aria-label', 'Syncing reports');
-  $('refresh').disabled = true;
+  anonSyncControl.begin();
   if (!silent) message('reports-message');
   if (!$('attendance-content').childElementCount) {
     for (const kind of ['attendance', 'marks']) {
@@ -260,9 +258,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
     }
     throw error;
   } finally {
-    $('refresh').classList.remove('syncing');
-    $('refresh').setAttribute('aria-label', 'Sync reports');
-    $('refresh').disabled = false;
+    anonSyncControl.end();
   }
 }
 
@@ -356,7 +352,7 @@ $('login-form').addEventListener('submit', (event) => {
 });
 
 function resumeSync() {
-  if (!authenticated || busy || reportLoad || designPreview || document.hidden || !navigator.onLine || $('connect-dialog').open || Date.now() < nextAutoSync) return;
+  if (reportSyncSchedule.isSunday() || !authenticated || busy || reportLoad || designPreview || document.hidden || !navigator.onLine || $('connect-dialog').open || Date.now() < nextAutoSync) return;
   nextAutoSync = reportSyncSchedule.next();
   loadReports({ silent: true }).catch(() => {});
 }

@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/garden.css?v=1c5b5ccb5f">
   <link rel="stylesheet" href="/login.css?v=3a3182a966">
   <link rel="stylesheet" href="/home.css?v=b88f426dd1">
-  <link rel="stylesheet" href="/academic.css?v=0f7c742800">
+  <link rel="stylesheet" href="/academic.css?v=36d27fa7e4">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
   <link rel="stylesheet" href="/settings.css?v=5c6b6dc0bc">
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
@@ -24,18 +24,19 @@
   <script src="/academic-calendar.js?v=37102b4930" defer></script>
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
   <script src="/course-details.js?v=c862a2bd04" defer></script>
-  <script src="/greeting.js?v=71ab6ab926" defer></script>
+  <script src="/greeting.js?v=f5ef206ccf" defer></script>
   <script src="/home.js?v=8b2e3902a7" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=fd8c3b7f24" defer></script>
   <script src="/date-attendance.js?v=9e8de7e9ee" defer></script>
-  <script src="/academic-ui.js?v=e8c6a4232b" defer></script>
+  <script src="/academic-ui.js?v=76011be99e" defer></script>
   <script src="/provider-connections.js?v=d823a1c618" defer></script>
   <script src="/client-ocr.js?v=7a543e9229" defer></script>
   <script src="/auth-client.js?v=2f54a42c87" defer></script>
-  <script src="/report-sync.js?v=82b2d514be" defer></script>
-  <script src="/settings.js?v=395fcf2342" defer></script>
-  <script src="/app.js?v=feecbb2c7a" defer></script>
+  <script src="/report-sync.js?v=baa9e679ac" defer></script>
+  <script src="/sync-control.js?v=9b80137deb" defer></script>
+  <script src="/settings.js?v=9ddf317c63" defer></script>
+  <script src="/app.js?v=c4ee630800" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -108,7 +109,7 @@
       <div class="page-heading">
         <div>
           <p class="eyebrow">Your academic record</p>
-          <div class="report-title-row"><h1 id="reports-title" tabindex="-1">Academic overview</h1><button id="refresh" type="button" aria-label="Sync reports"><span class="sync-icon" aria-hidden="true">↻</span><span>Sync</span></button></div>
+          <div class="report-title-row"><h1 id="reports-title" tabindex="-1">Academic overview</h1><button id="refresh" type="button" aria-label="Sync reports"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sync</span></button></div>
           <p id="updated-at" class="quiet">Your attendance and marks.</p>
         </div>
         <div class="report-actions"><button id="calculate-attendance" type="button">Calculate ↗</button></div>
@@ -163,7 +164,7 @@
     <h3 class="settings-section-title">Your preferences</h3>
     <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="clay">Clay</option></select></label>
     <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
-    <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><span class="sync-icon" aria-hidden="true">↻</span> Sync</button></div>
+    <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg> Sync</button></div>
     <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 48 hours of inactivity. Signing out deletes that session.</p><p>Your display preferences stay in this browser. Artwork is cached for reuse. Notifications contain no grades or personal details.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
     <details class="settings-detail"><summary>What’s new</summary><p>Academic calendar, date-based attendance projections, recovery dates and scheduled background sync.</p></details>
     <a class="settings-feedback" href="https://github.com/dheeraj-juvvadi/ClassPro/issues/new" target="_blank" rel="noopener noreferrer">Feedback &amp; report a problem ↗</a>

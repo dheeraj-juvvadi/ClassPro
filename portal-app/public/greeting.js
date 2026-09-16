@@ -37,7 +37,12 @@ globalThis.anonGreetings = (() => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       chosen.push(options[seed % options.length]);
     }
-    return chosen.map(line => line.replace('{name}', displayName));
+    return chosen.map(line => {
+      if (line.includes('{name}')) return line.replace('{name}', displayName);
+      if (!displayName) return line;
+      const ending = line.endsWith('?') ? '?' : '.';
+      return `${line.replace(/[?.]$/, '')}, ${displayName}${ending}`;
+    });
   }
   function show(fullName, date, extras = []) {
     const hour = date.getHours();

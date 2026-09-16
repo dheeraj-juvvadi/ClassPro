@@ -12,3 +12,8 @@ test('sync slots follow IST working hours and evening slots, including midnight'
   assert.equal(next('2026-09-16T21:00:00+05:30'), '2026-09-16T17:30:00.000Z');
   assert.equal(next('2026-09-16T23:00:00+05:30'), '2026-09-17T02:30:00.000Z');
 });
+test('Sunday is skipped in IST including Saturday night and Sunday return', () => {
+  assert.equal(next('2026-09-19T23:00:00+05:30'), '2026-09-21T02:30:00.000Z');
+  assert.equal(next('2026-09-20T09:00:00+05:30'), '2026-09-21T02:30:00.000Z');
+  assert.equal(context.reportSyncSchedule.isSunday(Date.parse('2026-09-19T20:00:00Z')), true);
+});

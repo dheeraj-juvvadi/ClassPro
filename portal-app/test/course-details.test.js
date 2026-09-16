@@ -39,7 +39,8 @@ test('each profile gets exactly three stable distinct extras without requests', 
   assert.equal(new Set(selected).size, 3);
   assert.deepEqual(anonGreetings.select(profile), selected);
   assert.equal(selected.some(line => /\{name\}|Night shift|Midnight maths|Still waking|Tomorrow already/.test(line)), false);
-  for (const line of selected) assert.equal(line.split(/\s+/).length, 2);
+  for (const line of selected) assert.match(line, /Dheeraj/);
+  for (const line of selected) assert.equal((line.match(/Dheeraj/g) || []).length, 1);
   assert.equal(anonGreetings.select(null).length, 3);
   assert.equal(anonGreetings.select({}).some(line => line.includes('{name}')), false);
 });
