@@ -67,6 +67,7 @@ class ProviderFlowTests(DiagnosticTests):
             self.assertEqual(result.status_code, 200)
             entry = next(iter(server.sessions.values()))
             entry["cached"] = 0
+            entry["synced_at"] = 0
             result = (await self.client.get("/api/reports")).json()
             self.assertEqual(result["scheduleProvider"], "academia")
             self.assertEqual(result["schedule"]["entries"][0]["title"], "Course")

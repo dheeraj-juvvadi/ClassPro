@@ -26,6 +26,7 @@ from deep_evidence import integrity, runtime, submitted, workload
 from academic_data import extras
 from provider_flow import providers, combined, same_student, refresh as refresh_providers
 from session_store import SessionStore, lifetime, SESSION_SECONDS
+import sync_schedule
 
 upstream.PortalSession = instrument(upstream.PortalSession)
 
@@ -305,7 +306,7 @@ async def login(request: Request):
     entry["last_seen"] = time.time()
     sessions.pop(token, None)
     token = secrets.token_urlsafe(32)
-    entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic()})
+    entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic(), "synced_at": time.time()})
     sessions[token] = entry
     result = JSONResponse({"authenticated": True, "connections": entry["report"]["connections"]})
     set_session_cookie(result, token, entry)
@@ -317,11 +318,18 @@ async def reports(request: Request):
     entry = sessions.get(request.cookies.get(cookie_name))
     if not entry or not providers(entry):
         return failure("SESSION_EXPIRED", "Please sign in again.")
-    if time.monotonic() - entry.get("cached", 0) < 60:
-        return entry["report"]
+    now = time.time()
+    force = request.query_params.get("force") == "1"
+    cache_only = request.query_params.get("cache") == "only"
+    if cache_only or (not force and not sync_schedule.due(entry, now)):
+        return sync_schedule.response(entry, now)
+    entry["sync_attempted_at"] = now
     data, succeeded = await refresh_providers(request, entry, invoke, report)
     entry.update({"report": data, "cached": time.monotonic()})
-    return entry["report"]
+    if succeeded:
+        entry["synced_at"] = time.time()
+    return sync_schedule.response(entry, time.time())
+
 
 
 if os.environ.get("DIAGNOSTIC_STATIC_DIR") and not secure:
