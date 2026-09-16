@@ -22,6 +22,7 @@ import main as upstream
 from observe import events, instrument, record
 from deep_evidence import integrity, runtime, submitted, workload
 from academic_data import extras
+from provider_flow import providers, combined, same_student, refresh as refresh_providers
 
 upstream.PortalSession = instrument(upstream.PortalSession)
 
@@ -178,8 +179,9 @@ async def boundary(request, call_next):
 @app.get("/api/session")
 async def session_status(request: Request):
     entry = sessions.get(request.cookies.get(cookie_name))
-    return {"authenticated": bool(entry and entry.get("cookies")), "authMode": "http",
-            "provider": "portal", "serverAuto": True, "diagnosticBackend": True}
+    return {"authenticated": bool(entry and providers(entry)), "authMode": "http",
+            "provider": "academia", "providers": ["academia", "portal"],
+            "serverAuto": True, "diagnosticBackend": True}
 
 
 @app.delete("/api/session")
@@ -197,8 +199,9 @@ async def logout(request: Request):
 @app.post("/api/challenge")
 async def challenge(request: Request):
     payload = await request.json()
-    if payload.get("provider") != "portal":
-        return failure("PROVIDER_UNAVAILABLE", "This diagnostic backend tests Student Portal only.", 400)
+    provider = payload.get("provider", "portal")
+    if provider not in {"academia", "portal"}:
+        return failure("PROVIDER_UNAVAILABLE", "Choose Academia or Student Portal.", 400)
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
     if entry is None:
@@ -207,6 +210,11 @@ async def challenge(request: Request):
         token = secrets.token_urlsafe(32)
         entry = {"created": time.monotonic()}
         sessions[token] = entry
+    entry["pending_provider"] = provider
+    if provider == "academia":
+        result = JSONResponse({"required": False})
+        result.set_cookie(cookie_name, token, httponly=True, secure=secure, samesite="strict", max_age=1800)
+        return result
     if entry.get("digest"):
         previous = upstream._portal_captcha_sessions.pop(entry["digest"], None)
         if previous:
@@ -224,28 +232,39 @@ async def challenge(request: Request):
 async def login(request: Request):
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
-    if not entry or not entry.get("digest"):
+    if not entry:
         return failure("SESSION_EXPIRED", "Start a fresh sign-in.")
     payload = await request.json()
+    provider = payload.get("provider", entry.get("pending_provider", "portal"))
+    if provider not in {"academia", "portal"} or provider != entry.get("pending_provider", "portal"):
+        return failure("INVALID_REQUEST", "Start a fresh sign-in for this provider.", 400)
+    if provider == "portal" and not entry.get("digest"):
+        return failure("SESSION_EXPIRED", "Start a fresh sign-in.")
     if not isinstance(payload.get("account"), str) or not isinstance(payload.get("password"), str):
         return failure("INVALID_REQUEST", "Enter your account and password.", 400)
     print(json.dumps({"event": "ratio_evidence", "request_id": request.state.diagnostic_id,
                       **integrity(payload)}), flush=True)
-    response, data = await invoke(request, "/portal/login", {
+    login_payload = {
         "username": payload["account"], "password": payload["password"],
-        "captcha": payload.get("answer") or None, "cdigest": entry["digest"],
-    })
+        "captcha": payload.get("answer") or None, "cdigest": entry.get("digest"),
+    }
+    response, data = await invoke(request, "/portal/login" if provider == "portal" else "/login", login_payload)
     if response.status_code != 200 or data.get("success") is not True:
         detail = data.get("detail")
         if isinstance(detail, str) and "captcha" in detail.lower():
             return failure("CAPTCHA_REQUIRED", "Ratio-D backend requested a new verification code.")
         return failure("LOGIN_REJECTED", "Ratio-D backend did not establish an SRM session.",
                        401 if response.status_code < 500 else 502)
-    if not data.get("cookies") or not data.get("attendance"):
-        return failure("PORTAL_CHANGED", "Login returned no verifiable attendance data.", 502)
+    if not data.get("cookies") or not (data.get("attendance") or data.get("schedule")):
+        return failure("PORTAL_CHANGED", "Login returned no attendance or timetable data.", 502)
+    states = providers(entry)
+    if not same_student(states, provider, data, payload["account"]):
+        return failure("ACCOUNT_MISMATCH", "Connect the same student's account for both providers.", 409)
+    states[provider] = {"cookies": data["cookies"], "username": payload["account"],
+                        "password": payload["password"], "report": report(data), "expired": False}
     sessions.pop(token, None)
     token = secrets.token_urlsafe(32)
-    entry.update({"cookies": data["cookies"], "report": report(data), "cached": time.monotonic()})
+    entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic()})
     sessions[token] = entry
     result = JSONResponse({"authenticated": True})
     result.set_cookie(cookie_name, token, httponly=True, secure=secure, samesite="strict", max_age=1800)
@@ -255,15 +274,12 @@ async def login(request: Request):
 @app.get("/api/reports")
 async def reports(request: Request):
     entry = sessions.get(request.cookies.get(cookie_name))
-    if not entry or not entry.get("cookies"):
+    if not entry or not providers(entry):
         return failure("SESSION_EXPIRED", "Please sign in again.")
     if time.monotonic() - entry.get("cached", 0) < 60:
         return entry["report"]
-    response, data = await invoke(request, "/portal/refresh", {"cookies": entry["cookies"]})
-    if response.status_code != 200:
-        return failure("SESSION_EXPIRED", "Your SRM session expired.")
-    entry.update({"cookies": data.get("cookies", entry["cookies"]),
-                  "report": report(data, entry.get("report")), "cached": time.monotonic()})
+    data, succeeded = await refresh_providers(request, entry, invoke, report)
+    entry.update({"report": data, "cached": time.monotonic()})
     return entry["report"]
 
 

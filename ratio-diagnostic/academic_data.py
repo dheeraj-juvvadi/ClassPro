@@ -53,7 +53,7 @@ def schedule_report(raw):
                 continue
             minutes = lambda time: int(time[:2]) * 60 + int(time[3:])
             entries.append({"dayOrder": match[1], "start": start, "end": end,
-                            "code": code, "title": course.get("courseTitle") or course.get("name") or code,
+                            "code": code, "title": course.get("courseTitle") or course.get("name") or course.get("course") or code,
                             "room": course.get("room") or "Room unavailable",
                             "faculty": course.get("faculty", ""),
                             "allocation": course.get("type") or "Theory",
@@ -66,10 +66,14 @@ def extras(data, previous=None):
     previous = previous or {}
     courses = data.get("courses", previous.get("courses", {}))
     courses = courses if isinstance(courses, dict) else {}
+    courses = {value.get("code", key): value for key, value in courses.items() if isinstance(value, dict)}
     attendance = []
     for course in data.get("attendance", []):
         details = courses.get(course.get("code"), {})
-        attendance.append({**course, **{key: details[key] for key in
+        normalized = dict(course)
+        if "present" not in normalized and isinstance(course.get("conducted"), int) and isinstance(course.get("absent"), int):
+            normalized["present"] = max(0, course["conducted"] - course["absent"])
+        attendance.append({**normalized, **{key: details[key] for key in
                            ("faculty", "room", "credits", "slot", "type") if key in details}})
     profile = data.get("profile") or previous.get("profile") or {}
     return {"attendance": {"data": attendance}, "courses": courses,
