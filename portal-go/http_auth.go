@@ -39,7 +39,7 @@ func (auth *httpAuth) entry(state *clientState) (*directSession, *transientJar) 
 	if state.Provider == "academia" {
 		base = auth.academiaBase
 	}
-	entry := &directSession{base: base, client: &http.Client{Jar: jar, Transport: auth.transport, Timeout: 30 * time.Second,
+	entry := &directSession{base: base, compatibility: state.Provider == "portal", client: &http.Client{Jar: jar, Transport: auth.transport, Timeout: 30 * time.Second,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }},
 		fields: state.Fields, nonce: state.Nonce, domainField: state.DomainField, interactionField: state.InteractionField,
 		delimiter: state.Delimiter, loaded: state.Loaded, authenticated: state.Authenticated}

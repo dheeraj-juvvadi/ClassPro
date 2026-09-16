@@ -20,7 +20,9 @@ func (entry *directSession) protocolLogin(ctx context.Context, input authInput) 
 		return failure(401, "CAPTCHA_REQUIRED", "Enter the verification code.")
 	}
 	var telemetry map[string]any
-	if json.Unmarshal(input.Telemetry, &telemetry) != nil || len(telemetry) == 0 || len(input.Telemetry) > 4096 {
+	if entry.compatibility {
+		telemetry = portalCompatibilityTelemetry()
+	} else if json.Unmarshal(input.Telemetry, &telemetry) != nil || len(telemetry) == 0 || len(input.Telemetry) > 4096 {
 		return failure(400, "INVALID_REQUEST", "Reload the login page and try again.")
 	}
 	base, _ := url.Parse(entry.base)
@@ -43,9 +45,16 @@ func (entry *directSession) protocolLogin(ctx context.Context, input authInput) 
 	}
 	fields.Set(entry.domainField, base64.StdEncoding.EncodeToString([]byte(string(host))))
 	clicks, _ := telemetry["mouseClicks"].(float64)
+	if entry.compatibility {
+		clicks = 3
+	}
 	fields.Set(entry.interactionField, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d%s%d", int(time.Since(entry.loaded).Seconds()), entry.delimiter, int(clicks)))))
 	fingerprint, _ := json.Marshal(map[string]any{"fp": "", "nonce": entry.nonce, "ts": time.Now().UnixMilli()})
 	fields.Set("fpPayload", base64.StdEncoding.EncodeToString(fingerprint))
+	if entry.compatibility {
+		fields.Set("fpToken", "")
+		fields.Set("recaptchaToken", "")
+	}
 	fields.Set("telemetryPayload", base64.StdEncoding.EncodeToString(encodedTelemetry))
 	data, response, err := entry.request(ctx, "POST", portalSubmitPath, fields, nil)
 	if err != nil {
@@ -58,6 +67,20 @@ func (entry *directSession) protocolLogin(ctx context.Context, input authInput) 
 		return unavailable()
 	}
 	classification := protocolEvidence(ctx, "login_response", response, document, false)
+	if entry.compatibility {
+		protected, protectedResponse, protectedErr := entry.request(ctx, "GET", "/srmiststudentportal/students/report/studentAttendanceDetails.jsp", nil, nil)
+		var page *goquery.Document
+		if protectedErr == nil {
+			page, _ = goquery.NewDocumentFromReader(strings.NewReader(string(protected)))
+		}
+		protocolEvidence(ctx, "attendance_verification", protectedResponse, page, protectedErr != nil)
+		if protectedErr == nil && protectedResponse.StatusCode == 200 && page != nil && page.Find("#login_form").Length() == 0 && !strings.Contains(string(protected), "theGR8LoginLoader") {
+			if _, parseErr := directAttendance(string(protected)); parseErr == nil {
+				entry.authenticated = true
+				return jsonReply(200, map[string]bool{"authenticated": true})
+			}
+		}
+	}
 	if response.StatusCode == 200 && document.Find("#login_form").Length() == 0 && document.Find("#userHomePage #hdnFormId").Length() > 0 {
 		entry.authenticated = true
 		return jsonReply(200, map[string]bool{"authenticated": true})

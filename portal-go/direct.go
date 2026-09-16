@@ -22,6 +22,7 @@ const portalSubmitPath = "/srmiststudentportal/LoginServlet"
 const portalShellPath = "/srmiststudentportal/students/template/HRDSystem.jsp"
 
 type directSession struct {
+	compatibility                                   bool
 	mu                                              sync.Mutex
 	client                                          *http.Client
 	base                                            string
@@ -112,9 +113,16 @@ func (entry *directSession) request(ctx context.Context, method, target string, 
 		request.Header.Set("User-Agent", "ClassPro/1.0 (Student Portal HTTP client)")
 		request.Header.Set("Accept", "text/html,application/xhtml+xml")
 		request.Header.Set("Referer", entry.base+portalLoginPath)
+		if entry.compatibility {
+			request.Header.Set("User-Agent", portalCompatibilityAgent)
+			request.Header.Set("Accept", "*/*")
+			request.Header.Set("Referer", entry.base+"/")
+		}
 		if method == "POST" {
 			request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			request.Header.Set("Origin", entry.base)
+			if !entry.compatibility {
+				request.Header.Set("Origin", entry.base)
+			}
 		}
 		for key, values := range headers {
 			request.Header[key] = values

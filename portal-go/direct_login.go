@@ -52,12 +52,26 @@ func (entry *directSession) challenge(ctx context.Context) reply {
 	entry.domainField = portalVariable(source, "domainFieldName")
 	entry.interactionField = portalVariable(source, "captchaFieldName")
 	entry.delimiter = portalVariable(source, "randomDelimiter")
+	if entry.nonce == "" {
+		entry.nonce, _ = document.Find("#fpNonce").Attr("value")
+	}
+	if entry.compatibility {
+		entry.fields = url.Values{}
+		document.Find("input[name]").Each(func(_ int, input *goquery.Selection) {
+			name, _ := input.Attr("name")
+			entry.fields.Set(name, "")
+		})
+	}
 	imagePath, exists := document.Find("#secure_captcha").Attr("data-src")
 	if !exists || entry.nonce == "" || entry.domainField == "" || entry.interactionField == "" || entry.delimiter == "" {
 		return failure(502, "PORTAL_CHANGED", "Student Portal verification fields changed.")
 	}
 	base, _ := url.Parse(entry.base)
 	headers := http.Header{"X-Domain-Proof": {base64.StdEncoding.EncodeToString([]byte(entry.nonce + ":" + base.Hostname()))}, "Accept": {"image/png,image/jpeg"}}
+	if entry.compatibility {
+		headers.Set("Referer", entry.base+portalLoginPath)
+		headers.Set("Accept", "image/png, image/jpeg, image/svg+xml, image/*")
+	}
 	image, response, err := entry.request(ctx, "GET", imagePath, nil, headers)
 	if err != nil || response.StatusCode != 200 {
 		return unavailable()
@@ -65,6 +79,9 @@ func (entry *directSession) challenge(ctx context.Context) reply {
 	media := http.DetectContentType(image)
 	if media != "image/png" && media != "image/jpeg" {
 		return failure(502, "PORTAL_CHANGED", "Student Portal did not return a verification image.")
+	}
+	if entry.compatibility {
+		entry.loaded = time.Now()
 	}
 	return jsonReply(200, map[string]string{"image": "data:" + media + ";base64," + base64.StdEncoding.EncodeToString(image)})
 }
