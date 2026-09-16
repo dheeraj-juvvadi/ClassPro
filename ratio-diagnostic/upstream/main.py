@@ -641,9 +641,11 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
         raise HTTPException(status_code=401, detail={"type": "SESSION_EXPIRED"})
     client = PortalClient(creds.cookies)
     await client.keepalive()
-    att_html, marks = await asyncio.gather(
+    att_html, marks, tt_html, prof_html = await asyncio.gather(
         client.get_attendance_html(),
-        client.get_marks_data()
+        client.get_marks_data(),
+        client.get_timetable_html(),
+        client.get_profile_html()
     )
     if att_html is None:
         if creds.username and creds.password:
@@ -694,6 +696,13 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
     }
     if marks:
         res["marks"] = marks
+    schedule, course_map = PortalTimetableService.parse(tt_html) if tt_html else ({}, {})
+    if schedule:
+        res["schedule"] = schedule
+    if course_map:
+        res["courses"] = course_map
+    if prof_html:
+        res["profile"] = PortalProfileService.parse(prof_html)
     return res
 
 
@@ -749,4 +758,3 @@ async def get_announcements():
         pass
 
     return _announcements_history
-
