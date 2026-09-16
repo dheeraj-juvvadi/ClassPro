@@ -25,7 +25,5 @@ not end the server session. Feedback opens GitHub; Anon submits nothing itself.
 Validation covers connection state visibility, name/theme updates, persistence,
 change logging, reset and layouts at 320, 390 and 1280 CSS pixels.
 
-Settings has its own composition: dark green foundation, soft sage profile note with a
-small original line-drawn flower, muted olive connection tiles, and open
-preference rows. The calendar banner is not reused. Green remains the primary accent, with lower saturation and darker supporting
-surfaces. Existing Settings behavior is retained.
+Settings uses plain profile text, a dark green foundation and restrained sage
+accents. There are no profile illustrations, avatars or image banners.

@@ -15,7 +15,6 @@ globalThis.anonSettings = (() => {
     get('settings-notifications').checked = prefs.notifications === true && globalThis.Notification?.permission === 'granted';
     const name = prefs.name || report.profile?.name || '';
     get('settings-name').textContent = name || 'Your space.';
-    get('settings-avatar').textContent = name.slice(0, 1).toUpperCase() || 'A';
     get('settings-display-name').value = prefs.name || '';
     get('settings-program').textContent = courseDetails.clean(report.profile?.program);
     classproHome.profile({ ...report.profile, name });
