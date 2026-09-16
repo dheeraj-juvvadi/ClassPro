@@ -55,7 +55,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#provider-connections').isVisible(), false);
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-accounts').click();
-  assert.equal(await page.locator('#accounts-title').innerText(), 'Settings');
+  assert.equal(await page.locator('#accounts-title').innerText(), 'Settings.');
   await page.locator('#settings-display-name').fill('Dheeraj');
   await page.locator('#settings-profile-form button').click();
   assert.equal(await page.locator('#settings-name').innerText(), 'Dheeraj');

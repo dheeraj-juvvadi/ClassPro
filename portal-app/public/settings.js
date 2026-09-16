@@ -10,7 +10,7 @@ globalThis.anonSettings = (() => {
     catch { tell('Browser storage is unavailable. Changes will last for this visit.'); }
   }
   function apply() {
-    document.body.dataset.accent = ['sand', 'slate'].includes(prefs.theme) ? prefs.theme : 'sage';
+    document.body.dataset.accent = ['sand', 'clay'].includes(prefs.theme) ? prefs.theme : 'sage';
     get('settings-theme').value = document.body.dataset.accent;
     get('settings-notifications').checked = prefs.notifications === true && globalThis.Notification?.permission === 'granted';
     const name = prefs.name || report.profile?.name || '';

@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/home.css?v=b88f426dd1">
   <link rel="stylesheet" href="/academic.css?v=f97bbc9778">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
-  <link rel="stylesheet" href="/settings.css?v=ef40df12b4">
+  <link rel="stylesheet" href="/settings.css?v=63aed837f9">
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
@@ -34,7 +34,7 @@
   <script src="/client-ocr.js?v=7a543e9229" defer></script>
   <script src="/auth-client.js?v=2f54a42c87" defer></script>
   <script src="/report-sync.js?v=82b2d514be" defer></script>
-  <script src="/settings.js?v=49beaa7d48" defer></script>
+  <script src="/settings.js?v=2c2f034c38" defer></script>
   <script src="/app.js?v=feecbb2c7a" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
@@ -156,13 +156,13 @@
     <button id="retry-academia" type="button">Try Academia again</button>
   </dialog>
   <dialog id="accounts-dialog" aria-labelledby="accounts-title">
-    <div class="schedule-heading"><h2 id="accounts-title">Settings</h2><button id="close-accounts" type="button" aria-label="Close settings">×</button></div>
+    <div class="settings-cover"><p class="planner-eyebrow">Your Anon.</p><div class="schedule-heading"><h2 id="accounts-title">Settings.</h2><button id="close-accounts" type="button" aria-label="Close settings">×</button></div></div>
     <div class="settings-intro"><span class="settings-monogram" id="settings-avatar">A</span><div><strong id="settings-name">Your space.</strong><p id="settings-program" class="quiet"></p></div></div>
     <form id="settings-profile-form" class="settings-name-form"><label for="settings-display-name">Display name</label><div><input id="settings-display-name" maxlength="60" autocomplete="nickname" placeholder="Use your SRM name"><button type="submit">Save</button></div></form>
     <h3 class="settings-section-title">Connections</h3>
     <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
     <h3 class="settings-section-title">Your preferences</h3>
-    <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="slate">Slate</option></select></label>
+    <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="clay">Clay</option></select></label>
     <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
     <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><span class="sync-icon" aria-hidden="true">↻</span> Sync</button></div>
     <p class="settings-footnote">Auto-sync: hourly 8am–7pm, then 9pm and 11pm IST, while Anon is visible.</p>

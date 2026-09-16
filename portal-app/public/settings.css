@@ -35,7 +35,39 @@
 .settings-signout { width: 100%; background: #342a24; color: #ecc1b0; }
 #settings-message { margin-top: 12px; font-size: 12px; line-height: 1.6; }
 .planner[data-accent="sand"] { --planner-green: #d8c49f; }
-.planner[data-accent="slate"] { --planner-green: #b6ccd0; }
-.planner[data-accent="sand"] #planner-nav button[aria-current], .planner[data-accent="slate"] #planner-nav button[aria-current] { background: var(--planner-green); }
+.planner[data-accent="clay"] { --planner-green: #d4ac91; }
+.planner[data-accent="sand"] #planner-nav button[aria-current], .planner[data-accent="clay"] #planner-nav button[aria-current] { background: var(--planner-green); }
 @media (max-width: 400px) { #accounts-dialog { padding: 20px; } .settings-row { gap: 10px; } }
 @media (prefers-reduced-motion: reduce) { #settings-sync.syncing .sync-icon { animation: none; } }
+
+/* Anon's garden palette, with open editorial sections and quiet controls. */
+#accounts-dialog { background: #202719; color: #f2edda; border: 1px solid #566043; border-radius: 28px; padding: 0 30px 28px; }
+.settings-cover { position: relative; margin: 0 -30px; padding: 36px 30px 26px; background: #191b19 url('/calendar-garden.eefc609c1c.svg') 65% center / cover no-repeat; border-radius: 27px 27px 0 0; }
+.settings-cover .planner-eyebrow { color: #d2d7b3; font-size: 10px; }
+#accounts-title { font-size: 42px; font-weight: 500; margin-top: 10px; color: #f3edda; }
+#close-accounts { align-self: flex-start; border: 0; background: #29321f; color: #e9e8c9; border-radius: 50%; width: 44px; height: 44px; padding: 0; }
+.settings-intro { margin-block: 26px; align-items: flex-start; }
+.settings-intro strong { font-size: 20px; font-weight: 500; }
+.settings-monogram { background: #ccd6a1; border-radius: 50% 45% 48% 42%; }
+#accounts-dialog .quiet, .settings-intro p, .settings-row small, .settings-footnote, .settings-detail > p, .settings-detail > div > p, .settings-course small, #settings-history small { color: #c5c9ac; }
+.settings-section-title { color: #d5cd9c; margin-top: 32px; margin-bottom: 4px; }
+.settings-name-form label { color: #c5c9ac; }
+#accounts-dialog input:not([type="checkbox"]), #accounts-dialog select { background: #2e3823; color: #f2edda; border: 0; border-bottom: 1px solid #718052; border-radius: 8px 8px 0 0; }
+#accounts-dialog input::placeholder { color: #bcc4a2; }
+#accounts-dialog button:not(#close-accounts):not(.settings-signout) { background: #cbd49e; color: #27341f; border: 0; border-radius: 12px; font-weight: 500; }
+#accounts-dialog button:not(#close-accounts):not(.settings-signout):hover { background: #dce2bc; }
+.connection-row, .settings-row, .settings-detail { border-color: #61704455; }
+.connection-state[data-connected="true"] { color: #d0dda1; }
+.connection-state[data-connected="true"]::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 6px; border-radius: 50%; background: #c6d991; }
+.settings-detail > summary { padding-block: 21px; }
+.settings-detail > summary:hover { background: transparent; color: #d8dfb0; }
+.settings-detail > summary::after { color: #d5cd9c; }
+.settings-detail > summary span { color: #c5c9ac; }
+.settings-feedback { color: #e1d5a1; }
+#accounts-dialog .settings-signout { background: transparent; border: 1px solid #b08b6155; color: #edcba9; border-radius: 13px; }
+#accounts-dialog :focus-visible { outline: 2px solid #dfd9a3; outline-offset: 3px; }
+@media (max-width: 400px) {
+  #accounts-dialog { padding: 0 20px 24px; }
+  .settings-cover { margin-inline: -20px; padding: 30px 20px 24px; }
+  #accounts-title { font-size: 36px; }
+}

@@ -7,7 +7,7 @@ reconnection flow; successful providers show Connected.
 
 Implemented controls:
 - Display-name override, saved per profile in this browser.
-- Sage, Sand and Slate accent choices within the existing dark design.
+- Sage, Sand and Clay accent choices within the existing dark design.
 - Opt-in browser notifications when a running Anon session detects changed marks
   or attendance. No background push subscription or notification polling.
 - Manual Sync, using the existing forced report refresh route and scheduled cache.
@@ -24,3 +24,6 @@ not end the server session. Feedback opens GitHub; Anon submits nothing itself.
 
 Validation covers connection state visibility, name/theme updates, persistence,
 change logging, reset and layouts at 320, 390 and 1280 CSS pixels.
+
+Settings uses Anon’s floral cover, warm olive surfaces, cream text, sage controls
+and restrained dividers. Neutral gray panels and the Slate accent were removed.
