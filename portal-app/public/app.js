@@ -4,7 +4,8 @@ const $ = (id) => document.getElementById(id);
 let authenticated = false;
 let busy = false;
 let reportLoad = null;
-let lastReportSync = 0;
+let nextAutoSync = 0;
+let reportFingerprint = {};
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
 
@@ -49,7 +50,6 @@ async function run(action) {
     $('sign-in-label').textContent = 'Sign in';
     $('sign-in-status').textContent = '';
     $('sign-in').removeAttribute('data-loading');
-    $('refresh').textContent = '↻ Retry';
     $('logout').textContent = 'Sign out';
     $('report-content').setAttribute('aria-busy', 'false');
   }
@@ -66,6 +66,8 @@ function showLogin(text = '', error = false) {
   academicSummary.clear();
   dateAttendance.clear();
   providerConnections.clear();
+  reportFingerprint = {};
+  nextAutoSync = 0;
   authenticated = false;
   $('startup').hidden = true;
   $('login-view').hidden = false;
@@ -204,39 +206,54 @@ function renderMarks(report) {
   if (data.length) container.append(list);
 }
 
-function loadReports() {
+function loadReports(options = {}) {
   if (reportLoad) return reportLoad;
-  reportLoad = fetchReports().finally(() => { reportLoad = null; });
+  reportLoad = fetchReports(options).finally(() => { reportLoad = null; });
   return reportLoad;
 }
 
-async function fetchReports() {
+async function fetchReports({ cacheOnly = false, force = false, silent = false } = {}) {
   if (designPreview) return;
-  $('refresh').textContent = 'Retrying…';
-  $('report-content').setAttribute('aria-busy', 'true');
-  message('reports-message', 'Loading your reports…');
+  $('refresh').classList.add('syncing');
+  $('refresh').setAttribute('aria-label', 'Syncing reports');
+  $('refresh').disabled = true;
+  if (!silent) message('reports-message');
   if (!$('attendance-content').childElementCount) {
     $('attendance-content').append(node('div', 'empty-state', 'Loading attendance…'));
     $('marks-content').append(node('div', 'empty-state', 'Loading marks…'));
   }
   try {
-    const reports = await api('/api/reports');
-    renderAttendance(reports.attendance);
-    renderMarks(reports.marks);
-    classproHome.update(reports.attendance, reports.schedule);
-    academicSummary.update(reports);
-    providerConnections.update(reports);
-    lastReportSync = Date.now();
+    const reports = await api(`/api/reports${force ? '?force=1' : cacheOnly ? '?cache=only' : ''}`);
+    const changed = (key, data, update) => {
+      const fingerprint = JSON.stringify(data);
+      if (reportFingerprint[key] !== fingerprint) { update(); reportFingerprint[key] = fingerprint; }
+    };
+    changed('attendance', reports.attendance, () => renderAttendance(reports.attendance));
+    changed('marks', reports.marks, () => renderMarks(reports.marks));
+    changed('home', [reports.attendance, reports.schedule], () => classproHome.update(reports.attendance, reports.schedule));
+    changed('summary', [reports.attendance, reports.monthly], () => academicSummary.update(reports));
+    changed('connections', [reports.connections, reports.warnings], () => providerConnections.update(reports));
+    $('refresh').title = 'Sync attendance and marks';
+    nextAutoSync = reports.sync?.due && cacheOnly ? 0 : reports.sync?.nextAt || reportSyncSchedule.next();
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
-    message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Retry.' : '');
+    message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Sync.' : '');
     return reports;
   } catch (error) {
     for (const kind of ['attendance', 'marks']) {
       const container = $(`${kind}-content`);
-      if (container.firstElementChild?.textContent === `Loading ${kind}…`) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Retry to try again.'));
+      if (container.firstElementChild?.textContent === `Loading ${kind}…`) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Sync to try again.'));
+    }
+    nextAutoSync = reportSyncSchedule.next();
+    if (silent && !error.expired) {
+      $('refresh').title = 'Could not sync. Your last data is still available. Select Sync to retry.';
+      return;
     }
     throw error;
+  } finally {
+    $('refresh').classList.remove('syncing');
+    $('refresh').setAttribute('aria-label', 'Sync reports');
+    $('refresh').disabled = false;
   }
 }
 
@@ -330,15 +347,17 @@ $('login-form').addEventListener('submit', (event) => {
 });
 
 function resumeSync() {
-  if (!authenticated || busy || designPreview || document.hidden || $('connect-dialog').open || Date.now() - lastReportSync < 60000) return;
-  run(loadReports);
+  if (!authenticated || busy || reportLoad || designPreview || document.hidden || !navigator.onLine || $('connect-dialog').open || Date.now() < nextAutoSync) return;
+  nextAutoSync = reportSyncSchedule.next();
+  loadReports({ silent: true }).catch(() => {});
 }
 window.addEventListener('focus', resumeSync);
 window.addEventListener('online', resumeSync);
 document.addEventListener('visibilitychange', resumeSync);
-setInterval(resumeSync, 5 * 60 * 1000);
+// This timer only checks the clock. Requests occur at the scheduled IST slots.
+setInterval(resumeSync, 15000);
 
-$('refresh').addEventListener('click', () => run(loadReports));
+$('refresh').addEventListener('click', () => run(() => loadReports({ force: true })));
 $('logout').addEventListener('click', () => run(async () => {
   if (designPreview) { location.href = '/'; return; }
   $('logout').textContent = 'Signing out…';
@@ -360,7 +379,8 @@ if (designPreview) {
     classproAuth.configure(session);
     if (session.authenticated) {
       showReports();
-      await loadReports();
+      await loadReports({ cacheOnly: true });
+      setTimeout(resumeSync, 0);
     } else showLogin();
   } catch (error) {
     if (!authenticated && !error.expired) showLogin(error.message, true);

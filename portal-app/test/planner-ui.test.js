@@ -51,7 +51,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#schedule-form').count(), 0);
   await page.evaluate(() => providerConnections.update({ connections: { portal: { connected: true } } }));
   assert.equal(await page.getByRole('button', { name: 'Connect Student Portal', exact: true }).count(), 0);
-  assert.match(await page.locator('#provider-connections').innerText(), /Student Portal connected/);
+  assert.doesNotMatch(await page.locator('#provider-connections').textContent(), /connected|Timetable from/);
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-accounts').click();
   await page.getByRole('button', { name: 'Connect Academia', exact: true }).click();
@@ -87,13 +87,9 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.getByRole('button', { name: 'Attendance', exact: true }).click();
   assert.equal(await page.locator('#monthly-attendance tbody tr').count(), 2);
   await page.getByRole('button', { name: 'Home', exact: true }).click();
-  await page.getByRole('button', { name: 'Plan attendance for Data Structures, 2 hours' }).click();
-  assert.match(await page.locator('#projection-period').innerText(), /1 date selected/);
-  assert.equal(await page.locator('#projection-calendar button[aria-pressed="true"]').count(), 1);
-  assert.match(await page.locator('#projection-result').innerText(), /75%/);
-  await page.keyboard.press('Escape');
-  assert.equal(await page.locator('#projection-dialog').isVisible(), false);
-  assert.match(await page.evaluate(() => document.activeElement.textContent), /Plan 2h/);
+  assert.equal(await page.locator('.period-plan').count(), 0);
+  await page.getByRole('button', { name: 'View attendance', exact: true }).click();
+  assert.equal(await page.locator('#attendance-panel').isVisible(), true);
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-calendar').click();
   assert.equal(await page.locator('.academic-month button').count(), 30);
@@ -102,9 +98,8 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#close-calendar').click();
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-schedule').click();
-  assert.equal(await page.locator('#schedule-entries svg').count(), 1);
-  assert.match(await page.locator('#timetable-svg-desc').textContent(), /Data Structures/);
-  await page.locator('#close-schedule').click();
+  assert.equal(await page.locator('#attendance-panel').isVisible(), true);
+  await page.locator('button[data-page="home"]').click();
   assert.equal(await page.locator('#student-context').count(), 0);
   assert.equal(await page.locator('#open-subjects').count(), 0);
   assert.equal(await page.getByText('What if I miss this class?', { exact: true }).count(), 0);

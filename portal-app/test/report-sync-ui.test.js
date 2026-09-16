@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import express from 'express';
+import { chromium } from 'playwright';
+import { fileURLToPath } from 'node:url';
+
+test('cached startup and navigation stay quiet; manual sync forces fresh reports', { timeout: 30000 }, async context => {
+  const app = express();
+  app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  context.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+  context.after(() => browser.close());
+  const page = await browser.newPage();
+  await page.route('**/api/session', route => route.fulfill({ json: { authenticated: true, authMode: 'http' } }));
+  const requests = [];
+  const report = { attendance: { data: [{ code: 'CS', title: 'Computer Science', present: 18, conducted: 20 }] }, marks: { data: [] }, connections: {}, sync: { due: false, nextAt: Date.now() + 3600000 } };
+  let release;
+  await page.route('**/api/reports*', async route => {
+    requests.push(route.request().url());
+    if (requests.length > 1) await new Promise(resolve => { release = resolve; });
+    await route.fulfill({ json: report });
+  });
+  await page.goto(`http://127.0.0.1:${server.address().port}`);
+  await page.locator('.attendance-row').waitFor({ state: 'attached' });
+  assert.match(requests[0], /cache=only/);
+  await page.locator('button[data-page="attendance"]').click();
+  await page.evaluate(() => { window.dispatchEvent(new Event('focus')); resumeSync(); });
+  assert.equal(requests.length, 1);
+  assert.equal(await page.locator('#reports-message').isVisible(), false);
+  await page.evaluate(() => { document.querySelector('.attendance-row').dataset.preserved = 'yes'; });
+  await page.locator('#refresh').click();
+  await page.waitForFunction(() => document.querySelector('#refresh').classList.contains('syncing'));
+  assert.match(requests[1], /force=1/);
+  assert.equal(await page.locator('.attendance-row').isVisible(), true);
+  assert.equal(await page.locator('#reports-message').isVisible(), false);
+  release();
+  await page.waitForFunction(() => !document.querySelector('#refresh').classList.contains('syncing'));
+  assert.equal(await page.locator('.attendance-row').getAttribute('data-preserved'), 'yes');
+});

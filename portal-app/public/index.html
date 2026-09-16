@@ -31,6 +31,7 @@
   <script src="/provider-connections.js" defer></script>
   <script src="/client-ocr.js" defer></script>
   <script src="/auth-client.js" defer></script>
+  <script src="/report-sync.js" defer></script>
   <script src="/app.js" defer></script>
   <script src="/credential-integrity.js" defer></script>
   <script src="/login-effects.js" defer></script>
@@ -106,7 +107,7 @@
       <div class="page-heading">
         <div>
           <p class="eyebrow">Your academic record</p>
-          <div class="report-title-row"><h1 id="reports-title" tabindex="-1">Academic overview</h1><button id="refresh" type="button" aria-label="Retry loading reports">↻ Retry</button></div>
+          <div class="report-title-row"><h1 id="reports-title" tabindex="-1">Academic overview</h1><button id="refresh" type="button" aria-label="Sync reports"><span class="sync-icon" aria-hidden="true">↻</span><span>Sync</span></button></div>
           <p id="updated-at" class="quiet">Your attendance and marks.</p>
         </div>
         <div class="report-actions"><button id="calculate-attendance" type="button">Calculate ↗</button></div>

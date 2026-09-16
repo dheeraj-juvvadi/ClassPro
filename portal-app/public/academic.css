@@ -122,3 +122,10 @@ dialog input { font-size: 16px; }
   .planner .course-details .course-score { font-size: 19px; }
   .projection-control { flex-wrap: wrap; }
 }
+
+.report-title-row #refresh { display: inline-flex; align-items: center; gap: 7px; }
+.sync-icon { display: inline-block; font-size: 19px; line-height: 1; }
+#refresh.syncing .sync-icon { animation: sync-turn 1s linear infinite; }
+#refresh.syncing { opacity: 1; color: #c5d4a7; }
+@keyframes sync-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { #refresh.syncing .sync-icon { animation: none; } }
