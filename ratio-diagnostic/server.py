@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "upstream"))
 import main as upstream
 from observe import events, instrument, record
+from deep_evidence import integrity, runtime, submitted, workload
 
 upstream.PortalSession = instrument(upstream.PortalSession)
 
@@ -49,6 +50,7 @@ cookie_name = "classpro_ratio_diagnostic"
 
 @asynccontextmanager
 async def lifespan(app):
+    print(json.dumps({"event": "ratio_runtime", **runtime()}), flush=True)
     async with upstream.lifespan(upstream.app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=upstream.app),
                                      base_url="http://ratio-internal", timeout=90) as client:
@@ -82,13 +84,21 @@ def report(data):
 
 
 async def invoke(request, path, payload):
-    captured = []
+    captured = [{"stage": "workload_before", **workload()}]
     token = events.set(captured)
+    credential_token = submitted.set(payload)
+    trace_id = request.state.diagnostic_id if hasattr(request.state, "diagnostic_id") else secrets.token_hex(8)
+    started = time.monotonic()
     try:
         with contextlib.redirect_stdout(io.StringIO()):
             response = await request.app.state.client.post(path, json=payload)
     finally:
+        captured.append({"stage": "workload_after", **workload()})
+        submitted.reset(credential_token)
         events.reset(token)
+        for index, evidence in enumerate(captured):
+            print(json.dumps({"event": "ratio_evidence", "request_id": trace_id,
+                              "index": index, **evidence}), flush=True)
     data = response.json()
     detail = data.get("detail", "") if isinstance(data, dict) else ""
     category = "accepted" if response.status_code == 200 else "unclassified"
@@ -98,12 +108,14 @@ async def invoke(request, path, payload):
         elif "credentials" in detail.lower():
             category = "upstream_credentials_classification"
     print(json.dumps({"event": "ratio_diagnostic", "route": path,
-                      "status": response.status_code, "classification": category, "evidence": captured}), flush=True)
+                      "request_id": trace_id, "duration_ms": round((time.monotonic() - started) * 1000),
+                      "status": response.status_code, "classification": category}), flush=True)
     return response, data
 
 
 @app.middleware("http")
 async def boundary(request, call_next):
+    request.state.diagnostic_id = secrets.token_hex(12)
     if request.url.path == "/health":
         return JSONResponse({"ok": True, "backend": "ratio-diagnostic"})
     if not request.url.path.startswith("/api/"):
@@ -149,10 +161,13 @@ async def boundary(request, call_next):
     async with gate:
         try:
             response = await asyncio.wait_for(call_next(request), 95)
-        except Exception:
+        except Exception as exception:
+            print(json.dumps({"event": "ratio_exception", "request_id": request.state.diagnostic_id,
+                              "exception_type": type(exception).__name__}), flush=True)
             response = failure("PORTAL_UNAVAILABLE", "Student Portal request failed.", 502)
     response.headers["Cache-Control"] = "no-store"
     response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Request-ID"] = request.state.diagnostic_id
     return response
 
 
@@ -210,6 +225,8 @@ async def login(request: Request):
     payload = await request.json()
     if not isinstance(payload.get("account"), str) or not isinstance(payload.get("password"), str):
         return failure("INVALID_REQUEST", "Enter your account and password.", 400)
+    print(json.dumps({"event": "ratio_evidence", "request_id": request.state.diagnostic_id,
+                      **integrity(payload)}), flush=True)
     response, data = await invoke(request, "/portal/login", {
         "username": payload["account"], "password": payload["password"],
         "captcha": payload.get("answer") or None, "cdigest": entry["digest"],

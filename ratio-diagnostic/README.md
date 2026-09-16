@@ -43,4 +43,20 @@ or failure classification. Logs include OCR completion/duration, cookie continui
 booleans, form-field presence and fixed alert categories. Cookie values, passwords,
 CAPTCHA answers, dynamic field names and raw responses are never logged.
 
+Deep comparison diagnostics additionally record:
+- Runtime/package versions and source/model/CA-bundle hashes.
+- Proxy/certificate override presence, never their values.
+- TCP/TLS timings, protocol/cipher, certificate hash and SRM destination IP.
+- Request header names, cookie flags/rotation, redirect category and clock offset.
+- Field roles/order, token validity, safe synthetic telemetry fields and timings.
+- Browser credential-integrity match flags and received-to-submitted equality.
+- Process CPU/RSS and Linux container CPU-throttle/memory counters.
+
+Each event has a random request ID; events are split into bounded log lines.
+No credential hashes, nonce values, raw query strings, response bodies or student
+records are emitted. Integrity compares only within a request: it does not prove
+two separate local/hosted sign-ins used identical credentials. Observers do not
+change login fields or retries. Response timing includes observation overhead;
+an HTTP Date comparison has approximately one-second precision, not exact skew.
+
 Tests: `PYTHONPATH=ratio-diagnostic python -m unittest discover -s ratio-diagnostic -p 'test_*.py'`.
