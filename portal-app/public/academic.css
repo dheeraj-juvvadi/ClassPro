@@ -107,8 +107,8 @@ dialog input { font-size: 16px; }
   .planner .site-header { padding: 13px 25px; min-height: 70px; }
   .planner main { margin: 0 13px 22px; padding: 18px 12px 105px; border-radius: 23px; }
   .planner .home-greeting { margin: 2px 0 24px; }
-  .planner .next-class-card { padding: 22px 21px 16px; }
-  .planner .next-class-card h2 { font-size: 30px; }
+  .planner .next-class-card { padding: 18px 20px 14px; }
+  .planner .next-class-card h2 { font-size: 26px; }
   .planner .insight-card { padding: 17px 16px; }
   .planner .insight-percentage { font-size: 46px; }
   .planner .timeline-row { gap: 9px; }
