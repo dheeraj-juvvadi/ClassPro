@@ -83,7 +83,8 @@ func (server *Server) reports(writer http.ResponseWriter, request *http.Request,
 	}
 	if !server.acquire() {
 		server.mu.Unlock()
-		send(writer, failure(503, "CAPACITY", "Student Portal is busy. Try again shortly."))
+		writer.Header().Set("Retry-After", "2")
+		send(writer, failure(503, "SERVER_BUSY", "ClassPro is processing another request. Please retry shortly."))
 		return
 	}
 	pending := &flight{done: make(chan struct{})}

@@ -9,6 +9,7 @@ globalThis.classproAuth = (() => {
   let challengeAt = 0;
   let prediction = '';
   let serverAuto = false;
+  let preparing = null;
   const element = id => document.getElementById(id);
   const provider = () => element('login-provider').value;
   const clearChallenge = () => {
@@ -60,11 +61,26 @@ globalThis.classproAuth = (() => {
       typingSpeedMs: keys ? Math.round((Date.now() - started) / keys) : 0,
     };
   }
-  async function prepare(api, automatic) {
+  function prepare(api, automatic) {
+    if (preparing) return preparing;
+    preparing = prepareChallenge(api, automatic).finally(() => { preparing = null; });
+    return preparing;
+  }
+  async function prepareChallenge(api, automatic) {
     clearChallenge();
-    const result = await api('/api/challenge', {
-      method: 'POST', body: JSON.stringify({ provider: provider() }),
-    }, true);
+    let result;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        result = await api('/api/challenge', {
+          method: 'POST', body: JSON.stringify({ provider: provider() }),
+        }, true);
+        break;
+      } catch (error) {
+        if (error.code !== 'SERVER_BUSY' || attempt === 4) throw error;
+        element('sign-in-status').textContent = 'Waiting for ClassPro…';
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     challengeAt = Date.now();
     if (result.required === false) return;
     if (!result.image || !/^data:image\/(png|jpeg);base64,/.test(result.image)) {

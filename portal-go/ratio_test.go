@@ -61,3 +61,18 @@ func TestRatioInputValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestRatioCapacityIsOurServerNotSRM(t *testing.T) {
+	server, backend := fixture()
+	server.httpAuth = newHTTPAuth(testCodec(t))
+	server.ratio = true
+	for server.acquire() {
+	}
+	response := stateCall(server, "POST", "/api/challenge", `{"provider":"portal"}`, nil)
+	if response.Code != 503 || !strings.Contains(response.Body.String(), `"SERVER_BUSY"`) || response.Header().Get("Retry-After") != "2" {
+		t.Fatalf("unexpected capacity response: %d %s", response.Code, response.Body)
+	}
+	if backend.calls["challenge"] != 0 {
+		t.Fatal("busy request reached upstream")
+	}
+}
