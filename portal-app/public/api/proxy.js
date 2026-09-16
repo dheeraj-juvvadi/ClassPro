@@ -2,6 +2,7 @@
 
 // Server-side proxy: the browser only ever talks to this origin. The secret that unlocks
 // the backend lives in Vercel environment variables and never reaches the browser bundle.
+// vercel.json rewrites /api/:path* here as ?__path=:path*.
 
 const REQUEST_SKIP = new Set(['host', 'connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'content-length']);
 const RESPONSE_SKIP = new Set(['connection', 'keep-alive', 'transfer-encoding', 'upgrade',
@@ -25,6 +26,13 @@ async function requestBody(request) {
   return raw;
 }
 
+function subpath(request) {
+  const supplied = request.query && request.query.__path;
+  if (Array.isArray(supplied)) return supplied.join('/');
+  if (typeof supplied === 'string' && supplied) return supplied;
+  return new URL(request.url, 'http://internal').pathname.replace(/^\/api\/proxy\/?/, '');
+}
+
 async function handler(request, response) {
   const backend = process.env.BACKEND_URL;
   const token = process.env.BACKEND_TOKEN;
@@ -38,9 +46,13 @@ async function handler(request, response) {
     headers[key] = Array.isArray(value) ? value.join(', ') : value;
   }
   headers['x-classpro-key'] = token;
+  const incoming = new URL(request.url, 'http://internal');
+  incoming.searchParams.delete('__path');
+  incoming.search = incoming.searchParams.toString();
+  const target = new URL(`/api/${subpath(request).replace(/^\/+/, '')}${incoming.search}`, backend);
   let upstream;
   try {
-    upstream = await fetch(new URL(request.url, backend), {
+    upstream = await fetch(target, {
       method: request.method, headers, body: await requestBody(request), redirect: 'manual',
     });
   } catch {
