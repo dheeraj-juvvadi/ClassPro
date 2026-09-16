@@ -40,7 +40,8 @@
       <summary aria-label="More options">•••</summary>
       <div class="planner-menu-items">
         <button id="open-schedule" type="button">Timetable</button>
-        <button id="open-subjects" type="button">Subjects</button>
+        <button id="open-calendar" type="button">Academic calendar</button>
+        <button id="open-accounts" type="button">Accounts</button>
         <button id="logout" class="secondary" type="button" hidden>Sign out</button>
       </div>
     </details>
@@ -83,8 +84,6 @@
     </section>
     <section id="home-view" aria-labelledby="home-title" hidden>
       <div class="home-greeting"><h1 id="home-title" tabindex="-1">Good morning.</h1><p id="home-date"></p></div>
-      <p id="student-context" class="quiet"></p>
-      <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
       <p id="home-preview-note" class="preview-note" hidden>Design preview · sample day <a href="/">Back to sign in</a></p>
       <article id="next-class-card" class="next-class-card" aria-labelledby="next-class-title"></article>
       <section class="attendance-insights" aria-label="Attendance at a glance" id="home-insights"></section>
@@ -135,6 +134,10 @@
     <p class="quiet" id="schedule-help">Your timetable from SRM, organized by day order.</p>
     <ul id="schedule-entries"></ul>
 
+  </dialog>
+  <dialog id="accounts-dialog" aria-labelledby="accounts-title">
+    <div class="schedule-heading"><h2 id="accounts-title">Your accounts</h2><button id="close-accounts" type="button" aria-label="Close accounts">×</button></div>
+    <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
   </dialog>
   <dialog id="connect-dialog" aria-labelledby="connect-title">
     <div class="schedule-heading"><h2 id="connect-title">Connect account</h2><button id="close-connect" type="button" aria-label="Close account connection">×</button></div>

@@ -8,10 +8,6 @@ globalThis.academicSummary = (() => {
     return node;
   };
   function update(reports = {}) {
-    const profile = reports.profile || {};
-    get('student-context').textContent = [profile.name, profile.program,
-      profile.semester && `Semester ${profile.semester}`, profile.section && `Section ${profile.section}`]
-      .filter(value => value && value !== 'N/A').join(' · ');
     const courses = (reports.attendance?.data || []).filter(course =>
       attendanceMath.predict({ present: course.present, conducted: course.conducted }).valid);
     const totals = courses.reduce((sum, course) => ({ present: sum.present + course.present,

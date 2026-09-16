@@ -18,6 +18,7 @@ globalThis.providerConnections = (() => {
       const button = document.createElement('button'); button.type = 'button';
       button.textContent = `${state?.expired ? 'Reconnect' : 'Connect'} ${label(provider)}`;
       button.addEventListener('click', () => {
+        get('accounts-dialog').close();
         selected = provider;
         get('connect-title').textContent = `Connect ${label(provider)}`;
         get('connect-help').textContent = provider === 'academia'
@@ -64,5 +65,5 @@ globalThis.providerConnections = (() => {
       get('connect-message').textContent = error.message || 'Could not connect. Try again.';
     } finally { pending = false; get('connect-submit').disabled = false; get('close-connect').disabled = false; }
   });
-  return { update, clear() { get('provider-connections').replaceChildren(); get('connect-password').value = ''; get('connect-dialog').close(); } };
+  return { update, clear() { get('provider-connections').replaceChildren(); get('connect-password').value = ''; get('connect-dialog').close(); get('accounts-dialog').close(); } };
 })();

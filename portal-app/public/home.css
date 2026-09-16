@@ -7,14 +7,14 @@
 .home-greeting { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin: 8px 0 25px; }
 .home-greeting h1 { font-size: 1rem; font-weight: 500; letter-spacing: -.025em; }
 .home-greeting p { color: var(--planner-muted); font-size: .7rem; }
-.next-class-card { background: var(--planner-green); color: #233020; padding: 26px 28px 19px; border-radius: 21px; }
+.next-class-card { background: var(--planner-green); color: #233020; padding: 20px 22px 15px; border-radius: 21px; }
 .next-class-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .planner-eyebrow { font-size: .6rem; font-weight: 650; text-transform: uppercase; letter-spacing: .085em; line-height: 1.5; }
 .class-countdown { font-size: .65rem; white-space: nowrap; }
-.next-class-card h2 { font-size: clamp(1.75rem, 4vw, 2.7rem); font-weight: 550; letter-spacing: -.055em; line-height: 1.1; margin: 27px 0 13px; max-width: 16ch; }
+.next-class-card h2 { font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 550; letter-spacing: -.055em; line-height: 1.1; margin: 16px 0 10px; max-width: 24ch; }
 .class-time { font-size: 1.3rem; font-weight: 500; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .class-room { margin-top: 6px; font-size: .75rem; line-height: 1.6; }
-.next-class-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; font-variant-numeric: tabular-nums; }
+.next-class-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 15px; font-variant-numeric: tabular-nums; }
 .next-class-stats span { display: block; font-size: .65rem; margin-bottom: 6px; }
 .next-class-stats strong { font-size: .9rem; font-weight: 600; }
 .next-class-calculate { margin-top: 18px; min-height: 44px; padding: 8px 12px; background: #263822; color: #eff2df; border-radius: 10px; font-size: .75rem; }
@@ -30,7 +30,7 @@
 #monthly-attendance caption { text-align: left; padding: 10px 0; color: #adb4a4; }
 #monthly-attendance th, #monthly-attendance td { padding: 12px 4px; text-align: right; border-bottom: 1px solid #3b4035; }
 #monthly-attendance th:first-child, #monthly-attendance td:first-child { text-align: left; }
-.next-class-bottom { margin-top: 25px; padding-top: 13px; border-top: 1px solid #24322126; display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.next-class-bottom { margin-top: 16px; padding-top: 9px; border-top: 1px solid #24322126; display: flex; align-items: center; gap: 12px; justify-content: space-between; }
 .next-class-bottom p { font-size: .625rem; line-height: 1.5; }
 .class-arrow { padding: 0; flex: 0 0 44px; height: 44px; border-radius: 50%; background: #263822; color: #eff2df; font-size: 1.25rem; font-weight: 400; }
 .class-arrow:hover { background: #3b5031; }

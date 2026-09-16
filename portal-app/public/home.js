@@ -96,12 +96,7 @@ globalThis.classproHome = (() => {
         stats.append(stat);
       }
       card.append(stats);
-      if (course) {
-        const calculate = element('button', 'next-class-calculate', 'What if I miss this class?');
-        calculate.type = 'button';
-        calculate.addEventListener('click', () => academicUI.plan(course.code, model.hours(next), next.date));
-        card.append(calculate);
-      }
+
     } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
     const bottom = element('div', 'next-class-bottom');
     const following = nextClasses[nextIndex + 1];
@@ -193,7 +188,11 @@ globalThis.classproHome = (() => {
 
   get('open-schedule').addEventListener('click', openSchedule);
   get('close-schedule').addEventListener('click', () => get('schedule-dialog').close());
-  get('open-subjects').addEventListener('click', () => page('attendance'));
+  get('open-accounts').addEventListener('click', () => {
+    get('planner-menu').open = false;
+    get('accounts-dialog').showModal();
+  });
+  get('close-accounts').addEventListener('click', () => get('accounts-dialog').close());
   for (const button of document.querySelectorAll('[data-page]')) button.addEventListener('click', () => page(button.dataset.page));
   document.addEventListener('click', event => {
     if (!get('planner-menu').contains(event.target)) get('planner-menu').open = false;
