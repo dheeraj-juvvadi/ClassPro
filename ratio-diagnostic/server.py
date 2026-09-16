@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "upstream"))
 import main as upstream
 from observe import events, instrument, record
 from deep_evidence import integrity, runtime, submitted, workload
+from academic_data import extras
 
 upstream.PortalSession = instrument(upstream.PortalSession)
 
@@ -67,7 +68,7 @@ def failure(code, message, status=401):
     return JSONResponse({"error": {"code": code, "message": message}}, status_code=status)
 
 
-def report(data):
+def report(data, previous=None):
     marks = []
     for course in data.get("marks", []):
         components = []
@@ -81,7 +82,7 @@ def report(data):
                       "scored": course.get("totalMarkGot"), "total": course.get("totalMaxMarks"),
                       "components": components})
     return {"updatedAt": datetime.now(timezone.utc).isoformat(),
-            "attendance": {"data": data.get("attendance", [])}, "marks": {"data": marks}}
+            **extras(data, previous), "marks": {"data": marks}}
 
 
 async def invoke(request, path, payload):
@@ -262,7 +263,7 @@ async def reports(request: Request):
     if response.status_code != 200:
         return failure("SESSION_EXPIRED", "Your SRM session expired.")
     entry.update({"cookies": data.get("cookies", entry["cookies"]),
-                  "report": report(data), "cached": time.monotonic()})
+                  "report": report(data, entry.get("report")), "cached": time.monotonic()})
     return entry["report"]
 
 
