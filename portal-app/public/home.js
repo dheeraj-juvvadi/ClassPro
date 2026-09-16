@@ -3,7 +3,6 @@
 globalThis.classproHome = (() => {
   const model = globalThis.classproHomeModel;
   const planner = globalThis.classproScheduleModel;
-  const storageKey = 'classpro-weekly-schedule-v1';
   let schedule = [];
   let attendance = [];
   let preview = false;
@@ -21,10 +20,6 @@ globalThis.classproHome = (() => {
     return result;
   };
   const now = () => preview ? new Date(2026, 8, 14, 9, 48) : planner.clock(reportedSchedule?.timezone || 'Asia/Kolkata');
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    if (Array.isArray(saved)) schedule = saved.filter(entry => model.valid(entry)).slice(0, 100);
-  } catch {}
 
   function describe(date) {
     const state = planner.dayState(source(), date);
@@ -44,6 +39,7 @@ globalThis.classproHome = (() => {
       if (!values.includes(filters[field])) filters[field] = '';
       select.value = filters[field];
       select.disabled = !values.length;
+      select.parentElement.hidden = !values.length;
     }
   }
   for (const field of ['allocation', 'batch']) get(`${field}-filter`).addEventListener('change', event => { filters[field] = event.target.value; render(); });
@@ -83,26 +79,43 @@ globalThis.classproHome = (() => {
     const ongoing = sameDay && model.minutes(next.start) <= minute;
     top.append(element('span', 'class-countdown', next ? ongoing ? 'Ongoing' : sameDay ? `Starts in ${model.minutes(next.start) - minute} min` : next.date.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' }) : ''));
     card.append(top);
-    const title = element('h2', '', next?.title || (reportedSchedule ? 'No next class confirmed.' : schedule.length ? 'No upcoming classes.' : 'Make room for your day.'));
+    const title = element('h2', '', next?.title || (reportedSchedule ? 'No next class confirmed.' : schedule.length ? 'No upcoming classes.' : 'Timetable unavailable.'));
     title.id = 'next-class-title';
     card.append(title);
     if (next) {
       card.append(element('p', 'class-time', `${next.start} → ${next.end}`));
       card.append(element('p', 'class-room', next.room));
-    } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Add your manual weekly schedule to see what’s next.'));
+      if (next.faculty && next.faculty !== 'TBA') card.append(element('p', 'class-room', next.faculty));
+      const course = attendance.find(subject => subject.code === next.code);
+      const insight = course && model.insight(course);
+      const stats = element('div', 'next-class-stats');
+      for (const [label, value] of [['Duration', `${model.hours(next)}h`],
+        ['Attendance', insight?.percentage || '—'], ['75% target', insight?.margin || 'No record']]) {
+        const stat = element('div', '');
+        stat.append(element('span', '', label), element('strong', '', value));
+        stats.append(stat);
+      }
+      card.append(stats);
+      if (course) {
+        const calculate = element('button', 'next-class-calculate', 'What if I miss this class?');
+        calculate.type = 'button';
+        calculate.addEventListener('click', () => academicUI.plan(course.code, model.hours(next)));
+        card.append(calculate);
+      }
+    } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
     const bottom = element('div', 'next-class-bottom');
     const following = nextClasses[nextIndex + 1];
-    bottom.append(element('p', '', next && following ? `Next · ${following.title} · ${following.start}` : next ? 'Last class of the day' : 'Your weekly planner'));
+    bottom.append(element('p', '', next && following ? `Next · ${following.title} · ${following.start}` : next ? 'Last class of the day' : 'Your SRM timetable'));
     const action = element('button', 'class-arrow', '↗');
     action.type = 'button';
-    action.setAttribute('aria-label', next ? 'View weekly schedule' : 'Add your schedule');
+    action.setAttribute('aria-label', 'View SRM timetable');
     action.addEventListener('click', openSchedule);
     bottom.append(action);
     card.append(bottom);
     renderInsights(classes);
     const state = describe(day);
     get('today-title').textContent = planner.key(day) === planner.key(date) ? 'Today’s classes' : day.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'short' });
-    get('schedule-source').textContent = `${scheduleInvalid ? 'Schedule report unavailable. ' : ''}${state.label}${next?.unknown ? ' · Gaps before the next known class are unverified.' : ''}`;
+    get('schedule-source').textContent = `${reportedSchedule?.calendarSource ? reportedSchedule.calendarSource + ' · ' : ''}${scheduleInvalid ? 'Schedule report unavailable. ' : ''}${state.label}${next?.unknown ? ' · Gaps before the next known class are unverified.' : ''}`;
     renderTimeline(classes, planner.key(day) === planner.key(date) ? minute : -1);
     calendar.today(date);
   }
@@ -134,12 +147,14 @@ globalThis.classproHome = (() => {
       const times = element('div', 'timeline-times');
       times.append(element('time', '', entry.start), element('time', '', entry.end));
       const description = element('div', 'timeline-description');
-      description.append(element('h3', '', entry.title), element('p', '', entry.room));
+      description.append(element('h3', '', entry.title), element('p', '', `${entry.room} · ${model.hours(entry)}h`));
+      if (entry.faculty && entry.faculty !== 'TBA') description.append(element('p', '', entry.faculty));
       const course = attendance.find(subject => subject.code === entry.code);
       const insight = course && model.insight(course);
       row.append(times, description, element('span', `timeline-status ${ongoing ? 'healthy' : insight?.tone || ''}`, ongoing ? 'Ongoing' : insight?.percentage || ''));
+      if (insight) description.append(element('p', `course-margin ${insight.tone}`, insight.margin));
       if (course) {
-        const hours = (model.minutes(entry.end) - model.minutes(entry.start)) / 60;
+        const hours = model.hours(entry);
         const plan = element('button', 'period-plan', `Plan ${hours}h ↗`);
         plan.type = 'button';
         plan.setAttribute('aria-label', `Plan attendance for ${entry.title}, ${hours} hours`);
@@ -151,46 +166,27 @@ globalThis.classproHome = (() => {
     }
     if (!classes.length) {
       const state = describe(selectedDate || now());
-      list.append(element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No verified calendar for this date. Open Schedule to view available periods or set up a manual plan.' : 'No classes for this date and filter selection.'));
-    }
-  }
-
-  function saveSchedule(next) {
-    try {
-      if (!preview) localStorage.setItem(storageKey, JSON.stringify(next));
-      schedule = next;
-      get('schedule-error').textContent = '';
-      renderSchedule();
-      render();
-      return true;
-    } catch {
-      get('schedule-error').textContent = 'Could not save on this device. Check your browser storage settings.';
-      return false;
+      list.append(element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No verified calendar for this date. Open Timetable to view the periods supplied by SRM.' : 'No classes for this date and filter selection.'));
     }
   }
 
   function renderSchedule() {
     const list = get('schedule-entries');
     list.replaceChildren();
-    get('schedule-form').hidden = Boolean(reportedSchedule);
-    get('schedule-help').textContent = reportedSchedule ? 'Reported timetable. Calendar dates appear only when supplied by your provider. Allocation and batch filters apply on Home.' : 'Manual weekly plan, saved on this device. Holidays and day orders are unavailable. Add one entry for the full class duration.';
-    for (const [index, entry] of (reportedSchedule?.entries || schedule).entries()) {
+    get('schedule-help').textContent = 'Your SRM timetable by day order. Dates use the Ratio-D academic calendar. Missing dates stay unconfirmed.';
+    const entries = [...(reportedSchedule?.entries || schedule)].sort((a, b) =>
+      String(a.dayOrder || a.day).localeCompare(String(b.dayOrder || b.day)) || a.start.localeCompare(b.start));
+    for (const entry of entries) {
       const row = element('li', 'schedule-entry');
-      const day = entry.dayOrder ? `Day order ${entry.dayOrder}` : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][entry.day];
-      row.append(element('span', '', [day, `${entry.start}–${entry.end}`, entry.title, entry.allocation, entry.batch].filter(Boolean).join(' · ')));
-      const remove = element('button', '', '×');
-      remove.type = 'button';
-      remove.setAttribute('aria-label', `Remove ${entry.title}, ${day} ${entry.start}`);
-      remove.addEventListener('click', () => saveSchedule(schedule.filter((entry, position) => position !== index)));
-      if (!reportedSchedule) row.append(remove);
+      const day = entry.dayOrder ? `Day order ${entry.dayOrder}` : 'Sample day';
+      row.append(element('span', '', `${day} · ${entry.start}–${entry.end} · ${entry.title} · ${entry.room} · ${model.hours(entry)}h`));
       list.append(row);
     }
-    if (!(reportedSchedule?.entries || schedule).length) list.append(element('li', 'quiet', 'No classes added yet.'));
+    if (!entries.length) list.append(element('li', 'quiet', 'SRM has not returned a timetable. Refresh reports or sign in again to reload it.'));
   }
 
   function openSchedule() {
     get('planner-menu').open = false;
-    get('schedule-error').textContent = '';
     renderSchedule();
     get('schedule-dialog').showModal();
   }
@@ -207,19 +203,6 @@ globalThis.classproHome = (() => {
       get('planner-menu').open = false;
       get('planner-menu').querySelector('summary').focus();
     }
-  });
-  get('schedule-form').addEventListener('submit', event => {
-    event.preventDefault();
-    const entry = { day: Number(get('schedule-day').value), code: get('schedule-code').value.trim(),
-      title: get('schedule-name').value.trim(), start: get('schedule-start').value,
-      end: get('schedule-end').value, room: get('schedule-room').value.trim() };
-    if (!model.valid(entry)) { get('schedule-error').textContent = 'Complete every field and choose an end time after the start.'; return; }
-    if (schedule.length >= 100) { get('schedule-error').textContent = 'Remove an entry before adding more classes.'; return; }
-    if (schedule.some(existing => existing.day === entry.day && entry.start < existing.end && entry.end > existing.start)) {
-      get('schedule-error').textContent = 'This overlaps another class. Check the start and end times.';
-      return;
-    }
-    if (saveSchedule([...schedule, entry])) get('schedule-form').reset();
   });
   setInterval(() => { if (!get('home-view').hidden && !document.hidden) render(); }, 60000);
 
@@ -245,7 +228,12 @@ globalThis.classproHome = (() => {
         { day: 1, code: 'CN', title: 'Computer Networks', start: '14:30', end: '15:30', room: 'Lab 1 · Main Block' },
         { day: 1, code: 'DM', title: 'Discrete Mathematics', start: '17:00', end: '18:00', room: 'Room 301' },
       ];
-      return { attendance: { data: [
+      return { schedule: { timezone: 'Asia/Kolkata', calendarSource: 'Sample calendar',
+        entries: schedule.map(({ day, ...entry }) => ({ ...entry, dayOrder: '1', hours: model.hours(entry) })),
+        calendar: [{ date: '2026-09-14', kind: 'teaching', dayOrder: '1' }] },
+        profile: { name: 'Sample student', program: 'Computer Science', semester: '5' },
+        monthly: [{ month: 'Aug-2026', present: 49, absent: 11 }, { month: 'Sep-2026', present: 21, absent: 5 }],
+        attendance: { data: [
         { code: 'DS', title: 'Data Structures', present: 18, conducted: 22, absent: 4, percentage: 82 },
         { code: 'CN', title: 'Computer Networks', present: 13, conducted: 19, absent: 6, percentage: 68 },
         { code: 'OS', title: 'Operating Systems', present: 20, conducted: 22, absent: 2, percentage: 91 },

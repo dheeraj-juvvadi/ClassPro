@@ -4,7 +4,7 @@ import express from 'express';
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
 
-test('planner UI handles manual plans, calendar contracts and static sign-in', { timeout: 30000 }, async context => {
+test('academic UI handles reported timetables, calendar gaps and static sign-in', { timeout: 30000 }, async context => {
   const app = express();
   app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
   const server = app.listen(0, '127.0.0.1');
@@ -27,8 +27,14 @@ test('planner UI handles manual plans, calendar contracts and static sign-in', {
   await page.goto(`${origin}/?preview=home`);
   await page.locator('#home-view').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#planner-nav button').count(), 3);
-  assert.match(await page.locator('#schedule-source').innerText(), /Manual/);
+  assert.match(await page.locator('#schedule-source').innerText(), /Day order 1/);
   assert.equal(await page.locator('.calendar-week button').count(), 7);
+  assert.match(await page.locator('#next-class-card').innerText(), /Margin: 2h/);
+  assert.match(await page.locator('#next-class-card').innerText(), /81.8%/);
+  assert.equal(await page.locator('#schedule-form').count(), 0);
+  await page.getByRole('button', { name: 'Attendance', exact: true }).click();
+  assert.equal(await page.locator('#monthly-attendance tbody tr').count(), 2);
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
   await page.getByRole('button', { name: 'Plan attendance for Data Structures, 2 hours' }).click();
   assert.match(await page.locator('#projection-period').innerText(), /2-hour/);
   assert.match(await page.locator('#projection-result').innerText(), /75%/);

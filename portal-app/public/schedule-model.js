@@ -17,7 +17,8 @@ globalThis.classproScheduleModel = (() => {
     const entries = input.entries.filter(entry => {
       if (!entry || !home.valid({ ...entry, day: entry.day ?? 0 })) return false;
       if (entry.day === undefined ? !label(entry.dayOrder) : entry.dayOrder !== undefined) return false;
-      return ['allocation', 'batch'].every(field => entry[field] === undefined || label(entry[field]));
+      return (entry.hours === undefined || Number.isInteger(entry.hours) && entry.hours > 0 && entry.hours <= 24)
+        && ['allocation', 'batch'].every(field => entry[field] === undefined || label(entry[field]));
     });
     const calendar = input.calendar.filter(day => day && parse(day.date)
       && ['teaching', 'holiday'].includes(day.kind)
@@ -25,7 +26,7 @@ globalThis.classproScheduleModel = (() => {
       && (day.label === undefined || label(day.label)));
     if (entries.length !== input.entries.length || calendar.length !== input.calendar.length) return null;
     if (new Set(calendar.map(day => day.date)).size !== calendar.length) return null;
-    return { timezone: input.timezone, entries, calendar };
+    return { timezone: input.timezone, entries, calendar, calendarSource: input.calendarSource };
   }
   function clock(timezone, instant = new Date()) {
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: timezone,
@@ -47,7 +48,11 @@ globalThis.classproScheduleModel = (() => {
     selected.sort((first, second) => first.start.localeCompare(second.start));
     return selected.reduce((merged, entry) => {
       const previous = merged.at(-1);
-      if (previous && ['code', 'title', 'room', 'allocation', 'batch'].every(field => previous[field] === entry[field]) && previous.end === entry.start) previous.end = entry.end;
+      if (previous && ['code', 'title', 'room', 'allocation', 'batch', 'faculty'].every(field => previous[field] === entry[field]) && previous.end === entry.start) {
+        const hours = home.hours(previous) + home.hours(entry);
+        previous.end = entry.end;
+        previous.hours = hours;
+      }
       else merged.push({ ...entry });
       return merged;
     }, []);

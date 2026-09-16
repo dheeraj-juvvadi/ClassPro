@@ -60,6 +60,7 @@ function showLogin(text = '', error = false) {
   $('planner-menu').hidden = true;
   classproHome.clear();
   academicUI.clear();
+  academicSummary.clear();
   authenticated = false;
   $('startup').hidden = true;
   $('login-view').hidden = false;
@@ -212,6 +213,7 @@ async function loadReports() {
     renderAttendance(reports.attendance);
     renderMarks(reports.marks);
     classproHome.update(reports.attendance, reports.schedule);
+    academicSummary.update(reports);
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Retry.' : '');
@@ -305,7 +307,8 @@ if (designPreview) {
   showReports();
   renderAttendance(reports.attendance);
   renderMarks(reports.marks);
-  classproHome.update(reports.attendance);
+  classproHome.update(reports.attendance, reports.schedule);
+  academicSummary.update(reports);
   $('updated-at').textContent = 'Design preview · sample data';
 } else run(async () => {
   try {

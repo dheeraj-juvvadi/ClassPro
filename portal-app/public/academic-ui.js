@@ -14,7 +14,7 @@ globalThis.academicUI = (() => {
     const prediction = attendanceMath.predict({ present, conducted });
     if (!prediction.valid || prediction.percentage === null) return { text: 'No hours yet', tone: 'neutral', percentage: '—', detail: 'No attendance hours recorded.' };
     const required = prediction.neededToTarget;
-    return { text: required ? `Required: ${required}` : `Margin: ${prediction.canMiss}`,
+    return { text: required ? `Recover: ${required}h` : `Margin: ${prediction.canMiss}h`,
       tone: required ? 'risk' : prediction.canMiss === 0 ? 'caution' : 'healthy',
       percentage: `${Number(prediction.percentage.toFixed(1))}%`,
       detail: required ? `Attend ${required} consecutive hours to reach 75%.` : `You can miss ${prediction.canMiss} hours and remain at 75%.` };
@@ -43,6 +43,8 @@ globalThis.academicUI = (() => {
       }
       bottom.append(counts, create('strong', 'attendance-percent', status.percentage));
       card.append(heading, bottom);
+      const details = [course.faculty, course.room, course.type, course.credits && `${course.credits} credits`].filter(value => value && value !== 'TBA');
+      if (details.length) card.append(create('p', 'course-metadata', details.join(' · ')));
       list.append(card);
     }
     container.append(list);

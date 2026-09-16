@@ -28,8 +28,11 @@ globalThis.classproHomeModel = {
     const prediction = globalThis.attendanceMath.predict({ present: course.present, conducted: course.conducted });
     if (!prediction.valid || prediction.percentage === null) return { percentage: '—', margin: 'No hours recorded', tone: 'neutral' };
     const margin = prediction.neededToTarget ? -prediction.neededToTarget : prediction.canMiss;
-    return { percentage: `${Math.round(prediction.percentage)}%`, margin: `${margin} margin`,
+    return { percentage: `${Number(prediction.percentage.toFixed(1))}%`, margin: margin < 0 ? `Recover: ${-margin}h` : `Margin: ${margin}h`,
       detail: margin < 0 ? `Attend ${-margin} more hours to reach 75%` : `Can miss ${margin} hours and stay at 75%`,
       tone: margin < 0 ? 'risk' : margin === 0 ? 'caution' : 'healthy' };
+  },
+  hours(entry) {
+    return entry.hours ?? (this.minutes(entry.end) - this.minutes(entry.start)) / 60;
   },
 };
