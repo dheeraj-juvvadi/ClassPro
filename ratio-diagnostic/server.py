@@ -247,7 +247,8 @@ async def login(request: Request):
     print(json.dumps({"event": "ratio_evidence", "request_id": request.state.diagnostic_id,
                       **integrity(payload)}), flush=True)
     login_payload = {
-        "username": payload["account"], "password": payload["password"],
+        "username": (payload["account"].strip() + "@srmist.edu.in") if provider == "academia" and "@" not in payload["account"] else payload["account"].strip(),
+        "password": payload["password"],
         "captcha": payload.get("answer") or None,
         "cdigest": entry.get("academia_digest") if provider == "academia" else entry.get("digest"),
     }
@@ -275,7 +276,7 @@ async def login(request: Request):
     states = providers(entry)
     if not same_student(states, provider, data, payload["account"]):
         return failure("ACCOUNT_MISMATCH", "Connect the same student's account for both providers.", 409)
-    states[provider] = {"cookies": data["cookies"], "username": payload["account"],
+    states[provider] = {"cookies": data["cookies"], "username": login_payload["username"],
                         "password": payload["password"], "report": report(data), "expired": False}
     sessions.pop(token, None)
     token = secrets.token_urlsafe(32)

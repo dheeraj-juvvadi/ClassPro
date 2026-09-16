@@ -39,6 +39,7 @@ class ProviderFlowTests(DiagnosticTests):
             self.assertFalse(result.json()["required"])
             result = await self.client.post("/api/login/client", json={"provider": "academia", "account": "student", "password": "synthetic"})
             self.assertEqual(result.status_code, 200)
+            self.assertEqual(calls[-1][1]["username"], "student@srmist.edu.in")
             await self.client.post("/api/challenge", json={"provider": "portal"})
             result = await self.client.post("/api/login/client", json={"provider": "portal", "account": "student", "password": "synthetic2"})
             self.assertEqual(result.status_code, 200)
