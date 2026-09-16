@@ -55,3 +55,23 @@ its own 75% target; overall attendance does not override a course's requirement.
 
 Validation: Python report/calendar tests, frontend attendance/schedule/date
 projection tests, and browser interaction checks at 320, 390 and 1280 pixels.
+
+## September 16 interface update
+
+Home now keeps the greeting and date without profile/account status text. Account
+connections are available from More options → Accounts. The next-class card is
+more compact, retaining duration, attendance and margin. Its duplicate calculator
+button has been removed; the attendance date calculator is still available.
+
+More options → Academic calendar opens a month grid with day orders, holiday and
+exam indications where supplied by calendar descriptions, and selected-day
+classes. More options → Timetable renders the returned periods as an accessible,
+horizontally scrollable SVG using Inter and the existing sage/charcoal palette.
+Subjects was removed because it duplicated Attendance. Empty timetables remain
+explicit; this presentation does not manufacture missing SRM schedule data.
+
+New HTTP sign-ins start on Academia. Connection failures offer a Student Portal
+fallback dialog; a successful Academia login continues normally. Invalid
+credentials, CAPTCHA and capacity errors retain their own handling. Switching to
+Student Portal clears the password and keeps the account name; providers may use
+different passwords. Remembered-session and auto-sync behavior is unchanged.
