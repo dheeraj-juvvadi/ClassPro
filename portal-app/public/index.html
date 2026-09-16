@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
-  <link rel="stylesheet" href="/interaction-feedback.css?v=7a01ad117a">
+  <link rel="stylesheet" href="/interaction-feedback.css?v=b7930f8bb0">
   <script src="/interaction-feedback.js?v=57200f9f85" defer></script>
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
@@ -153,11 +153,11 @@
 
   </dialog>
   <dialog id="login-fallback-dialog" aria-labelledby="login-fallback-title">
-    <p class="fallback-kicker">Another way in</p>
+    <p class="fallback-kicker">Anon / Sign in</p>
     <h2 id="login-fallback-title">Academia is unavailable right now</h2>
     <p id="login-fallback-message" class="quiet">Please sign in with Student Portal to fetch your attendance and marks.</p>
     <p class="fallback-note">Use your Student Portal password. You can connect Academia later from Settings.</p>
-    <button id="use-student-portal" type="button">Sign in with Student Portal</button>
+    <button id="use-student-portal" type="button"><span>Sign in with Student Portal</span><span class="fallback-arrow" aria-hidden="true">↗</span></button>
     <button id="retry-academia" type="button">Try Academia again</button>
   </dialog>
   <dialog id="accounts-dialog" aria-labelledby="accounts-title">
