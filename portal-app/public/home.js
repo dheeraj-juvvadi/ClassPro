@@ -5,6 +5,7 @@ globalThis.classproHome = (() => {
   const planner = globalThis.classproScheduleModel;
   let schedule = [];
   let studentName = '';
+  let greetingExtras = [];
   let attendance = [];
   let preview = false;
   let reportError = '';
@@ -64,7 +65,7 @@ globalThis.classproHome = (() => {
 
   function render() {
     const date = now();
-    get('home-title').textContent = anonGreeting(studentName, date);
+    get('home-title').textContent = anonGreeting(studentName, preview ? date : planner.clock('Asia/Kolkata'), greetingExtras);
     get('home-date').textContent = new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
     const day = selectedDate || date;
     const classes = planner.classes(source(), day, filters);
@@ -197,12 +198,15 @@ globalThis.classproHome = (() => {
       get('planner-menu').querySelector('summary').focus();
     }
   });
-  setInterval(() => { if (!get('home-view').hidden && !document.hidden) render(); }, 60000);
+  const refreshClock = () => { if (!get('home-view').hidden && !document.hidden) render(); };
+  setInterval(refreshClock, 60000);
+  document.addEventListener('visibilitychange', refreshClock);
+  window.addEventListener('focus', refreshClock);
 
   return {
-    profile(profile) { studentName = profile?.name || ''; render(); },
+    profile(profile) { studentName = profile?.name || ''; greetingExtras = anonGreetings.select(profile); render(); },
     enter() { render(); page('home'); },
-    clear() { studentName = ''; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
+    clear() { studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
     update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];
       reportError = report?.error?.message || '';

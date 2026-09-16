@@ -25,9 +25,35 @@ test('recovery date needs continuous confirmed dates and future classes', () => 
 });
 test('approved greetings use name rule and all time boundaries', () => {
   const name = 'JUVVADI DHEERAJ CHANDRA';
-  for (const [hour, expected] of [[0,'It’s late'],[4,'It’s late'],[5,'Good morning'],[12,'Good afternoon'],[17,'Good evening'],[22,'It’s late']]) {
+  for (const [hour, expected] of [[0,'Goodnight'],[4,'Goodnight'],[5,'Good morning'],[12,'Good morning'],[17,'Good evening'],[22,'Goodnight']]) {
     assert.equal(anonGreeting(name, new Date(2026,8,16,hour)), `${expected}, Dheeraj.`);
   }
   assert.equal(anonGreeting('ANANYA RAO', new Date(2026,8,16,9)), 'Good morning, Ananya.');
   assert.equal(anonGreeting('', new Date(2026,8,16,9)), 'Good morning.');
+});
+
+test('each profile gets exactly three stable distinct extras without requests', () => {
+  const profile = { name: 'JUVVADI DHEERAJ CHANDRA', regNo: 'TEST123' };
+  const selected = anonGreetings.select(profile);
+  assert.equal(selected.length, 3);
+  assert.equal(new Set(selected).size, 3);
+  assert.deepEqual(anonGreetings.select(profile), selected);
+  assert.equal(selected.some(line => /\{name\}|Night shift|Midnight maths|Still waking|Tomorrow already/.test(line)), false);
+  for (const line of selected) assert.equal(line.split(/\s+/).length, 2);
+  assert.equal(anonGreetings.select({}).some(line => line.includes('{name}')), false);
+});
+test('fixed first hour changes to assigned extra locally at each boundary', () => {
+  const extras = ['You again?', 'Back already?', 'Still here?'];
+  const at = (hour, minute = 0) => anonGreeting('Dheeraj', new Date(2026, 8, 16, hour, minute), extras);
+  assert.equal(at(5), 'Good morning, Dheeraj.');
+  assert.equal(at(5,59), 'Good morning, Dheeraj.');
+  assert.equal(at(6), extras[0]);
+  assert.equal(at(12), extras[0]);
+  assert.equal(at(16,59), extras[0]);
+  assert.equal(at(17), 'Good evening, Dheeraj.');
+  assert.equal(at(18), extras[1]);
+  assert.equal(at(22), 'Goodnight, Dheeraj.');
+  assert.equal(at(23), extras[2]);
+  assert.equal(at(0), extras[2]);
+  assert.equal(at(4,59), extras[2]);
 });
