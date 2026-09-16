@@ -79,3 +79,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Continuous app surface
+
+`app-surface.css` removes the outer main/report shell borders and rounded edges
+across Home, Attendance and Marks. The existing floral art fades into the common
+dark background instead of ending at a hard clip. Header content and report title
+alignment are preserved. Course-level separators remain useful within lists;
+the bottom navigation retains its separate fixed, floating surface.
+
+`menu-control.css` isolates the options summary from the generic disclosure-grid
+styles. The plus sits at the center of its 44px target with no fill or box shadow.

@@ -1,0 +1,25 @@
+/* One app surface from the illustrated masthead through the report content. */
+body.planner .site-header,
+body.planner main,
+body.planner #home-view,
+body.planner #reports-view,
+body.planner #report-content,
+body.planner .report-section {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+body.planner .section-heading { border-bottom: 0; }
+body.planner .botanical-backdrop {
+  clip-path: none;
+  mask-image: linear-gradient(to bottom, #000 0, #000 60px, transparent 150px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 60px, transparent 150px);
+}
+/* Preserve content alignment after removing the former one-pixel shell. */
+body.planner main { padding-inline: 29px; }
+body.planner:is([data-page="attendance"], [data-page="marks"]) main { padding-inline: 29px; }
+@media (max-width: 700px) {
+  body.planner main { padding-inline: 13px; }
+  body.planner:is([data-page="attendance"], [data-page="marks"]) main { padding-inline: 26px; }
+}

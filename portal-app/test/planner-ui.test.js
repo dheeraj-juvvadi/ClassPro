@@ -44,6 +44,23 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.goto(`${origin}/?preview=home`);
   await page.locator('#home-view').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#planner-nav button').count(), 3);
+  const menuGeometry = await page.locator('#planner-menu > summary').evaluate(button => {
+    const icon = button.querySelector('span'), b = button.getBoundingClientRect(), i = icon.getBoundingClientRect();
+    const style = getComputedStyle(button);
+    return { dx: Math.abs((b.x + b.width / 2) - (i.x + i.width / 2)), dy: Math.abs((b.y + b.height / 2) - (i.y + i.height / 2)), background: style.backgroundColor, shadow: style.boxShadow };
+  });
+  assert.ok(menuGeometry.dx < 1 && menuGeometry.dy < 1);
+  assert.equal(menuGeometry.background, 'rgba(0, 0, 0, 0)');
+  assert.equal(menuGeometry.shadow, 'none');
+  await page.locator('#planner-menu > summary').click({ position: { x: 22, y: 22 } });
+  assert.equal(await page.locator('#planner-menu').getAttribute('open'), '');
+  await page.keyboard.press('Escape');
+  await page.locator('button[data-page="marks"]').click();
+  assert.equal(await page.locator('main').evaluate(node => getComputedStyle(node).borderTopWidth), '0px');
+  assert.equal(await page.locator('main').evaluate(node => getComputedStyle(node).backgroundColor), 'rgba(0, 0, 0, 0)');
+  assert.equal(await page.locator('#planner-nav').evaluate(node => getComputedStyle(node).position), 'fixed');
+  await page.locator('button[data-page="home"]').click();
+
   assert.match(await page.locator('#schedule-source').innerText(), /Day order 1/);
   assert.equal(await page.locator('.calendar-week button').count(), 7);
   assert.match(await page.locator('#next-class-card').innerText(), /Margin: 2h/);
