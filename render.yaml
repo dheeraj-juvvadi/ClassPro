@@ -10,8 +10,10 @@ services:
     healthCheckPath: /health
     autoDeploy: false
     envVars:
-      - key: NODE_ENV
-        value: production
+      - key: AUTH_MODE
+        value: http
+      - key: SESSION_ENCRYPTION_KEY
+        sync: false
       - key: APP_ORIGIN
         value: https://revamp-tracker.vercel.app
       - key: MAX_SESSIONS

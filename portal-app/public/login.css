@@ -77,3 +77,11 @@
   .garden-login .login-options { gap: .5rem; }
   .garden-login .remember-choice, .garden-login .login-options a { font-size: .625rem; }
 }
+#provider-choice { margin-bottom: 18px; }
+#provider-choice select {
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  color: #eeeae2; background: #1b201b; border: 1px solid #3b443b;
+  border-radius: 6px; font: inherit;
+}
+#provider-choice select:focus-visible { outline: 2px solid #b4c59c; outline-offset: 3px; }
+#provider-help { margin-top: 8px; font-size: 12px; }

@@ -30,6 +30,7 @@ type rate struct {
 }
 
 type Server struct {
+	httpAuth *httpAuth
 	config   Config
 	worker   worker
 	mu       sync.Mutex

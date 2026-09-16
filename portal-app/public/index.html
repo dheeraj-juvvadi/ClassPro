@@ -20,6 +20,8 @@
   <script src="/home.js" defer></script>
   <script src="/quantity-stepper.js" defer></script>
   <script src="/academic-ui.js" defer></script>
+  <script src="/client-ocr.js" defer></script>
+  <script src="/auth-client.js" defer></script>
   <script src="/app.js" defer></script>
   <script src="/credential-integrity.js" defer></script>
   <script src="/login-effects.js" defer></script>
@@ -45,6 +47,11 @@
         <h1 id="login-title">Welcome <span>back.</span></h1>
         <p class="quiet">Lightweight. No bs.</p>
         <form id="login-form">
+          <div id="provider-choice" hidden>
+            <label for="login-provider">Sign in with</label>
+            <select id="login-provider" aria-describedby="provider-help"><option value="academia">Academia</option><option value="portal">Student Portal</option></select>
+            <p id="provider-help" class="quiet">Use your Academia password.</p>
+          </div>
           <label for="account">NetID</label>
           <input id="account" name="account" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your SRM NetID" required>
           <label for="password">Password</label>

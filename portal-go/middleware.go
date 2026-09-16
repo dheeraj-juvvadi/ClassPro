@@ -57,7 +57,11 @@ func (server *Server) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 			}
 		}
 	}
-	server.route(writer, request)
+	if server.httpAuth != nil {
+		server.statelessRoute(writer, request)
+	} else {
+		server.route(writer, request)
+	}
 }
 
 func (server *Server) allowRate(key string) bool {

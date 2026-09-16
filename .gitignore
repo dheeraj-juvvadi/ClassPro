@@ -47,6 +47,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+/reference/
+
 # Million Lint
 .million
 

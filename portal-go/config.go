@@ -37,7 +37,7 @@ func configFromEnv() (Config, error) {
 	if worker.Scheme == "http" && !net.ParseIP(worker.Hostname()).IsLoopback() {
 		return config, fmt.Errorf("unencrypted worker must use a literal loopback address")
 	}
-	if len(config.WorkerToken) < 32 || strings.ContainsAny(config.WorkerToken, "\r\n") {
+	if os.Getenv("AUTH_MODE") != "http" && (len(config.WorkerToken) < 32 || strings.ContainsAny(config.WorkerToken, "\r\n")) {
 		return config, fmt.Errorf("WORKER_TOKEN needs at least 32 characters")
 	}
 	for name, target := range map[string]*int{"MAX_SESSIONS": &config.MaxSessions, "MAX_CONCURRENT": &config.MaxConcurrent, "RATE_PER_MINUTE": &config.RatePerMinute} {

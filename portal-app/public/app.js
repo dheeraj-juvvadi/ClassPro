@@ -25,6 +25,7 @@ function syncControls() {
   $('account').disabled = busy;
   $('password').disabled = busy;
   $('remember').disabled = busy;
+  $('login-provider').disabled = busy;
   $('manual-captcha-refresh').disabled = busy;
   $('manual-captcha-answer').disabled = busy;
   $('login-form').setAttribute('aria-busy', String(busy));
@@ -65,6 +66,7 @@ function showLogin(text = '', error = false) {
   $('reports-view').hidden = true;
   $('logout').hidden = true;
   $('login-form').reset();
+  classproAuth.reset();
   manualChallengeAt = 0;
   $('manual-captcha-image').hidden = true;
   $('manual-captcha-answer').value = '';
@@ -129,7 +131,7 @@ async function api(path, options = {}, login = false) {
     catch { throw new Error('The server returned an unexpected response.\nPlease try again.'); }
   }
   if (!response.ok) {
-      throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code });
+      throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code, image: data.image });
   }
   return data;
 }
@@ -241,7 +243,7 @@ async function loadManualChallenge() {
   }
 }
 
-$('manual-captcha-refresh').addEventListener('click', () => run(loadManualChallenge));
+$('manual-captcha-refresh').addEventListener('click', () => run(() => classproAuth.enabled ? classproAuth.prepare(api, false) : loadManualChallenge()));
 
 async function submitCredentials(credentials, answer) {
   const integrity = await createCredentialIntegrity(credentials.account, credentials.password, answer);
@@ -259,6 +261,14 @@ $('login-form').addEventListener('submit', (event) => {
     $('sign-in').setAttribute('data-loading', '');
     $('sign-in-status').textContent = 'Connecting to SRM…';
     let data;
+    if (classproAuth.enabled) {
+      data = await classproAuth.login(api, credentials);
+      if (!data) return;
+      if (data.authenticated !== true) throw new Error('Sign-in could not be confirmed.');
+      showReports();
+      await loadReports();
+      return;
+    }
     if (!manualChallengeAt || Date.now() - manualChallengeAt >= 90000) {
       await loadManualChallenge();
       throw new Error('Enter the new code, then sign in again.');
@@ -300,6 +310,7 @@ if (designPreview) {
 } else run(async () => {
   try {
     const session = await api('/api/session');
+    classproAuth.configure(session);
     if (session.authenticated) {
       showReports();
       await loadReports();
