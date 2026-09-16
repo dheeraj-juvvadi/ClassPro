@@ -7,6 +7,15 @@ from provider_flow import refresh
 
 
 class ProviderFlowTests(DiagnosticTests):
+    async def test_academia_login_returns_captcha_challenge(self):
+        import server
+        from unittest.mock import AsyncMock
+        challenge = '{"type":"CAPTCHA_REQUIRED","cdigest":"synthetic","image":"https://academia.srmist.edu.in/captcha"}'
+        with patch.object(server.upstream.AcademiaClient, "authenticate", AsyncMock(side_effect=Exception(challenge))):
+            response = await server.app.state.client.post("/login", json={"username": "synthetic", "password": "synthetic"})
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.json()["detail"]["type"], "CAPTCHA_REQUIRED")
+
     async def test_academia_then_portal_preserves_timetable_and_separate_cookies(self):
         calls = []
 
