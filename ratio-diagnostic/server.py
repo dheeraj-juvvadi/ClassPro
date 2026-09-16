@@ -25,6 +25,7 @@ from observe import events, instrument, record
 from deep_evidence import integrity, runtime, submitted, workload
 from academic_data import extras
 from provider_flow import providers, combined, same_student, refresh as refresh_providers
+from session_store import SessionStore, lifetime, SESSION_SECONDS
 
 upstream.PortalSession = instrument(upstream.PortalSession)
 
@@ -51,16 +52,23 @@ sessions = {}
 rates = {}
 gate = asyncio.Lock()
 cookie_name = "classpro_ratio_diagnostic"
+session_store = None
 
 
 @asynccontextmanager
 async def lifespan(app):
+    global session_store
+    if os.environ.get("SESSION_STORE_DIR"):
+        session_store = SessionStore(os.environ["SESSION_STORE_DIR"])
+        sessions.update(session_store.load())
     print(json.dumps({"event": "ratio_runtime", **runtime()}), flush=True)
     async with upstream.lifespan(upstream.app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=upstream.app),
                                      base_url="http://ratio-internal", timeout=90) as client:
             app.state.client = client
             yield
+    if session_store:
+        session_store.save(sessions)
     sessions.clear()
 
 
@@ -148,7 +156,9 @@ async def boundary(request, call_next):
         request._body = bytes(body)
     now = time.monotonic()
     for key, entry in list(sessions.items()):
-        if now - entry["created"] > 1800:
+        expired = (time.time() - entry.get("last_seen", time.time()) > lifetime(entry)
+                   if entry.get("providers") or entry.get("cookies") else now - entry["created"] > SESSION_SECONDS)
+        if expired:
             sessions.pop(key, None)
             previous = upstream._portal_captcha_sessions.pop(entry.get("digest"), None)
             if previous:
@@ -161,6 +171,10 @@ async def boundary(request, call_next):
     if count >= 30 or (key not in rates and len(rates) >= 4096):
         return failure("RATE_LIMIT", "Wait a minute before retrying.", 429)
     rates[key] = (start, count + 1)
+    token = request.cookies.get(cookie_name)
+    entry = sessions.get(token)
+    if entry and (entry.get("providers") or entry.get("cookies")):
+        entry["last_seen"] = time.time()
     if gate.locked():
         response = failure("SERVER_BUSY", "ClassPro is processing another request.", 503)
         response.headers["Retry-After"] = "2"
@@ -172,10 +186,19 @@ async def boundary(request, call_next):
             print(json.dumps({"event": "ratio_exception", "request_id": request.state.diagnostic_id,
                               "exception_type": type(exception).__name__}), flush=True)
             response = failure("PORTAL_UNAVAILABLE", "Student Portal request failed.", 502)
+        if session_store:
+            session_store.save(sessions)
+    if token in sessions and sessions[token].get("providers"):
+        set_session_cookie(response, token, sessions[token])
     response.headers["Cache-Control"] = "no-store"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Request-ID"] = request.state.diagnostic_id
     return response
+
+
+def set_session_cookie(response, token, entry):
+    response.set_cookie(cookie_name, token, httponly=True, secure=secure, samesite="strict",
+                        max_age=lifetime(entry) if entry.get("remember", True) else None)
 
 
 @app.get("/api/session")
@@ -210,12 +233,12 @@ async def challenge(request: Request):
         if len(sessions) >= 4:
             return failure("CAPACITY", "Diagnostic sessions are full. Please sign out first.", 503)
         token = secrets.token_urlsafe(32)
-        entry = {"created": time.monotonic()}
+        entry = {"created": time.monotonic(), "remember": True, "last_seen": time.time()}
         sessions[token] = entry
     entry["pending_provider"] = provider
     if provider == "academia":
         result = JSONResponse({"required": False})
-        result.set_cookie(cookie_name, token, httponly=True, secure=secure, samesite="strict", max_age=1800)
+        set_session_cookie(result, token, entry)
         return result
     if entry.get("digest"):
         previous = upstream._portal_captcha_sessions.pop(entry["digest"], None)
@@ -226,7 +249,7 @@ async def challenge(request: Request):
         return failure("PORTAL_UNAVAILABLE", "Cannot load SRM verification.", 502)
     entry["digest"] = data["session"]
     result = JSONResponse({"required": True, "serverAuto": True, "image": data["captcha_image"]})
-    result.set_cookie(cookie_name, token, httponly=True, secure=secure, samesite="strict", max_age=1800)
+    set_session_cookie(result, token, entry)
     return result
 
 
@@ -278,12 +301,14 @@ async def login(request: Request):
         return failure("ACCOUNT_MISMATCH", "Connect the same student's account for both providers.", 409)
     states[provider] = {"cookies": data["cookies"], "username": login_payload["username"],
                         "password": payload["password"], "report": report(data), "expired": False}
+    entry["remember"] = payload.get("remember", entry.get("remember", True)) is not False
+    entry["last_seen"] = time.time()
     sessions.pop(token, None)
     token = secrets.token_urlsafe(32)
     entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic()})
     sessions[token] = entry
-    result = JSONResponse({"authenticated": True})
-    result.set_cookie(cookie_name, token, httponly=True, secure=secure, samesite="strict", max_age=1800)
+    result = JSONResponse({"authenticated": True, "connections": entry["report"]["connections"]})
+    set_session_cookie(result, token, entry)
     return result
 
 

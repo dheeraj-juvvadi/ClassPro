@@ -7,6 +7,28 @@ from provider_flow import refresh
 
 
 class ProviderFlowTests(DiagnosticTests):
+    async def test_remembered_session_survives_hours_and_refreshes_cookie(self):
+        import server
+        import time
+        server.sessions["remembered"] = {"created": time.monotonic() - 6 * 3600,
+            "last_seen": time.time() - 6 * 3600, "remember": True,
+            "providers": {"portal": {"cookies": {"session": "synthetic"}}}}
+        self.client.cookies.set(server.cookie_name, "remembered")
+        response = await self.client.get("/api/session")
+        self.assertTrue(response.json()["authenticated"])
+        self.assertIn("Max-Age=172800", response.headers["set-cookie"])
+        server.sessions["remembered"]["last_seen"] = time.time() - 49 * 3600
+        response = await self.client.get("/api/session")
+        self.assertFalse(response.json()["authenticated"])
+
+    async def test_unremembered_session_expires_after_inactivity(self):
+        import server
+        import time
+        server.sessions["temporary"] = {"created": time.monotonic(), "remember": False,
+            "last_seen": time.time() - 1900, "providers": {"portal": {"cookies": {}}}}
+        self.client.cookies.set(server.cookie_name, "temporary")
+        self.assertFalse((await self.client.get("/api/session")).json()["authenticated"])
+
     async def test_academia_login_returns_captcha_challenge(self):
         import server
         from unittest.mock import AsyncMock
