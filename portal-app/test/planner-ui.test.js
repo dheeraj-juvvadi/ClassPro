@@ -56,6 +56,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-accounts').click();
   assert.equal(await page.locator('#accounts-title').innerText(), 'Settings.');
+  assert.equal(await page.locator('#settings-courses, #settings-history, .settings-footnote').count(), 0);
   await page.locator('#settings-display-name').fill('Dheeraj');
   await page.locator('#settings-profile-form button').click();
   assert.equal(await page.locator('#settings-name').innerText(), 'Dheeraj');
@@ -159,12 +160,10 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   });
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-accounts').click();
-  assert.match(await page.locator('#settings-history').textContent(), /Attendance updated/);
   await page.locator('#settings-display-name').fill('Test nickname');
   await page.locator('#settings-profile-form button').click();
   await page.evaluate(() => { anonSettings.clear(); anonSettings.update(globalThis.settingsTestReport); });
   assert.equal(await page.locator('#settings-name').innerText(), 'Test nickname');
-  assert.match(await page.locator('#settings-history').textContent(), /Attendance updated/);
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.locator('#accounts-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
@@ -172,6 +171,5 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('.settings-detail').filter({ hasText: 'Privacy & storage' }).locator('summary').click();
   await page.locator('#settings-reset').click();
   assert.equal(await page.locator('#settings-name').innerText(), 'Test Person');
-  assert.doesNotMatch(await page.locator('#settings-history').textContent(), /Attendance updated/);
   assert.deepEqual(failures, []);
 });

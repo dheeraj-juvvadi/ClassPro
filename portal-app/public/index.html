@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/home.css?v=b88f426dd1">
   <link rel="stylesheet" href="/academic.css?v=0f7c742800">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
-  <link rel="stylesheet" href="/settings.css?v=41d2770f70">
+  <link rel="stylesheet" href="/settings.css?v=5c6b6dc0bc">
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
@@ -34,7 +34,7 @@
   <script src="/client-ocr.js?v=7a543e9229" defer></script>
   <script src="/auth-client.js?v=2f54a42c87" defer></script>
   <script src="/report-sync.js?v=82b2d514be" defer></script>
-  <script src="/settings.js?v=333bf054e7" defer></script>
+  <script src="/settings.js?v=395fcf2342" defer></script>
   <script src="/app.js?v=feecbb2c7a" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
@@ -164,10 +164,7 @@
     <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="clay">Clay</option></select></label>
     <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
     <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><span class="sync-icon" aria-hidden="true">↻</span> Sync</button></div>
-    <p class="settings-footnote">Auto-sync: hourly 8am–7pm, then 9pm and 11pm IST, while Anon is visible.</p>
-    <details class="settings-detail"><summary>Course details</summary><div id="settings-courses"></div></details>
-    <details class="settings-detail"><summary>Recent changes <span>48 hours</span></summary><div id="settings-history"></div><button id="settings-clear-history" type="button">Clear history</button></details>
-    <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 48 hours of inactivity. Signing out deletes that session.</p><p>Your display preferences and recent change summaries stay in this browser. Artwork is cached for reuse. Notifications contain no grades or personal details.</p><button id="settings-reset" type="button">Reset local preferences &amp; history</button></details>
+    <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 48 hours of inactivity. Signing out deletes that session.</p><p>Your display preferences stay in this browser. Artwork is cached for reuse. Notifications contain no grades or personal details.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
     <details class="settings-detail"><summary>What’s new</summary><p>Academic calendar, date-based attendance projections, recovery dates and scheduled background sync.</p></details>
     <a class="settings-feedback" href="https://github.com/dheeraj-juvvadi/ClassPro/issues/new" target="_blank" rel="noopener noreferrer">Feedback &amp; report a problem ↗</a>
     <button id="settings-signout" class="settings-signout" type="button">Sign out</button>

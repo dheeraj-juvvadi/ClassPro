@@ -33,7 +33,6 @@
 .settings-row input[type="checkbox"] { width: 32px; height: 22px; flex-shrink: 0; accent-color: #b7c79b; cursor: pointer; }
 #settings-sync { white-space: nowrap; background: transparent; color: #cad7b5; padding-right: 0; }
 #settings-sync.syncing .sync-icon { animation: sync-turn 1s linear infinite; }
-.settings-footnote { font-size: 11px; color: #bfb3a0; line-height: 1.7; margin: 12px 0 22px; }
 .settings-detail { border-bottom: 1px solid #65594255; }
 .settings-detail > summary { grid-template-columns: minmax(0, 1fr) auto auto; padding: 20px 0; font-size: 14px; gap: 10px; }
 .settings-detail > summary:hover { background: transparent; color: #e6c8a7; }
@@ -41,10 +40,6 @@
 .settings-detail > summary span { color: #bfb3a0; font-size: 11px; }
 .settings-detail > p, .settings-detail > div > p { font-size: 12px; line-height: 1.7; color: #c9bfaf; margin-bottom: 16px; }
 #accounts-dialog .settings-detail button { font-size: 12px; margin: 0 0 16px; background: transparent; color: #e4c6a4; padding-left: 0; text-decoration: underline; text-underline-offset: 4px; }
-.settings-course { padding: 14px 0; }
-.settings-course + .settings-course { border-top: 1px solid #65594255; }
-.settings-course strong { font-size: 13px; font-weight: 500; }
-.settings-course small, #settings-history small { display: block; color: #bfb3a0; font-size: 11px; line-height: 1.7; margin-top: 6px; }
 .settings-feedback { display: block; color: #d9c7a7; font-size: 13px; padding: 23px 0; }
 #accounts-dialog .settings-signout { width: auto; background: transparent; color: #e3ad94; padding-left: 0; border-radius: 0; }
 #settings-message { margin-top: 12px; font-size: 12px; line-height: 1.6; color: #d7c7ae; }
