@@ -180,7 +180,6 @@ globalThis.classproHome = (() => {
   });
   get('close-calendar').addEventListener('click', () => get('calendar-dialog').close());
 
-  get('open-schedule').addEventListener('click', () => page('attendance'));
   get('close-schedule').addEventListener('click', () => get('schedule-dialog').close());
   get('open-accounts').addEventListener('click', () => {
     get('planner-menu').open = false;

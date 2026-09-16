@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/garden.css?v=1c5b5ccb5f">
   <link rel="stylesheet" href="/login.css?v=3a3182a966">
   <link rel="stylesheet" href="/home.css?v=b88f426dd1">
-  <link rel="stylesheet" href="/academic.css?v=f97bbc9778">
+  <link rel="stylesheet" href="/academic.css?v=0f7c742800">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
   <link rel="stylesheet" href="/settings.css?v=41d2770f70">
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
@@ -25,7 +25,7 @@
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
   <script src="/course-details.js?v=c862a2bd04" defer></script>
   <script src="/greeting.js?v=71ab6ab926" defer></script>
-  <script src="/home.js?v=5267c81667" defer></script>
+  <script src="/home.js?v=8b2e3902a7" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=fd8c3b7f24" defer></script>
   <script src="/date-attendance.js?v=9e8de7e9ee" defer></script>
@@ -45,9 +45,8 @@
   <header class="site-header">
     <div class="brand">Anon<span class="brand-caption">A LITTLE ROOM TO GROW</span></div>
     <details id="planner-menu" hidden>
-      <summary aria-label="More options">•••</summary>
+      <summary aria-label="More options"><span aria-hidden="true">+</span></summary>
       <div class="planner-menu-items">
-        <button id="open-schedule" type="button">Attendance</button>
         <button id="open-calendar" type="button">Academic calendar</button>
         <button id="open-accounts" type="button">Settings</button>
         <button id="logout" class="secondary" type="button" hidden>Sign out</button>

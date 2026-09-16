@@ -129,3 +129,11 @@ dialog input { font-size: 16px; }
 #refresh.syncing { opacity: 1; color: #c5d4a7; }
 @keyframes sync-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { #refresh.syncing .sync-icon { animation: none; } }
+
+/* A quiet, warm accent for the header options control. */
+#planner-menu > summary { color: #e5e9cf; background: #252b20; border: 1px solid #bac69a30; box-shadow: 0 0 12px #c9d7a50c; text-shadow: 0 0 5px #edf1d42a, 0 0 12px #c9d7a512; }
+#planner-menu > summary::after { content: none; }
+#planner-menu > summary > span { font-size: 27px; line-height: 1; font-weight: 400; }
+#planner-menu[open] > summary > span { transform: rotate(45deg); }
+#planner-menu > summary:hover { background: #2d3525; color: #f1eee3; }
+#planner-menu > summary:focus-visible { outline: 2px solid #c5d4a7; outline-offset: 3px; }

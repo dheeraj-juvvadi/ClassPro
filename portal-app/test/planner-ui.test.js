@@ -118,9 +118,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   }
 
   await page.locator('#close-calendar').click();
-  await page.locator('#planner-menu summary').click();
-  await page.locator('#open-schedule').click();
-  assert.equal(await page.locator('#attendance-panel').isVisible(), true);
+  assert.equal(await page.locator('#open-schedule').count(), 0);
   await page.locator('button[data-page="home"]').click();
   assert.equal(await page.locator('#student-context').count(), 0);
   assert.equal(await page.locator('#open-subjects').count(), 0);
