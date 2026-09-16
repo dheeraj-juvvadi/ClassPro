@@ -1,0 +1,28 @@
+#calendar-dialog { width: min(540px, calc(100% - 24px)); }
+.academic-month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; margin-block: 14px; }
+.month-weekday { text-align: center; font-size: 11px; color: #adb4a4; padding-block: 8px; }
+.academic-month button { min-width: 0; min-height: 60px; padding: 8px 2px; display: flex; flex-direction: column; gap: 8px; align-items: center; border: 1px solid #454d3e; border-radius: 10px; background: #292e25; color: #f1eee3; font-variant-numeric: tabular-nums; }
+.academic-month button small { font-size: 9px; font-weight: 500; }
+.academic-month button[data-kind="holiday"] { color: #efb8a4; }
+.academic-month button[data-kind="exam"] { color: #e2cd97; }
+.academic-month button[aria-current="date"] { outline: 2px solid #c5d4a7; outline-offset: -3px; }
+.academic-month button[aria-pressed="true"] { color: #233020; background: #c5d4a7; }
+.calendar-legend { color: #bbc3b0; font-size: 11px; line-height: 1.6; }
+.calendar-detail { border-top: 1px solid #454d3e; margin-top: 18px; padding-block: 18px; }
+.calendar-detail h3 { font-size: 16px; font-weight: 550; }
+.calendar-detail p { font-size: 13px; line-height: 1.7; margin-top: 10px; }
+.calendar-detail button { background: transparent; color: #c5d4a7; padding-left: 0; margin-top: 10px; }
+.calendar-period { color: #cbd4be; }
+#schedule-dialog { width: min(1280px, calc(100% - 24px)); }
+#schedule-entries { overflow-x: auto; max-width: 100%; margin-top: 18px; border-radius: 18px; }
+.timetable-svg { display: block; max-width: none; }
+#schedule-entries:focus-visible { outline: 2px solid #c5d4a7; outline-offset: 2px; }
+#login-fallback-dialog h2 { font-size: 22px; text-wrap: balance; }
+#login-fallback-dialog p { margin-block: 16px; line-height: 1.6; font-size: 14px; }
+#login-fallback-dialog button { width: 100%; margin-top: 10px; }
+#retry-academia { background: transparent; color: #c5d4a7; }
+@media (max-width: 380px) {
+  #calendar-dialog { padding: 16px; }
+  .academic-month { gap: 3px; }
+  .academic-month button small { font-size: 8px; }
+}

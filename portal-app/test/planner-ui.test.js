@@ -25,10 +25,22 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#manual-captcha-answer').isVisible(), true);
   assert.equal(await page.locator('#sign-in').evaluate(element => getComputedStyle(element).minHeight), '58px');
   await page.evaluate(() => classproAuth.configure({ authMode: 'http', provider: 'academia' }));
-  await page.locator('#login-provider').selectOption('portal');
-  assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
-  await page.locator('#login-provider').selectOption('academia');
+  assert.equal(await page.locator('#provider-choice').isVisible(), false);
   assert.equal(await page.locator('#login-provider').inputValue(), 'academia');
+  await page.evaluate(() => classproAuth.usePortal());
+  assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
+  await page.evaluate(() => classproAuth.configure({ authMode: 'http', provider: 'portal' }));
+  assert.equal(await page.locator('#login-provider').inputValue(), 'academia');
+  await page.route('**/api/challenge', route => route.fulfill({ json: { required: false } }));
+  await page.route('**/api/login/client', route => route.fulfill({ status: 502, json: { error: { code: 'LOGIN_REJECTED', message: 'Academia could not respond.' } } }));
+  await page.locator('#account').fill('synthetic');
+  await page.locator('#password').fill('test-password');
+  await page.locator('#sign-in').click();
+  await page.locator('#login-fallback-dialog').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('#password').inputValue(), '');
+  await page.locator('#use-student-portal').click();
+  assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
+  assert.equal(await page.locator('#account').inputValue(), 'synthetic');
   await page.goto(`${origin}/?preview=home`);
   await page.locator('#home-view').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#planner-nav button').count(), 3);
@@ -40,6 +52,8 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.evaluate(() => providerConnections.update({ connections: { portal: { connected: true } } }));
   assert.equal(await page.getByRole('button', { name: 'Connect Student Portal', exact: true }).count(), 0);
   assert.match(await page.locator('#provider-connections').innerText(), /Student Portal connected/);
+  await page.locator('#planner-menu summary').click();
+  await page.locator('#open-accounts').click();
   await page.getByRole('button', { name: 'Connect Academia', exact: true }).click();
   const providerRequests = [];
   await page.route('**/api/challenge', route => {
@@ -80,6 +94,20 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#projection-dialog').isVisible(), false);
   assert.match(await page.evaluate(() => document.activeElement.textContent), /Plan 2h/);
+  await page.locator('#planner-menu summary').click();
+  await page.locator('#open-calendar').click();
+  assert.equal(await page.locator('.academic-month button').count(), 30);
+  await page.locator('.academic-month button[data-date="2026-09-14"]').click();
+  assert.match(await page.locator('.calendar-detail').innerText(), /Day order 1/);
+  await page.locator('#close-calendar').click();
+  await page.locator('#planner-menu summary').click();
+  await page.locator('#open-schedule').click();
+  assert.equal(await page.locator('#schedule-entries svg').count(), 1);
+  assert.match(await page.locator('#timetable-svg-desc').textContent(), /Data Structures/);
+  await page.locator('#close-schedule').click();
+  assert.equal(await page.locator('#student-context').count(), 0);
+  assert.equal(await page.locator('#open-subjects').count(), 0);
+  assert.equal(await page.getByText('What if I miss this class?', { exact: true }).count(), 0);
   await page.evaluate(() => {
     const entry = { code: 'DS', title: 'Data Structures', room: 'Test lab', dayOrder: 'A', start: '10:30', end: '11:30', allocation: 'Theory', batch: 'B1' };
     const attendance = { data: [{ code: 'DS', title: 'Data Structures', present: 18, conducted: 22 }] };

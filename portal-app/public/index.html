@@ -13,11 +13,14 @@
   <link rel="stylesheet" href="/login.css">
   <link rel="stylesheet" href="/home.css">
   <link rel="stylesheet" href="/academic.css">
+  <link rel="stylesheet" href="/calendar-timetable.css">
   <script src="/attendance-math.js" defer></script>
   <script src="/secure-context-shim.js" defer></script>
   <script src="/home-model.js" defer></script>
   <script src="/schedule-model.js" defer></script>
   <script src="/schedule-calendar.js" defer></script>
+  <script src="/academic-calendar.js" defer></script>
+  <script src="/timetable-svg.js" defer></script>
   <script src="/home.js" defer></script>
   <script src="/quantity-stepper.js" defer></script>
   <script src="/date-projection.js" defer></script>
@@ -129,10 +132,14 @@
     <button type="button" data-page="attendance"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m7 12 3 3 7-7"/></svg>Attendance</button>
     <button type="button" data-page="marks"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 21V11m7 10V3m7 18V7"/></svg>Marks</button>
   </nav>
+  <dialog id="calendar-dialog" aria-labelledby="calendar-title">
+    <div class="schedule-heading"><h2 id="calendar-title">Academic calendar</h2><button id="close-calendar" type="button" aria-label="Close calendar">×</button></div>
+    <div id="academic-calendar"></div>
+  </dialog>
   <dialog id="schedule-dialog" aria-labelledby="schedule-title">
     <div class="schedule-heading"><h2 id="schedule-title">SRM timetable</h2><button id="close-schedule" type="button" aria-label="Close schedule">×</button></div>
     <p class="quiet" id="schedule-help">Your timetable from SRM, organized by day order.</p>
-    <ul id="schedule-entries"></ul>
+    <div id="schedule-entries" tabindex="0" role="region" aria-label="Timetable, scroll horizontally to view all day orders"></div>
 
   </dialog>
   <dialog id="login-fallback-dialog" aria-labelledby="login-fallback-title">

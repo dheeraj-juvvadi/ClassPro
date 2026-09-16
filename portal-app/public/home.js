@@ -168,16 +168,10 @@ globalThis.classproHome = (() => {
   function renderSchedule() {
     const list = get('schedule-entries');
     list.replaceChildren();
-    get('schedule-help').textContent = 'Your SRM timetable by day order. Dates use the Ratio-D academic calendar. Missing dates stay unconfirmed.';
+    get('schedule-help').textContent = 'Your classes by day order. Scroll sideways to see every day order. Dates follow the Ratio-D academic calendar.';
     const entries = [...(reportedSchedule?.entries || schedule)].sort((a, b) =>
       String(a.dayOrder || a.day).localeCompare(String(b.dayOrder || b.day)) || a.start.localeCompare(b.start));
-    for (const entry of entries) {
-      const row = element('li', 'schedule-entry');
-      const day = entry.dayOrder ? `Day order ${entry.dayOrder}` : 'Sample day';
-      row.append(element('span', '', `${day} · ${entry.start}–${entry.end} · ${entry.title} · ${entry.room} · ${model.hours(entry)}h`));
-      list.append(row);
-    }
-    if (!entries.length) list.append(element('li', 'quiet', 'SRM has not returned a timetable. Refresh reports or sign in again to reload it.'));
+    renderTimetableSvg(list, entries);
   }
 
   function openSchedule() {
@@ -185,6 +179,13 @@ globalThis.classproHome = (() => {
     renderSchedule();
     get('schedule-dialog').showModal();
   }
+
+  const monthCalendar = createAcademicCalendar({ container: get('academic-calendar'), source, now,
+    onSelect(date) { selectedDate = date; get('calendar-dialog').close(); calendar.reset(date); page('home'); render(); } });
+  get('open-calendar').addEventListener('click', () => {
+    get('planner-menu').open = false; monthCalendar.reset(); get('calendar-dialog').showModal();
+  });
+  get('close-calendar').addEventListener('click', () => get('calendar-dialog').close());
 
   get('open-schedule').addEventListener('click', openSchedule);
   get('close-schedule').addEventListener('click', () => get('schedule-dialog').close());
@@ -207,7 +208,7 @@ globalThis.classproHome = (() => {
 
   return {
     enter() { render(); page('home'); },
-    clear() { attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); updateFilters(); },
+    clear() { attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
     update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];
       reportError = report?.error?.message || '';
