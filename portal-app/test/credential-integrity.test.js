@@ -7,6 +7,7 @@ import { checkIntegrity } from '../src/credential-integrity.js';
 
 test('browser proof matches decoded values and detects changed passwords', async () => {
   const context = vm.createContext({ crypto: webcrypto, TextEncoder });
+  vm.runInContext(await readFile(new URL('../public/secure-context-shim.js', import.meta.url), 'utf8'), context);
   vm.runInContext(await readFile(new URL('../public/credential-integrity.js', import.meta.url), 'utf8'), context);
   const password = '  synthetic&+=%<>"\'\\é🙂  ';
   const proof = await context.createCredentialIntegrity(' student@SRMIST.EDU.IN ', password, 'Ab12');
