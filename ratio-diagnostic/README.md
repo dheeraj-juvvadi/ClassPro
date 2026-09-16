@@ -23,9 +23,12 @@ required. No changes are made to the upstream login algorithm or classifier.
 Consequently upstream may still misclassify a login rejection as a CAPTCHA
 error. Success is not claimed until real reports are returned.
 
-Passwords and cookies are held only in the expiring server session for provider
-reauthentication, never written to disk or returned to the browser. Logout removes local session state; it does not
-claim to revoke the upstream SRM session. Restart clears all local sessions.
+Passwords and cookies stay server-side for provider reauthentication. Remembered
+sessions use encrypted disk storage when `SESSION_STORE_DIR` is configured,
+with a 48-hour inactivity expiry; they are never returned to the browser.
+Logout removes the stored session; it does not
+claim to revoke the upstream SRM session. Restart restores remembered sessions
+from the mounted store; nonremembered sessions are cleared.
 The compatibility layer supports Academia and Student Portal connections with
 separate cookie jars. Portal attendance takes priority; an Academia timetable
 is retained when Portal omits its schedule. See `docs/anon-academic-data.md`.

@@ -10,8 +10,17 @@ and `/portal/refresh`. The public compatibility endpoints select these based
 on the requested provider. Home offers account connection buttons without
 discarding the other connection. Accounts must match by registration number
 or, when unavailable, normalized username. Separate cookies and credentials
-remain in expiring server memory for retry after session expiry. A failed
+remain on the server for retry after SRM session expiry. Remembered sessions
+are encrypted at rest and expire after 48 hours of inactivity. A failed
 provider refresh preserves previous reports and displays a warning.
+
+`SESSION_STORE_DIR` points to the mounted persistent session directory. The
+Fernet key and encrypted SQLite records must survive container replacement;
+both are restricted to the container user. Logout removes the stored session.
+Unchecked "Keep me signed in" uses a browser-session cookie, a 30-minute idle
+timeout, and no disk persistence. The frontend syncs on reopening, focus,
+network reconnection and every five minutes while visible. SRM CAPTCHA or
+rejected credentials can still require user action.
 
 Academia builds its schedule from `My_Time_Table_2023_24` course allocation and
 the appropriate batch of `Unified_Time_Table_2025`. Portal attendance takes
