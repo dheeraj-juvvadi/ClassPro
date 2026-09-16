@@ -81,3 +81,17 @@
 .home-empty { color: var(--planner-muted); font-size: .8rem; line-height: 1.7; grid-column: 1 / -1; padding: 12px 0; }
 .preview-note { color: #a9b39b; font-size: .625rem; margin: -12px 0 18px; display: flex; justify-content: space-between; gap: 10px; }
 .preview-note a { color: #c5d4a7; text-underline-offset: 3px; }
+
+/* A single daily agenda, with shared separators instead of tall timeline rows. */
+#today-classes { border: 1px solid #3b4035; border-radius: 17px; background: #20241e; padding: 0 16px; }
+.timeline-row { grid-template-columns: 43px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 0; padding: 15px 0; }
+.timeline-row + .timeline-row { border-top: 1px solid #3b4035; }
+.timeline-description { padding: 0; border: 0; }
+.timeline-description::before { display: none; }
+.timeline-times { gap: 5px; }
+.timeline-description h3 { font-size: 13px; line-height: 1.4; }
+.timeline-description p { font-size: 11px; margin-top: 4px; }
+.timeline-description .course-margin { display: none; }
+.timeline-status { font-size: 12px; padding: 0; font-variant-numeric: tabular-nums; }
+.timeline-row.ongoing .timeline-description h3 { color: #d7e5bf; }
+#today-classes > .home-empty { padding: 16px 0; }

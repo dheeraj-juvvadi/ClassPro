@@ -8,13 +8,7 @@ globalThis.providerConnections = (() => {
     const container = get('provider-connections'); container.replaceChildren();
     for (const provider of ['academia', 'portal']) {
       const state = report.connections?.[provider];
-      if (state?.connected && !state.expired) {
-        const status = document.createElement('span');
-        status.className = 'provider-connected';
-        status.textContent = `${label(provider)} connected`;
-        container.append(status);
-        continue;
-      }
+      if (state?.connected && !state.expired) continue;
       const button = document.createElement('button'); button.type = 'button';
       button.textContent = `${state?.expired ? 'Reconnect' : 'Connect'} ${label(provider)}`;
       button.addEventListener('click', () => {
@@ -30,9 +24,6 @@ globalThis.providerConnections = (() => {
       });
       container.append(button);
     }
-    const info = document.createElement('p'); info.className = 'quiet';
-    info.textContent = report.scheduleProvider ? `Timetable from ${label(report.scheduleProvider)}` : 'Connect Academia to load your timetable if Student Portal has none.';
-    container.append(info);
     for (const warning of report.warnings || []) { const p = document.createElement('p'); p.className = 'quiet'; p.textContent = warning; container.append(p); }
   }
   get('close-connect').addEventListener('click', () => { if (!pending) get('connect-dialog').close(); });

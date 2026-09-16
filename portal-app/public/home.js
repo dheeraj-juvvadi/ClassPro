@@ -100,17 +100,17 @@ globalThis.classproHome = (() => {
     } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
     const bottom = element('div', 'next-class-bottom');
     const following = nextClasses[nextIndex + 1];
-    bottom.append(element('p', '', next && following ? `Next · ${following.title} · ${following.start}` : next ? 'Last class of the day' : 'Your SRM timetable'));
+    bottom.append(element('p', '', next && following ? `Next · ${following.title} · ${following.start}` : next ? 'Last class of the day' : 'Your attendance'));
     const action = element('button', 'class-arrow', '↗');
     action.type = 'button';
-    action.setAttribute('aria-label', 'View SRM timetable');
-    action.addEventListener('click', openSchedule);
+    action.setAttribute('aria-label', 'View attendance');
+    action.addEventListener('click', () => page('attendance'));
     bottom.append(action);
     card.append(bottom);
     renderInsights(classes);
     const state = describe(day);
     get('today-title').textContent = planner.key(day) === planner.key(date) ? 'Today’s classes' : day.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'short' });
-    get('schedule-source').textContent = `${reportedSchedule?.calendarSource ? reportedSchedule.calendarSource + ' · ' : ''}${scheduleInvalid ? 'Schedule report unavailable. ' : ''}${state.label}${next?.unknown ? ' · Gaps before the next known class are unverified.' : ''}`;
+    get('schedule-source').textContent = state.label;
     renderTimeline(classes, planner.key(day) === planner.key(date) ? minute : -1);
     calendar.today(date);
   }
@@ -142,26 +142,18 @@ globalThis.classproHome = (() => {
       const times = element('div', 'timeline-times');
       times.append(element('time', '', entry.start), element('time', '', entry.end));
       const description = element('div', 'timeline-description');
-      description.append(element('h3', '', entry.title), element('p', '', `${entry.room} · ${model.hours(entry)}h`));
+      description.append(element('h3', '', entry.title), element('p', '', `${entry.room ? entry.room + ' · ' : ''}${model.hours(entry)}h`));
       if (entry.faculty && entry.faculty !== 'TBA') description.append(element('p', '', entry.faculty));
       const course = attendance.find(subject => subject.code === entry.code);
       const insight = course && model.insight(course);
       row.append(times, description, element('span', `timeline-status ${ongoing ? 'healthy' : insight?.tone || ''}`, ongoing ? 'Ongoing' : insight?.percentage || ''));
       if (insight) description.append(element('p', `course-margin ${insight.tone}`, insight.margin));
-      if (course) {
-        const hours = model.hours(entry);
-        const plan = element('button', 'period-plan', `Plan ${hours}h ↗`);
-        plan.type = 'button';
-        plan.setAttribute('aria-label', `Plan attendance for ${entry.title}, ${hours} hours`);
-        plan.addEventListener('click', () => academicUI.plan(course.code, hours, selectedDate || now()));
-        description.append(plan);
-      }
       if (entry.allocation || entry.batch) description.append(element('p', '', [entry.allocation, entry.batch].filter(Boolean).join(' · ')));
       list.append(row);
     }
     if (!classes.length) {
       const state = describe(selectedDate || now());
-      list.append(element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No verified calendar for this date. Open Timetable to view the periods supplied by SRM.' : 'No classes for this date and filter selection.'));
+      list.append(element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No confirmed classes for this date.' : 'No classes for this date and filter selection.'));
     }
   }
 
@@ -187,7 +179,7 @@ globalThis.classproHome = (() => {
   });
   get('close-calendar').addEventListener('click', () => get('calendar-dialog').close());
 
-  get('open-schedule').addEventListener('click', openSchedule);
+  get('open-schedule').addEventListener('click', () => page('attendance'));
   get('close-schedule').addEventListener('click', () => get('schedule-dialog').close());
   get('open-accounts').addEventListener('click', () => {
     get('planner-menu').open = false;
