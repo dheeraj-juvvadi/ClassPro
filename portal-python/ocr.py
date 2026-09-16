@@ -12,22 +12,24 @@ _session = None
 
 def solve(image_bytes):
     global _session
-    root = Path(os.environ.get("OCR_ASSET_DIR", Path(__file__).parent.parent / "portal-app/public/ocr"))
+    root = Path(os.environ.get("OCR_ASSET_DIR", Path(__file__).parent / "model"))
     if _session is None:
         options = ort.SessionOptions()
         options.intra_op_num_threads = 1
         options.inter_op_num_threads = 1
         options.log_severity_level = 3
-        _session = ort.InferenceSession(str(root / "portal-alnum.onnx"), options,
+        _session = ort.InferenceSession(str(root / "captcha_crnn.onnx"), options,
                                        providers=["CPUExecutionProvider"])
     with Image.open(io.BytesIO(image_bytes)) as source:
-        if source.width * source.height > 1000000:
+        if source.size != (175, 45):
             raise ValueError("Invalid image dimensions")
-        width = max(1, source.width * 64 // source.height)
-        image = source.convert("L").resize((width, 64), Image.Resampling.BILINEAR)
-        pixels = (np.asarray(image, dtype=np.float32) / 127.5 - 1)[None, None, :, :]
+        image = source.convert("L")
+        pixels = ((np.asarray(image, dtype=np.float32) / 255.0 - 0.5) / 0.5)[None, None, :, :]
     logits = _session.run(None, {_session.get_inputs()[0].name: pixels})[0]
-    charset = json.loads((root / "charset.json").read_text())
+    vocabulary = json.loads((root / "vocab.json").read_text())
+    if vocabulary.get("blank_idx") != 0:
+        raise ValueError("Invalid OCR vocabulary")
+    charset = " " + vocabulary["vocab"]
     if logits.shape[-1] != len(charset):
         raise ValueError("Invalid OCR output")
     indices = logits.reshape(-1, len(charset)).argmax(axis=1)

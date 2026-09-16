@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 from urllib.parse import parse_qs
 
 import httpx
-from adapter import Adapter
+from adapter import Adapter, PortalSession
 
 
 class AdapterTests(unittest.IsolatedAsyncioTestCase):
@@ -34,8 +34,19 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
 
         self.adapter.session.client = httpx.AsyncClient(transport=httpx.MockTransport(handler),
                                                        follow_redirects=True)
+        self.clients = [self.adapter.session.client]
+
+        def session_factory():
+            session = PortalSession()
+            session.client = httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=True)
+            self.clients.append(session.client)
+            return session
+
+        self.factory_patch = patch("adapter.PortalSession", side_effect=session_factory)
+        self.factory_patch.start()
 
     async def asyncTearDown(self):
+        self.factory_patch.stop()
         await self.adapter.session.client.aclose()
 
     async def test_same_client_cookie_and_exact_password(self):
@@ -77,6 +88,25 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
             result = await self.adapter.call("login", {"account": "user", "password": "pass"})
         self.assertEqual(result["body"]["error"]["code"], "CAPTCHA_INVALID")
         self.assertEqual(sum(request.method == "POST" for request in self.requests), 4)
+        self.assertEqual(len(self.clients), 4)
+        self.assertTrue(all(client.is_closed for client in self.clients[:-1]))
+
+    async def test_refresh_uses_new_session(self):
+        await self.adapter.call("challenge", {})
+        first = self.adapter.session.client
+        await self.adapter.call("challenge", {})
+        self.assertIsNot(first, self.adapter.session.client)
+        self.assertTrue(first.is_closed)
+
+    async def test_diagnostics_ignore_validation_script(self):
+        response = httpx.Response(200, text='<script>alert("invalid captcha")</script>',
+                                  request=httpx.Request("POST", "https://example.test/LoginServlet"))
+        await self.adapter.evidence(response)
+        self.assertEqual(self.adapter.events[-1]["alert_classification"], "unclassified")
+        response = httpx.Response(200, text='<div role="alert">Invalid credentials</div>',
+                                  request=httpx.Request("POST", "https://example.test/LoginServlet"))
+        await self.adapter.evidence(response)
+        self.assertEqual(self.adapter.events[-1]["alert_classification"], "credentials_rejected")
 
     async def test_ocr_failure_never_submits_credentials(self):
         await self.adapter.call("challenge", {})

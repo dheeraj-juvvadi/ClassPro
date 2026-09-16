@@ -31,17 +31,25 @@ only through private stdin/stdout pipes. It has no public listener.
 - Same live client and cookie jar across CAPTCHA, submission and reports.
 - Exact upstream dynamic form fields, synthetic telemetry, and NetID normalization.
 - Automatic OCR runs server-side with a two-second pre-submit delay.
-- At most four automatic attempts, retrying only explicit CAPTCHA rejection.
+- At most four automatic attempts using upstream's CAPTCHA classification.
+- Fresh PortalSession/cookie jar on refresh and between automatic CAPTCHA retries.
 - Manual CAPTCHA remains available. Invalid credentials are not retried.
 - Upstream's broad success test is additionally checked against our attendance parser.
 
 ## Deliberate differences from Ratio-D
 
-Ratio-D calls a separate Rust TinyOCR service with its own fixed 175x45 model.
-This adapter instead runs our existing 64px-height ONNX model with one CPU thread.
-It does not claim identical OCR accuracy. No third-party OCR service receives images.
+Ratio-D calls a separate Rust TinyOCR service. This adapter runs the exact TinyOCR
+weights, native 175x45 grayscale preprocessing, vocabulary and greedy CTC decoder
+locally through ONNX Runtime with one CPU thread. It does not run the Rust HTTP
+server; no third-party OCR service receives images. See model/README.md.
 We do not copy upstream logging of predicted CAPTCHA answers or persistent
 client-side plaintext upstream cookies. Diagnostics contain only fixed classifications,
 status codes, attempt numbers, stages and exception class names.
+
+The unchanged upstream classifier searches raw HTML and labels even an unsubmitted
+login page `wrong_captcha` because validation scripts contain that phrase. This
+is not proof SRM rejected the CAPTCHA. Separate `alert_classification` diagnostics
+inspect alert elements without scripts or hidden validation messages; they emit
+only fixed categories, never page text. Login success still requires valid reports.
 
 Tests: `PYTHONPATH=portal-python python -m unittest discover -s portal-python -p 'test_*.py'`.

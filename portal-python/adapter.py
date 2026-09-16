@@ -6,6 +6,7 @@ import sys
 
 from core.portal_client import PortalSession, PortalClient
 from ocr import solve
+from selectolax.parser import HTMLParser
 
 
 def error(code, message, status=401):
@@ -19,21 +20,38 @@ class Adapter:
         self.events = []
         self.session.client.event_hooks["response"] = [self.evidence]
 
+    async def fresh_session(self):
+        await self.session.client.aclose()
+        self.session = PortalSession()
+        self.session.client.event_hooks["response"] = [self.evidence]
+
     async def evidence(self, response):
         await response.aread()
         stage = response.url.path.rsplit("/", 1)[-1]
         allowed = {"youLogin.jsp", "LoginServlet", "studentAttendanceDetails.jsp", "SCaptchaServlet"}
         text = response.text if "text" in response.headers.get("content-type", "") else ""
+        tree = HTMLParser(text)
+        for node in tree.css('script, style, [hidden], [aria-hidden="true"], .invalid-feedback'):
+            node.decompose()
+        messages = " ".join(node.text() for node in tree.css('.alert, [role="alert"], #errorMessage')).lower()
+        category = "unclassified"
+        if any(value in messages for value in ("invalid captcha", "incorrect captcha", "captcha mismatch")):
+            category = "captcha_rejected"
+        elif any(value in messages for value in ("invalid credentials", "invalid username or password")):
+            category = "credentials_rejected"
         self.events.append({"stage": stage if stage in allowed else "report_or_redirect",
                             "status": response.status_code,
                             "redirect": response.is_redirect,
                             "login_form_present": "login_form" in text,
-                            "dashboard_present": "userHomePage" in text})
+                            "dashboard_present": "userHomePage" in text,
+                            "alert_classification": category})
         self.events = self.events[-20:]
 
     async def call(self, action, payload):
         self.events = []
         if action == "challenge":
+            if self.session.captcha_page:
+                await self.fresh_session()
             info = await self.session.load_captcha()
             if not info.get("captcha_image"):
                 return error("PORTAL_UNAVAILABLE", "SRM verification is unavailable.", 502)
@@ -57,6 +75,7 @@ class Adapter:
                 if result.get("ok") or result.get("reason") != "wrong_captcha":
                     break
                 if automatic and attempt < 3:
+                    await self.fresh_session()
                     await self.session.load_captcha()
             if not result or not result.get("ok"):
                 reason = (result or {}).get("reason")
