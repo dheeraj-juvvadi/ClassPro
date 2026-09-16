@@ -75,3 +75,23 @@ fallback dialog; a successful Academia login continues normally. Invalid
 credentials, CAPTCHA and capacity errors retain their own handling. Switching to
 Student Portal clears the password and keeps the account name; providers may use
 different passwords. Remembered-session and auto-sync behavior is unchanged.
+
+## Scheduled sync and compact agenda
+
+Automatic refresh uses Asia/Kolkata time: hourly at 08:00 through 19:00, then
+21:00 and 23:00. A visible, online browser checks whether a slot is due; hidden
+or closed browsers do not request upstream refreshes. Returning after missed
+slots performs one catch-up sync. Failed automatic attempts retain cached data
+and wait until the next slot; manual Sync can retry immediately.
+
+`GET /api/reports?cache=only` serves the remembered report immediately on startup.
+A normal report request refreshes only when its slot is due; `?force=1` explicitly
+refreshes for manual Sync. Slot metadata persists with the encrypted session.
+No overnight background job logs into SRM for inactive users.
+
+The Sync icon rotates while fetching, without a loading banner over existing
+content. Unchanged report sections retain their DOM. Navigation does not fetch.
+Today’s classes share one compact agenda; period planning buttons and connection
+source labels were removed. The standalone timetable view is deferred; its menu
+entry and the next-class arrow now lead to Attendance. The month calendar and
+attendance date calculator remain available.
