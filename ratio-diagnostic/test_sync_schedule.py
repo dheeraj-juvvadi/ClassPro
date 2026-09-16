@@ -51,3 +51,22 @@ class SyncRouteTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(refresh.await_count, 2)
         finally:
             server.sessions.pop("sync-test", None)
+
+    async def test_sunday_serves_cache_but_manual_sync_runs(self):
+        import server
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock, patch
+        report = {"attendance": {"data": []}}
+        server.sessions['sunday'] = {"providers": {"portal": {}}, "report": report, "synced_at": stamp(19, 8)}
+        request = SimpleNamespace(cookies={server.cookie_name: 'sunday'}, query_params={})
+        try:
+            with patch('server.time.time', return_value=stamp(20, 12)), patch('server.refresh_providers', new_callable=AsyncMock, return_value=(report, True)) as refresh:
+                result = await server.reports(request)
+                self.assertFalse(result['sync']['due'])
+                self.assertEqual(result['sync']['nextAt'], stamp(21, 8) * 1000)
+                refresh.assert_not_awaited()
+                request.query_params = {'force': '1'}
+                await server.reports(request)
+                refresh.assert_awaited_once()
+        finally:
+            server.sessions.pop('sunday', None)

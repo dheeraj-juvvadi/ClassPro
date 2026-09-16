@@ -27,6 +27,7 @@ from academic_data import extras
 from provider_flow import providers, combined, same_student, refresh as refresh_providers
 from session_store import SessionStore, lifetime, SESSION_SECONDS
 import sync_schedule
+import attendance_trends
 
 upstream.PortalSession = instrument(upstream.PortalSession)
 
@@ -307,6 +308,7 @@ async def login(request: Request):
     sessions.pop(token, None)
     token = secrets.token_urlsafe(32)
     entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic(), "synced_at": time.time()})
+    attendance_trends.observe(entry, time.time())
     sessions[token] = entry
     result = JSONResponse({"authenticated": True, "connections": entry["report"]["connections"]})
     set_session_cookie(result, token, entry)
@@ -328,6 +330,7 @@ async def reports(request: Request):
     entry.update({"report": data, "cached": time.monotonic()})
     if succeeded:
         entry["synced_at"] = time.time()
+        attendance_trends.observe(entry, entry["synced_at"])
     return sync_schedule.response(entry, time.time())
 
 
