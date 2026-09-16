@@ -1,5 +1,7 @@
 import os
 import unittest
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 os.environ["APP_ORIGIN"] = "http://localhost:8089"
@@ -53,6 +55,25 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
         response = await self.client.post("/api/challenge", content=b"x" * 8193,
                                           headers={"Content-Type": "application/json"})
         self.assertEqual(response.status_code, 413)
+
+    async def test_static_assets_bypass_api_gate_and_rate_limit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            Path(directory, "style.css").write_text("body { color: white; }")
+            server.app.mount("/test-assets", server.StaticFiles(directory=directory))
+            try:
+                await server.gate.acquire()
+                server.rates["127.0.0.1"] = (server.time.monotonic(), 30)
+                response = await self.client.get("/test-assets/style.css")
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("text/css", response.headers["content-type"])
+                response = await self.client.get("/api/session")
+                self.assertEqual(response.status_code, 429)
+                server.rates.clear()
+                response = await self.client.get("/api/session")
+                self.assertEqual(response.status_code, 503)
+            finally:
+                server.gate.release()
+                server.app.router.routes.pop()
 
     async def test_real_upstream_asgi_route(self):
         response = await self.client.get("/health")

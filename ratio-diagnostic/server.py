@@ -106,6 +106,13 @@ async def invoke(request, path, payload):
 async def boundary(request, call_next):
     if request.url.path == "/health":
         return JSONResponse({"ok": True, "backend": "ratio-diagnostic"})
+    if not request.url.path.startswith("/api/"):
+        if request.method not in {"GET", "HEAD"}:
+            return failure("METHOD_NOT_ALLOWED", "Method not allowed.", 405)
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
     if request.method not in {"GET", "POST", "DELETE"}:
         return failure("METHOD_NOT_ALLOWED", "Method not allowed.", 405)
     if request.method != "GET":
