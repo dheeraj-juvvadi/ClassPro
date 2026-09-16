@@ -1,0 +1,8 @@
+**
+!ratio-diagnostic/
+!ratio-diagnostic/**
+ratio-diagnostic/**/__pycache__/
+!portal-python/
+!portal-python/ocr.py
+!portal-python/model/
+!portal-python/model/**
