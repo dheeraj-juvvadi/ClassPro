@@ -24,6 +24,11 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('script[src*="sign-in-particles"]').count(), 0);
   assert.equal(await page.locator('#manual-captcha-answer').isVisible(), true);
   assert.equal(await page.locator('#sign-in').evaluate(element => getComputedStyle(element).minHeight), '58px');
+  await page.evaluate(() => classproAuth.configure({ authMode: 'http', provider: 'academia' }));
+  await page.locator('#login-provider').selectOption('portal');
+  assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
+  await page.locator('#login-provider').selectOption('academia');
+  assert.equal(await page.locator('#login-provider').inputValue(), 'academia');
   await page.goto(`${origin}/?preview=home`);
   await page.locator('#home-view').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#planner-nav button').count(), 3);
@@ -32,6 +37,25 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.match(await page.locator('#next-class-card').innerText(), /Margin: 2h/);
   assert.match(await page.locator('#next-class-card').innerText(), /81.8%/);
   assert.equal(await page.locator('#schedule-form').count(), 0);
+  await page.evaluate(() => providerConnections.update({ connections: { portal: { connected: true } } }));
+  await page.getByRole('button', { name: 'Connect Academia', exact: true }).click();
+  const providerRequests = [];
+  await page.route('**/api/challenge', route => {
+    providerRequests.push(route.request().postDataJSON());
+    return route.fulfill({ json: { required: false } });
+  });
+  await page.route('**/api/login/client', route => {
+    providerRequests.push(route.request().postDataJSON());
+    return route.fulfill({ json: { authenticated: true } });
+  });
+  await page.locator('#connect-account').fill('synthetic');
+  await page.locator('#connect-password').fill('test-password');
+  await page.locator('#connect-submit').click();
+  await page.locator('#connect-dialog').waitFor({ state: 'hidden' });
+  assert.equal(providerRequests.length, 2);
+  assert.equal(providerRequests[0].provider, 'academia');
+  assert.equal(providerRequests[1].provider, 'academia');
+  assert.equal(await page.locator('#connect-password').inputValue(), '');
   await page.getByRole('button', { name: 'Attendance', exact: true }).click();
   assert.equal(await page.locator('#monthly-attendance tbody tr').count(), 2);
   await page.getByRole('button', { name: 'Home', exact: true }).click();

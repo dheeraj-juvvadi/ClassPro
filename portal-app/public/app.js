@@ -62,6 +62,7 @@ function showLogin(text = '', error = false) {
   academicUI.clear();
   academicSummary.clear();
   dateAttendance.clear();
+  providerConnections.clear();
   authenticated = false;
   $('startup').hidden = true;
   $('login-view').hidden = false;
@@ -215,6 +216,7 @@ async function loadReports() {
     renderMarks(reports.marks);
     classproHome.update(reports.attendance, reports.schedule);
     academicSummary.update(reports);
+    providerConnections.update(reports);
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Retry.' : '');

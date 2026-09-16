@@ -82,6 +82,9 @@ dialog label { font-size: 12px; margin-top: 15px; }
 .date-projection-course p { font-size: 12px; margin: 8px 0; }
 .date-projection-course small { font-size: 11px; color: #adb4a4; }
 #projection-result { display: block; }
+.provider-connections { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+.provider-connections button { min-height: 44px; padding: 8px 12px; background: #30382a; color: #eeeede; border-radius: 10px; font-size: 12px; }
+.provider-connections p { flex-basis: 100%; font-size: 11px; line-height: 1.6; }
 dialog select { width: 100%; min-height: 44px; padding: 10px; color: #f1eee3; border: 1px solid #49523e; border-radius: 7px; background: #191d17; font: inherit; font-size: 13px; }
 dialog input { font-size: 16px; }
 .schedule-times { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

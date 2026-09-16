@@ -24,6 +24,7 @@
   <script src="/date-attendance.js" defer></script>
   <script src="/academic-ui.js" defer></script>
   <script src="/academic-summary.js" defer></script>
+  <script src="/provider-connections.js" defer></script>
   <script src="/client-ocr.js" defer></script>
   <script src="/auth-client.js" defer></script>
   <script src="/app.js" defer></script>
@@ -83,6 +84,7 @@
     <section id="home-view" aria-labelledby="home-title" hidden>
       <div class="home-greeting"><h1 id="home-title" tabindex="-1">Good morning.</h1><p id="home-date"></p></div>
       <p id="student-context" class="quiet"></p>
+      <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
       <p id="home-preview-note" class="preview-note" hidden>Design preview · sample day <a href="/">Back to sign in</a></p>
       <article id="next-class-card" class="next-class-card" aria-labelledby="next-class-title"></article>
       <section class="attendance-insights" aria-label="Attendance at a glance" id="home-insights"></section>
@@ -133,6 +135,18 @@
     <p class="quiet" id="schedule-help">Your timetable from SRM, organized by day order.</p>
     <ul id="schedule-entries"></ul>
 
+  </dialog>
+  <dialog id="connect-dialog" aria-labelledby="connect-title">
+    <div class="schedule-heading"><h2 id="connect-title">Connect account</h2><button id="close-connect" type="button" aria-label="Close account connection">×</button></div>
+    <p class="quiet" id="connect-help"></p>
+    <form id="connect-form">
+      <label for="connect-account">SRM account</label><input id="connect-account" autocomplete="username" required maxlength="100">
+      <label for="connect-password">Password</label><input id="connect-password" type="password" autocomplete="current-password" required maxlength="256">
+      <div id="connect-captcha" hidden><img id="connect-image" alt="Account verification code"><label for="connect-answer">Verification code</label><input id="connect-answer" autocomplete="off" maxlength="20"></div>
+      <p id="connect-message" role="status" class="quiet"></p>
+      <button id="connect-submit" type="submit">Connect</button>
+    </form>
+    <p class="quiet">Credentials stay in this server session for automatic reconnection. Signing out or session expiry removes them.</p>
   </dialog>
   <footer class="site-footer">Anon <span>Student Portal</span></footer>
   <dialog id="projection-dialog" aria-labelledby="projection-title">

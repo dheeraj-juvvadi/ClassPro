@@ -80,7 +80,7 @@ globalThis.classproAuth = (() => {
         break;
       } catch (error) {
         if (error.code !== 'SERVER_BUSY' || attempt === 4) throw error;
-        element('sign-in-status').textContent = 'Waiting for ClassPro…';
+        element('sign-in-status').textContent = 'Waiting for Anon…';
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
@@ -135,6 +135,7 @@ globalThis.classproAuth = (() => {
   document.addEventListener('DOMContentLoaded', () => {
     element('login-provider').addEventListener('change', () => {
       element('password').value = '';
+      configuredProvider = provider();
       reset();
     });
   });
