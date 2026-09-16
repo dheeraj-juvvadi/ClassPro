@@ -28,13 +28,14 @@ globalThis.classproAuth = (() => {
     clearChallenge();
     element('provider-help').textContent = provider() === 'academia'
       ? 'Use your Academia password.' : 'Use your Student Portal password.';
+    element('login-provider-caption').textContent = `Sign in with ${provider() === 'academia' ? 'Academia' : 'Student Portal'}`;
     started = Date.now();
     clicks = keys = movements = 0;
   }
   function configure(session) {
     enabled = session.authMode === 'http';
-    configuredProvider = session.provider === 'portal' ? 'portal' : 'academia';
-    element('provider-choice').hidden = !enabled;
+    configuredProvider = 'academia';
+    element('provider-choice').hidden = true;
     if (enabled) {
       element('login-provider').value = configuredProvider;
       reset();
@@ -139,5 +140,11 @@ globalThis.classproAuth = (() => {
       reset();
     });
   });
-  return { configure, reset, login, prepare, get enabled() { return enabled; } };
+  function usePortal() {
+    configuredProvider = 'portal';
+    element('password').value = '';
+    reset();
+    element('password').focus();
+  }
+  return { configure, reset, login, prepare, usePortal, get enabled() { return enabled; } };
 })();

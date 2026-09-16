@@ -47,6 +47,7 @@ async function run(action) {
     busy = false;
     syncControls();
     $('sign-in-label').textContent = 'Sign in';
+    $('sign-in-status').textContent = '';
     $('sign-in').removeAttribute('data-loading');
     $('refresh').textContent = '↻ Retry';
     $('logout').textContent = 'Sign out';
@@ -136,7 +137,7 @@ async function api(path, options = {}, login = false) {
     catch { throw new Error('The server returned an unexpected response.\nPlease try again.'); }
   }
   if (!response.ok) {
-      throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code, image: data.image });
+      throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code, image: data.image, status: response.status });
   }
   return data;
 }
@@ -258,6 +259,16 @@ async function loadManualChallenge() {
   }
 }
 
+$('use-student-portal').addEventListener('click', () => {
+  $('login-fallback-dialog').close();
+  classproAuth.usePortal();
+  message('login-message', 'Use your Student Portal password to continue.');
+});
+$('retry-academia').addEventListener('click', () => {
+  $('login-fallback-dialog').close();
+  $('password').focus();
+});
+
 $('manual-captcha-refresh').addEventListener('click', () => run(() => classproAuth.enabled ? classproAuth.prepare(api, false) : loadManualChallenge()));
 
 async function submitCredentials(credentials, answer) {
@@ -277,7 +288,18 @@ $('login-form').addEventListener('submit', (event) => {
     $('sign-in-status').textContent = 'Connecting to SRM…';
     let data;
     if (classproAuth.enabled) {
-      data = await classproAuth.login(api, credentials);
+      try {
+        data = await classproAuth.login(api, credentials);
+      } catch (error) {
+        if ($('login-provider').value === 'academia' && error.status !== 401 && !['SERVER_BUSY', 'CAPACITY'].includes(error.code)) {
+          $('login-fallback-title').textContent = error.status >= 500 ? 'Academia is unavailable right now' : 'Could not connect to Academia';
+          $('login-fallback-message').textContent = `${error.message} Please sign in with Student Portal to fetch your attendance and marks.`;
+          $('password').value = '';
+          $('login-fallback-dialog').showModal();
+          return;
+        }
+        throw error;
+      }
       if (!data) return;
       if (data.authenticated !== true) throw new Error('Sign-in could not be confirmed.');
       showReports();
