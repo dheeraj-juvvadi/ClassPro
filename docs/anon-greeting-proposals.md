@@ -1,4 +1,24 @@
-# Greeting proposals — awaiting approval
+# Active greeting behavior
+
+Each user receives three fixed greetings (Good morning, Good evening, Goodnight)
+and exactly three distinct extra lines from the reviewed two-word pool.
+Selection occurs locally when the profile arrives in an existing reports response.
+A deterministic profile seed keeps the extra lines stable on refresh and return.
+There are no greeting API calls, additional polling, or stored credentials involved.
+
+IST timing: 05:00–05:59 Good morning, 17:00–17:59 Good evening, and
+22:00–22:59 Goodnight. After those first hours, show the assigned period extra.
+The night extra continues through 04:59. The existing frontend clock and visibility
+handler update the greeting; navigation and report sync do not reshuffle it.
+Names follow the approved middle-word/first-word rule on fixed greetings.
+
+The active pool is in `portal-app/public/greeting.js`; it incorporates the final
+50-line review and the corrections “Back, {name}?”, “Wide awake?” and “Up late?”.
+Daytime selection uses neutral lines so they remain appropriate after noon.
+
+---
+
+# Greeting proposals — earlier review draft
 
 Keep the approved greeting for the first hour of each IST period: 05:00–05:59,
 12:00–12:59, 17:00–17:59 and 22:00–22:59. Afterward, choose from the appropriate

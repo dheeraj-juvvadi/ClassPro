@@ -40,6 +40,7 @@ test('each profile gets exactly three stable distinct extras without requests', 
   assert.deepEqual(anonGreetings.select(profile), selected);
   assert.equal(selected.some(line => /\{name\}|Night shift|Midnight maths|Still waking|Tomorrow already/.test(line)), false);
   for (const line of selected) assert.equal(line.split(/\s+/).length, 2);
+  assert.equal(anonGreetings.select(null).length, 3);
   assert.equal(anonGreetings.select({}).some(line => line.includes('{name}')), false);
 });
 test('fixed first hour changes to assigned extra locally at each boundary', () => {

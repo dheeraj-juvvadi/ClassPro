@@ -24,6 +24,7 @@ globalThis.anonGreetings = (() => {
     return value;
   }
   function select(profile = {}) {
+    profile = profile || {};
     const displayName = name(profile.name);
     const identity = String(profile.regNo || profile.name || 'anon').trim().toLowerCase();
     let seed = 2166136261;
