@@ -65,6 +65,7 @@ function showLogin(text = '', error = false) {
   academicUI.clear();
   dateAttendance.clear();
   providerConnections.clear();
+  anonSettings.clear();
   reportFingerprint = {};
   nextAutoSync = 0;
   authenticated = false;
@@ -239,7 +240,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
     changed('attendance', [reports.attendance, reports.schedule], () => renderAttendance(reports.attendance, reports.schedule));
     changed('marks', reports.marks, () => renderMarks(reports.marks));
     changed('home', [reports.attendance, reports.schedule], () => classproHome.update(reports.attendance, reports.schedule));
-    changed('profile', reports.profile, () => classproHome.profile(reports.profile));
+    anonSettings.update(reports);
     changed('connections', [reports.connections, reports.warnings], () => providerConnections.update(reports));
     $('refresh').title = 'Sync attendance and marks';
     nextAutoSync = reports.sync?.due && cacheOnly ? 0 : reports.sync?.nextAt || reportSyncSchedule.next();
@@ -379,7 +380,7 @@ if (designPreview) {
   renderAttendance(reports.attendance, reports.schedule);
   renderMarks(reports.marks);
   classproHome.update(reports.attendance, reports.schedule);
-  classproHome.profile(reports.profile);
+  anonSettings.update(reports);
   $('updated-at').textContent = 'Design preview · sample data';
 } else run(async () => {
   try {

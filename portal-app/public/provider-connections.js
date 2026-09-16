@@ -8,6 +8,13 @@ globalThis.providerConnections = (() => {
     const container = get('provider-connections'); container.replaceChildren();
     for (const provider of ['academia', 'portal']) {
       const state = report.connections?.[provider];
+      const row = document.createElement('div'); row.className = 'connection-row';
+      const info = document.createElement('div');
+      const title = document.createElement('strong'); title.textContent = label(provider);
+      const status = document.createElement('span'); status.className = 'connection-state';
+      status.textContent = state?.expired ? 'Needs reconnection' : state?.connected ? 'Connected' : 'Not connected';
+      status.dataset.connected = String(!!state?.connected && !state.expired);
+      info.append(title, status); row.append(info); container.append(row);
       if (state?.connected && !state.expired) continue;
       const button = document.createElement('button'); button.type = 'button';
       button.textContent = `${state?.expired ? 'Reconnect' : 'Connect'} ${label(provider)}`;
@@ -22,7 +29,7 @@ globalThis.providerConnections = (() => {
         challengeReady = false; get('connect-captcha').hidden = true;
         get('connect-dialog').showModal();
       });
-      container.append(button);
+      row.append(button);
     }
     for (const warning of report.warnings || []) { const p = document.createElement('p'); p.className = 'quiet'; p.textContent = warning; container.append(p); }
   }

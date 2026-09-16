@@ -51,9 +51,17 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#schedule-form').count(), 0);
   await page.evaluate(() => providerConnections.update({ connections: { portal: { connected: true } } }));
   assert.equal(await page.getByRole('button', { name: 'Connect Student Portal', exact: true }).count(), 0);
-  assert.doesNotMatch(await page.locator('#provider-connections').textContent(), /connected|Timetable from/);
+  assert.match(await page.locator('#provider-connections').textContent(), /Connected/);
+  assert.equal(await page.locator('#provider-connections').isVisible(), false);
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-accounts').click();
+  assert.equal(await page.locator('#accounts-title').innerText(), 'Settings');
+  await page.locator('#settings-display-name').fill('Dheeraj');
+  await page.locator('#settings-profile-form button').click();
+  assert.equal(await page.locator('#settings-name').innerText(), 'Dheeraj');
+  await page.locator('#settings-theme').selectOption('sand');
+  assert.equal(await page.locator('body').getAttribute('data-accent'), 'sand');
+
   await page.getByRole('button', { name: 'Connect Academia', exact: true }).click();
   const providerRequests = [];
   await page.route('**/api/challenge', route => {
@@ -145,5 +153,27 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `no overflow at ${width}px`);
   }
+  await page.evaluate(() => {
+    const report = { profile: { name: 'Test Person', regNo: 'SETTINGS-TEST' }, attendance: { data: [{ code: 'CS', title: 'Computing', present: 8, conducted: 10 }] }, marks: { data: [] } };
+    anonSettings.update(report);
+    anonSettings.update({ ...report, attendance: { data: [{ code: 'CS', title: 'Computing', present: 9, conducted: 11 }] } });
+    globalThis.settingsTestReport = report;
+  });
+  await page.locator('#planner-menu summary').click();
+  await page.locator('#open-accounts').click();
+  assert.match(await page.locator('#settings-history').textContent(), /Attendance updated/);
+  await page.locator('#settings-display-name').fill('Test nickname');
+  await page.locator('#settings-profile-form button').click();
+  await page.evaluate(() => { anonSettings.clear(); anonSettings.update(globalThis.settingsTestReport); });
+  assert.equal(await page.locator('#settings-name').innerText(), 'Test nickname');
+  assert.match(await page.locator('#settings-history').textContent(), /Attendance updated/);
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.equal(await page.locator('#accounts-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
+  }
+  await page.locator('.settings-detail').filter({ hasText: 'Privacy & storage' }).locator('summary').click();
+  await page.locator('#settings-reset').click();
+  assert.equal(await page.locator('#settings-name').innerText(), 'Test Person');
+  assert.doesNotMatch(await page.locator('#settings-history').textContent(), /Attendance updated/);
   assert.deepEqual(failures, []);
 });

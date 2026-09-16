@@ -12,7 +12,7 @@ globalThis.renderTimetableSvg = (container, entries) => {
   container.replaceChildren();
   if (!entries.length) {
     const empty = document.createElement('p'); empty.className = 'quiet';
-    empty.textContent = 'SRM has not returned a timetable. Connect Academia from Accounts, then refresh your reports.';
+    empty.textContent = 'SRM has not returned a timetable. Connect Academia from Settings, then refresh your reports.';
     container.append(empty); return;
   }
   const orders = [...new Set(entries.map(entry => String(entry.dayOrder || `Day ${entry.day}`)))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
