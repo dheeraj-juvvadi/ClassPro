@@ -3,6 +3,12 @@ adapted from components/calender/week-strip-calendar.tsx in
 https://github.com/bidyut10/opensourceui (retrieved September 15, 2026).
 Adaptation: native DOM, existing ClassPro palette, no motion, academic states.
 
+The course-row layout in report-layout.css also adapts the full-width rows,
+flexible title/metadata column, trailing value, and peer separators from
+components/audio/music-playlist-card.tsx in the same repository
+(retrieved September 16, 2026). Adaptation: CSS grid with native details/summary,
+existing ClassPro colors, wrapping titles, and no React or animation runtime.
+
 MIT License
 
 Copyright (c) 2026 Bidyut Kundu
