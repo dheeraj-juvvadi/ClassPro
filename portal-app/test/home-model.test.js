@@ -28,7 +28,7 @@ test('schedule validation rejects invalid days, times and durations', () => {
 
 test('insights distinguish positive, zero and required attendance hours', () => {
   assert.equal(classproHomeModel.insight({ present: 18, conducted: 22 }).margin, 'Margin: 2h');
-  assert.equal(classproHomeModel.insight({ present: 13, conducted: 19 }).margin, 'Recover: 5h');
+  assert.equal(classproHomeModel.insight({ present: 13, conducted: 19 }).margin, 'Required: 5h');
   assert.equal(classproHomeModel.insight({ present: 19, conducted: 25 }).tone, 'caution');
   assert.equal(classproHomeModel.insight({ present: 0, conducted: 0 }).percentage, '—');
 });

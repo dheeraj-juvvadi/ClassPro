@@ -85,7 +85,9 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#close-connect').click();
   await page.evaluate(() => { loadReports = globalThis.savedLoadReports; });
   await page.getByRole('button', { name: 'Attendance', exact: true }).click();
-  assert.equal(await page.locator('#monthly-attendance tbody tr').count(), 2);
+  assert.equal(await page.locator('#monthly-attendance').count(), 0);
+  assert.equal(await page.locator('#attendance-overview').count(), 0);
+  assert.equal(await page.locator('#allocation-filter').count(), 0);
   await page.getByRole('button', { name: 'Home', exact: true }).click();
   assert.equal(await page.locator('.period-plan').count(), 0);
   await page.getByRole('button', { name: 'View attendance', exact: true }).click();
