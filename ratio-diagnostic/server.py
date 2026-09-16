@@ -42,6 +42,7 @@ async def solve_image(image):
 upstream.solve_captcha_ocr_bytes = solve_image
 origin = os.environ["APP_ORIGIN"]
 secure = origin.startswith("https://")
+required_token = os.environ.get("BACKEND_TOKEN", "")
 sessions = {}
 rates = {}
 gate = asyncio.Lock()
@@ -127,6 +128,8 @@ async def boundary(request, call_next):
         return response
     if request.method not in {"GET", "POST", "DELETE"}:
         return failure("METHOD_NOT_ALLOWED", "Method not allowed.", 405)
+    if required_token and not secrets.compare_digest(request.headers.get("x-classpro-key", ""), required_token):
+        return failure("UNAUTHORIZED", "Not available.", 401)
     if request.method != "GET":
         if request.headers.get("origin") != origin or request.headers.get("sec-fetch-site") == "cross-site":
             return failure("INVALID_ORIGIN", "Reload the app.", 403)

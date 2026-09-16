@@ -10,6 +10,7 @@ globalThis.classproAuth = (() => {
   let prediction = '';
   let serverAuto = false;
   let preparing = null;
+  let configuredProvider = 'academia';
   const element = id => document.getElementById(id);
   const provider = () => element('login-provider').value;
   const clearChallenge = () => {
@@ -23,6 +24,7 @@ globalThis.classproAuth = (() => {
   };
   function reset() {
     if (!enabled) return;
+    element('login-provider').value = configuredProvider;
     clearChallenge();
     element('provider-help').textContent = provider() === 'academia'
       ? 'Use your Academia password.' : 'Use your Student Portal password.';
@@ -31,9 +33,10 @@ globalThis.classproAuth = (() => {
   }
   function configure(session) {
     enabled = session.authMode === 'http';
+    configuredProvider = session.provider === 'portal' ? 'portal' : 'academia';
     element('provider-choice').hidden = !enabled;
     if (enabled) {
-      element('login-provider').value = session.provider === 'portal' ? 'portal' : 'academia';
+      element('login-provider').value = configuredProvider;
       reset();
     }
   }

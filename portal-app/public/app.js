@@ -99,7 +99,7 @@ function showReports() {
 }
 
 async function api(path, options = {}, login = false) {
-  const clientTrace = crypto.randomUUID();
+  const clientTrace = classproRandomId();
   const started = performance.now();
   const loginMode = 'manual';
   const record = (details) => {
