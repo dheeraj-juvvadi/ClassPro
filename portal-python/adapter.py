@@ -70,8 +70,16 @@ class Adapter:
                     await asyncio.sleep(2)
                 result = await self.session.login(payload["account"].strip().split("@")[0],
                                                    payload["password"], answer)
+                upstream_reason = result.get("reason", "accepted")
+                if not result.get("ok"):
+                    evidence = next((event for event in reversed(self.events)
+                                     if event.get("stage") == "LoginServlet"), {})
+                    classification = evidence.get("alert_classification", "unclassified")
+                    result["reason"] = {"credentials_rejected": "invalid_credentials",
+                                        "captcha_rejected": "wrong_captcha"}.get(classification, "login_failed")
                 self.events.append({"stage": "login_result", "automatic": automatic,
-                                    "attempt": attempt + 1, "reason": result.get("reason", "accepted")})
+                                    "attempt": attempt + 1, "reason": result.get("reason", "accepted"),
+                                    "upstream_reason": upstream_reason})
                 if result.get("ok") or result.get("reason") != "wrong_captcha":
                     break
                 if automatic and attempt < 3:
@@ -80,7 +88,12 @@ class Adapter:
             if not result or not result.get("ok"):
                 reason = (result or {}).get("reason")
                 code = "CAPTCHA_INVALID" if reason == "wrong_captcha" else "LOGIN_REJECTED"
-                return error(code, "Student Portal did not establish a session. Please retry.")
+                message = "Student Portal did not establish a session. The cause is not confirmed."
+                if reason == "invalid_credentials":
+                    message = "SRM returned a credentials-rejection message. CAPTCHA retries will not resolve this."
+                elif reason == "wrong_captcha":
+                    message = "SRM rejected the verification code. Please enter a fresh code."
+                return error(code, message)
             attendance = await self.session.get_attendance_html()
             self.authenticated = True
             return {"status": 200, "body": {"authenticated": True, "attendanceHTML": attendance}}

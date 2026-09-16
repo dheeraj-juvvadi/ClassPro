@@ -31,7 +31,7 @@ only through private stdin/stdout pipes. It has no public listener.
 - Same live client and cookie jar across CAPTCHA, submission and reports.
 - Exact upstream dynamic form fields, synthetic telemetry, and NetID normalization.
 - Automatic OCR runs server-side with a two-second pre-submit delay.
-- At most four automatic attempts using upstream's CAPTCHA classification.
+- At most four automatic attempts, only for CAPTCHA rejection in alert elements.
 - Fresh PortalSession/cookie jar on refresh and between automatic CAPTCHA retries.
 - Manual CAPTCHA remains available. Invalid credentials are not retried.
 - Upstream's broad success test is additionally checked against our attendance parser.
@@ -50,6 +50,9 @@ The unchanged upstream classifier searches raw HTML and labels even an unsubmitt
 login page `wrong_captcha` because validation scripts contain that phrase. This
 is not proof SRM rejected the CAPTCHA. Separate `alert_classification` diagnostics
 inspect alert elements without scripts or hidden validation messages; they emit
-only fixed categories, never page text. Login success still requires valid reports.
+only fixed categories, never page text. The adapter overrides that raw classifier
+for retry decisions: credentials rejection or unknown failure stops submission
+and does not request another CAPTCHA. The original classification is retained as
+`upstream_reason` for comparison. Login success still requires valid reports.
 
 Tests: `PYTHONPATH=portal-python python -m unittest discover -s portal-python -p 'test_*.py'`.

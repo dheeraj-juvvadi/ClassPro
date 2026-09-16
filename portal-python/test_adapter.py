@@ -33,7 +33,8 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
             return httpx.Response(200, text="attendance table" if self.login_result == "ok" else "login_form")
 
         self.adapter.session.client = httpx.AsyncClient(transport=httpx.MockTransport(handler),
-                                                       follow_redirects=True)
+                                                       follow_redirects=True,
+                                                       event_hooks={"response": [self.adapter.evidence]})
         self.clients = [self.adapter.session.client]
 
         def session_factory():
@@ -68,11 +69,12 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_automatic_wait_and_no_credential_retry(self):
         await self.adapter.call("challenge", {})
-        self.login_result = "invalid credentials"
+        self.login_result = '<script>const hint="invalid captcha";</script><div role="alert">Invalid credentials</div>'
         with patch("adapter.solve", return_value="Ab12"), patch("adapter.asyncio.sleep", new_callable=AsyncMock) as delay:
             result = await self.adapter.call("login", {"account": "user", "password": "pass"})
         delay.assert_awaited_once_with(2)
         self.assertEqual(result["status"], 401)
+        self.assertEqual(result["body"]["error"]["code"], "LOGIN_REJECTED")
         self.assertEqual(sum(request.method == "POST" for request in self.requests), 1)
 
     async def test_manual_never_runs_ocr(self):
@@ -83,13 +85,21 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_captcha_retries_are_bounded(self):
         await self.adapter.call("challenge", {})
-        self.login_result = "invalid captcha"
+        self.login_result = '<div role="alert">Invalid captcha</div>'
         with patch("adapter.solve", return_value="Ab12"), patch("adapter.asyncio.sleep", new_callable=AsyncMock):
             result = await self.adapter.call("login", {"account": "user", "password": "pass"})
         self.assertEqual(result["body"]["error"]["code"], "CAPTCHA_INVALID")
         self.assertEqual(sum(request.method == "POST" for request in self.requests), 4)
         self.assertEqual(len(self.clients), 4)
         self.assertTrue(all(client.is_closed for client in self.clients[:-1]))
+
+    async def test_script_only_captcha_message_never_retries(self):
+        await self.adapter.call("challenge", {})
+        self.login_result = '<script>const hint="invalid captcha";</script>'
+        with patch("adapter.solve", return_value="Ab12"), patch("adapter.asyncio.sleep", new_callable=AsyncMock):
+            result = await self.adapter.call("login", {"account": "user", "password": "pass"})
+        self.assertEqual(result["body"]["error"]["code"], "LOGIN_REJECTED")
+        self.assertEqual(sum(request.method == "POST" for request in self.requests), 1)
 
     async def test_refresh_uses_new_session(self):
         await self.adapter.call("challenge", {})
