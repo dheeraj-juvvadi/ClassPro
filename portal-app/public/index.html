@@ -22,12 +22,13 @@
   <script src="/schedule-calendar.js" defer></script>
   <script src="/academic-calendar.js" defer></script>
   <script src="/timetable-svg.js" defer></script>
+  <script src="/course-details.js" defer></script>
+  <script src="/greeting.js" defer></script>
   <script src="/home.js" defer></script>
   <script src="/quantity-stepper.js" defer></script>
   <script src="/date-projection.js" defer></script>
   <script src="/date-attendance.js" defer></script>
   <script src="/academic-ui.js" defer></script>
-  <script src="/academic-summary.js" defer></script>
   <script src="/provider-connections.js" defer></script>
   <script src="/client-ocr.js" defer></script>
   <script src="/auth-client.js" defer></script>
@@ -96,7 +97,6 @@
         <div id="schedule-calendar"></div>
         <p id="schedule-source" class="quiet" role="status"></p>
         <div class="schedule-filters">
-          <div><label for="allocation-filter">Allocation</label><select id="allocation-filter"><option value="">All allocations</option></select></div>
           <div><label for="batch-filter">Batch</label><select id="batch-filter"><option value="">All batches</option></select></div>
         </div>
         <div class="timeline-heading"><h2 id="today-title">Today’s classes</h2><span id="today-count"></span></div>
@@ -116,13 +116,11 @@
       <div id="report-content" aria-busy="false">
         <section id="attendance-panel" class="report-section" aria-labelledby="attendance-title">
           <div class="section-heading"><h2 id="attendance-title">Attendance</h2><span id="attendance-count" class="quiet"></span></div>
-          <div id="attendance-overview" class="attendance-overview"></div>
           <div id="attendance-content"></div>
-          <section id="monthly-attendance" aria-label="Monthly attendance" hidden></section>
         </section>
         <section id="marks-panel" class="report-section" aria-labelledby="marks-title">
           <div class="section-heading"><h2 id="marks-title">Marks</h2><span id="marks-count" class="quiet"></span></div>
-          <p class="section-help quiet">Select a course to view its assessment details.</p>
+          <p class="section-help quiet">Your assessments, course by course.</p>
           <div id="marks-content"></div>
         </section>
       </div>

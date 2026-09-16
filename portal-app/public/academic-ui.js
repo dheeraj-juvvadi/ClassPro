@@ -14,12 +14,12 @@ globalThis.academicUI = (() => {
     const prediction = attendanceMath.predict({ present, conducted });
     if (!prediction.valid || prediction.percentage === null) return { text: 'No hours yet', tone: 'neutral', percentage: '—', detail: 'No attendance hours recorded.' };
     const required = prediction.neededToTarget;
-    return { text: required ? `Recover: ${required}h` : `Margin: ${prediction.canMiss}h`,
+    return { text: required ? `Required: ${required}h` : `Margin: ${prediction.canMiss}h`,
       tone: required ? 'risk' : prediction.canMiss === 0 ? 'caution' : 'healthy',
       percentage: `${Number(prediction.percentage.toFixed(1))}%`,
       detail: required ? `Attend ${required} consecutive hours to reach 75%.` : `You can miss ${prediction.canMiss} hours and remain at 75%.` };
   }
-  function renderAttendance(data, container) {
+  function renderAttendance(data, container, schedule) {
     courses = data;
     const list = create('div', 'attendance-rows');
     for (const course of data) {
@@ -43,8 +43,13 @@ globalThis.academicUI = (() => {
       }
       bottom.append(counts, create('strong', 'attendance-percent', status.percentage));
       card.append(heading, bottom);
-      const details = [course.faculty, course.room, course.type, course.credits && `${course.credits} credits`].filter(value => value && value !== 'TBA');
+      const details = [course.faculty, course.room, course.type, course.credits && `${course.credits} credits`].map(value => courseDetails.clean(value)).filter(Boolean);
       if (details.length) card.append(create('p', 'course-metadata', details.join(' · ')));
+      const recovery = courseDetails.recovery(course, classproScheduleModel.normalize(schedule), classproScheduleModel.clock('Asia/Kolkata'));
+      if (recovery?.date) {
+        const date = recovery.date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
+        card.append(create('p', 'recovery-date', `Can be recovered by ${date}`), create('p', 'recovery-assumption', 'If you attend every upcoming class.'));
+      } else if (recovery?.unavailable) card.append(create('p', 'recovery-assumption', 'Recovery date needs a confirmed timetable and calendar.'));
       list.append(card);
     }
     container.append(list);

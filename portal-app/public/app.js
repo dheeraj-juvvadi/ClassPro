@@ -63,7 +63,6 @@ function showLogin(text = '', error = false) {
   $('planner-menu').hidden = true;
   classproHome.clear();
   academicUI.clear();
-  academicSummary.clear();
   dateAttendance.clear();
   providerConnections.clear();
   reportFingerprint = {};
@@ -173,9 +172,9 @@ function reportState(kind, report) {
   return { container, data };
 }
 
-function renderAttendance(report) {
+function renderAttendance(report, schedule) {
   const { container, data } = reportState('attendance', report);
-  academicUI.renderAttendance(data, container);
+  academicUI.renderAttendance(data, container, schedule);
 }
 
 function renderMarks(report) {
@@ -184,9 +183,11 @@ function renderMarks(report) {
   for (const course of data) {
     const details = node('details', 'course-details');
     const summary = node('summary');
-    summary.append(courseHeading(course), node('span', 'course-score', score(course)));
+    const scoreBlock = node('span', 'marks-score-block');
+    scoreBlock.append(node('span', 'course-score', score(course)), node('span', 'marks-score-caption', 'Total score'));
+    summary.append(courseHeading(course), scoreBlock);
     const content = node('div', 'assessments');
-    content.append(node('h3', 'assessment-heading', 'Assessment details'));
+    content.append(node('h3', 'assessment-heading', 'Assessments'));
     if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
     const components = Array.isArray(course.components) ? course.components : [];
     const metadata = node('span', 'course-result-count', `${components.length} ${components.length === 1 ? 'assessment' : 'assessments'}`);
@@ -219,8 +220,13 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
   $('refresh').disabled = true;
   if (!silent) message('reports-message');
   if (!$('attendance-content').childElementCount) {
-    $('attendance-content').append(node('div', 'empty-state', 'Loading attendance…'));
-    $('marks-content').append(node('div', 'empty-state', 'Loading marks…'));
+    for (const kind of ['attendance', 'marks']) {
+      const skeleton = node('div', 'report-placeholder');
+      skeleton.setAttribute('aria-label', 'Fetching your data');
+      skeleton.setAttribute('role', 'status');
+      for (let i = 0; i < 3; i++) skeleton.append(node('div', 'placeholder-row'));
+      $(`${kind}-content`).append(skeleton);
+    }
   }
   try {
     const reports = await api(`/api/reports${force ? '?force=1' : cacheOnly ? '?cache=only' : ''}`);
@@ -228,10 +234,10 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
       const fingerprint = JSON.stringify(data);
       if (reportFingerprint[key] !== fingerprint) { update(); reportFingerprint[key] = fingerprint; }
     };
-    changed('attendance', reports.attendance, () => renderAttendance(reports.attendance));
+    changed('attendance', [reports.attendance, reports.schedule], () => renderAttendance(reports.attendance, reports.schedule));
     changed('marks', reports.marks, () => renderMarks(reports.marks));
     changed('home', [reports.attendance, reports.schedule], () => classproHome.update(reports.attendance, reports.schedule));
-    changed('summary', [reports.attendance, reports.monthly], () => academicSummary.update(reports));
+    changed('profile', reports.profile, () => classproHome.profile(reports.profile));
     changed('connections', [reports.connections, reports.warnings], () => providerConnections.update(reports));
     $('refresh').title = 'Sync attendance and marks';
     nextAutoSync = reports.sync?.due && cacheOnly ? 0 : reports.sync?.nextAt || reportSyncSchedule.next();
@@ -242,7 +248,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
   } catch (error) {
     for (const kind of ['attendance', 'marks']) {
       const container = $(`${kind}-content`);
-      if (container.firstElementChild?.textContent === `Loading ${kind}…`) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Sync to try again.'));
+      if (container.firstElementChild?.classList.contains('report-placeholder')) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Sync to try again.'));
     }
     nextAutoSync = reportSyncSchedule.next();
     if (silent && !error.expired) {
@@ -368,10 +374,10 @@ $('logout').addEventListener('click', () => run(async () => {
 if (designPreview) {
   const reports = classproHome.preview();
   showReports();
-  renderAttendance(reports.attendance);
+  renderAttendance(reports.attendance, reports.schedule);
   renderMarks(reports.marks);
   classproHome.update(reports.attendance, reports.schedule);
-  academicSummary.update(reports);
+  classproHome.profile(reports.profile);
   $('updated-at').textContent = 'Design preview · sample data';
 } else run(async () => {
   try {

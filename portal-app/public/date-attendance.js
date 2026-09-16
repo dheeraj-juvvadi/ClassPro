@@ -42,7 +42,7 @@ globalThis.dateAttendance = (() => {
       else {
         const before = academicUI.margin(course.present, course.conducted);
         card.append(node('strong', `${before.percentage} → ${prediction.percentage}%`));
-        card.append(node('p', prediction.neededToTarget ? `Recover: ${prediction.neededToTarget}h` : `Margin: ${prediction.canMiss}h`));
+        card.append(node('p', prediction.neededToTarget ? `Required: ${prediction.neededToTarget}h` : `Margin: ${prediction.canMiss}h`));
         card.append(node('small', `${course.impact.attend}h attend · ${course.impact.miss}h leave · ${course.impact.od}h OD selected`));
       }
       output.append(card);

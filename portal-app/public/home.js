@@ -4,6 +4,7 @@ globalThis.classproHome = (() => {
   const model = globalThis.classproHomeModel;
   const planner = globalThis.classproScheduleModel;
   let schedule = [];
+  let studentName = '';
   let attendance = [];
   let preview = false;
   let reportError = '';
@@ -32,7 +33,7 @@ globalThis.classproHome = (() => {
     onSelect(date) { selectedDate = date; render(); } });
 
   function updateFilters() {
-    for (const field of ['allocation', 'batch']) {
+    for (const field of ['batch']) {
       const select = get(`${field}-filter`);
       const values = [...new Set((reportedSchedule?.entries || schedule).map(entry => entry[field]).filter(Boolean))].sort();
       select.replaceChildren(new Option(`All ${field === 'batch' ? 'batches' : 'allocations'}`, ''), ...values.map(value => new Option(value, value)));
@@ -42,7 +43,7 @@ globalThis.classproHome = (() => {
       select.parentElement.hidden = !values.length;
     }
   }
-  for (const field of ['allocation', 'batch']) get(`${field}-filter`).addEventListener('change', event => { filters[field] = event.target.value; render(); });
+  for (const field of ['batch']) get(`${field}-filter`).addEventListener('change', event => { filters[field] = event.target.value; render(); });
   updateFilters();
 
   function page(destination, focus = true) {
@@ -63,7 +64,7 @@ globalThis.classproHome = (() => {
 
   function render() {
     const date = now();
-    get('home-title').textContent = date.getHours() < 12 ? 'Good morning.' : date.getHours() < 17 ? 'Good afternoon.' : 'Good evening.';
+    get('home-title').textContent = anonGreeting(studentName, date);
     get('home-date').textContent = new Intl.DateTimeFormat('en', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
     const day = selectedDate || date;
     const classes = planner.classes(source(), day, filters);
@@ -85,7 +86,7 @@ globalThis.classproHome = (() => {
     if (next) {
       card.append(element('p', 'class-time', `${next.start} → ${next.end}`));
       card.append(element('p', 'class-room', next.room));
-      if (next.faculty && next.faculty !== 'TBA') card.append(element('p', 'class-room', next.faculty));
+      if (courseDetails.clean(next.faculty)) card.append(element('p', 'class-room', courseDetails.clean(next.faculty)));
       const course = attendance.find(subject => subject.code === next.code);
       const insight = course && model.insight(course);
       const stats = element('div', 'next-class-stats');
@@ -143,12 +144,12 @@ globalThis.classproHome = (() => {
       times.append(element('time', '', entry.start), element('time', '', entry.end));
       const description = element('div', 'timeline-description');
       description.append(element('h3', '', entry.title), element('p', '', `${entry.room ? entry.room + ' · ' : ''}${model.hours(entry)}h`));
-      if (entry.faculty && entry.faculty !== 'TBA') description.append(element('p', '', entry.faculty));
+      if (courseDetails.clean(entry.faculty)) description.append(element('p', '', courseDetails.clean(entry.faculty)));
       const course = attendance.find(subject => subject.code === entry.code);
       const insight = course && model.insight(course);
       row.append(times, description, element('span', `timeline-status ${ongoing ? 'healthy' : insight?.tone || ''}`, ongoing ? 'Ongoing' : insight?.percentage || ''));
       if (insight) description.append(element('p', `course-margin ${insight.tone}`, insight.margin));
-      if (entry.allocation || entry.batch) description.append(element('p', '', [entry.allocation, entry.batch].filter(Boolean).join(' · ')));
+
       list.append(row);
     }
     if (!classes.length) {
@@ -199,8 +200,9 @@ globalThis.classproHome = (() => {
   setInterval(() => { if (!get('home-view').hidden && !document.hidden) render(); }, 60000);
 
   return {
+    profile(profile) { studentName = profile?.name || ''; render(); },
     enter() { render(); page('home'); },
-    clear() { attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
+    clear() { studentName = ''; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
     update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];
       reportError = report?.error?.message || '';

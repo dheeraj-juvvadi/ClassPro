@@ -172,3 +172,21 @@
     font-size: 15px;
   }
 }
+
+/* Quiet initial placeholders; existing results stay visible during sync. */
+.report-placeholder { display: grid; gap: 1px; }
+.placeholder-row { height: 96px; border-bottom: 1px solid #343b30; position: relative; }
+.placeholder-row::before, .placeholder-row::after { content: ''; position: absolute; height: 10px; border-radius: 4px; background: #30372b; left: 0; top: 28px; width: 48%; }
+.placeholder-row::after { top: 50px; width: 26%; background: #282e24; }
+.recovery-date { margin-top: 16px; font-size: 12px; color: #d8dfc8; line-height: 1.5; }
+.recovery-assumption { margin-top: 5px; font-size: 11px; color: #adb4a4; line-height: 1.5; }
+.planner #marks-panel .course-details > summary { padding-block: 26px; }
+.planner #marks-panel .course-heading { gap: 7px; }
+.planner #marks-panel .course-code { display: none; }
+.planner #marks-panel .course-result-count { font-size: 12px; }
+.marks-score-block { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.marks-score-caption { font-size: 10px; color: #adb4a4; white-space: nowrap; }
+.planner #marks-panel .assessments { padding-top: 8px; padding-bottom: 26px; }
+.planner #marks-panel .assessment-row { padding-block: 16px; }
+.planner #marks-panel .assessment-row + .assessment-row { border-top: 1px solid #343a2e; }
+.schedule-filters { grid-template-columns: minmax(0, 1fr); }
