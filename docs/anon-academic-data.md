@@ -5,6 +5,18 @@ Vercel project: `revamp-tracker`, linked to `dheeraj-juvvadi/ClassPro`, branch
 `main`, root directory `portal-app/public`. Pushes to main deploy the frontend.
 The Python backend runs separately in the Azure `classpro-test` VM.
 
+Academia uses Ratio-D's `/login` and `/refresh`; Portal uses `/portal/login`
+and `/portal/refresh`. The public compatibility endpoints select these based
+on the requested provider. Home offers account connection buttons without
+discarding the other connection. Accounts must match by registration number
+or, when unavailable, normalized username. Separate cookies and credentials
+remain in expiring server memory for retry after session expiry. A failed
+provider refresh preserves previous reports and displays a warning.
+
+Academia builds its schedule from `My_Time_Table_2023_24` course allocation and
+the appropriate batch of `Unified_Time_Table_2025`. Portal attendance takes
+priority while Academia supplies the timetable if Portal has no entries.
+
 The Ratio-D portal client uses these paths under
 `https://sp.srmist.edu.in/srmiststudentportal`:
 
