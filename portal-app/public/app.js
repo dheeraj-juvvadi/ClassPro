@@ -8,6 +8,22 @@ let nextAutoSync = 0;
 let reportFingerprint = {};
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
+const REPORTS_CACHE = 'classpro-reports-cache';
+
+function readReportsCache() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(REPORTS_CACHE));
+    return cached && cached.syncedAt ? cached : null;
+  } catch { return null; }
+}
+
+function writeReportsCache(reports) {
+  try { localStorage.setItem(REPORTS_CACHE, JSON.stringify({ ...reports, syncedAt: Date.now() })); } catch {}
+}
+
+function clearReportsCache() {
+  try { localStorage.removeItem(REPORTS_CACHE); } catch {}
+}
 
 function node(tag, className, text) {
   const element = document.createElement(tag);
@@ -246,6 +262,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Sync.' : '');
+    writeReportsCache(reports);
     return reports;
   } catch (error) {
     for (const kind of ['attendance', 'marks']) {
@@ -372,9 +389,24 @@ $('refresh').addEventListener('click', () => run(async () => {
 $('logout').addEventListener('click', () => run(async () => {
   if (designPreview) { location.href = '/'; return; }
   $('logout').textContent = 'Signing out…';
+  clearReportsCache();
   await api('/api/session', { method: 'DELETE' });
   showLogin('You have signed out.');
 }));
+
+function paintCachedReports() {
+  const cached = readReportsCache();
+  if (!cached) return false;
+  showReports();
+  renderAttendance(cached.attendance, cached.schedule);
+  renderMarks(cached.marks);
+  classproHome.update(cached.attendance, cached.schedule);
+  anonSettings.update(cached);
+  providerConnections.update(cached);
+  const date = new Date(cached.updatedAt);
+  $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Showing your last synced data.' : `Last synced ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
+  return true;
+}
 
 if (designPreview) {
   const reports = classproHome.preview();
@@ -384,17 +416,25 @@ if (designPreview) {
   classproHome.update(reports.attendance, reports.schedule);
   anonSettings.update(reports);
   $('updated-at').textContent = 'Design preview · sample data';
-} else run(async () => {
-  try {
-    const session = await api('/api/session');
-    classproAuth.configure(session);
-    if (session.authenticated) {
-      showReports();
-      await loadReports({ cacheOnly: true });
-      setTimeout(resumeSync, 0);
-    } else showLogin();
-  } catch (error) {
-    if (!authenticated && !error.expired) showLogin(error.message, true);
-    else throw error;
-  }
-});
+} else {
+  paintCachedReports();
+  run(async () => {
+    try {
+      const session = await api('/api/session');
+      classproAuth.configure(session);
+      if (session.authenticated) {
+        if (!reportFingerprint.home) {
+          showReports();
+          await loadReports({ cacheOnly: true });
+        } else {
+          setTimeout(resumeSync, 0);
+        }
+      } else if (!authenticated) {
+        showLogin();
+      }
+    } catch (error) {
+      if (!authenticated && !error.expired) showLogin(error.message, true);
+      else throw error;
+    }
+  });
+}
