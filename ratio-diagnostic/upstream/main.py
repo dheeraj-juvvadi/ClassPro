@@ -392,10 +392,10 @@ async def refresh_data(creds: Credentials, request: Request):
         print(f"{get_now()}\n  -> [API] ERROR in /refresh: {err_msg}", flush=True)
         try:
             err_data = json.loads(err_msg)
-            if isinstance(err_data, dict) and err_data.get("type") == "CAPTCHA_REQUIRED":
-                raise HTTPException(status_code=401, detail=err_data)
-        except Exception:
-            pass
+        except (ValueError, TypeError):
+            err_data = None
+        if isinstance(err_data, dict) and err_data.get("type") == "CAPTCHA_REQUIRED":
+            raise HTTPException(status_code=401, detail=err_data)
         raise HTTPException(status_code=500, detail="Something went wrong while fetching data.")
 
 @app.post("/login")

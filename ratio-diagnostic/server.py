@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import re
 import contextlib
 import importlib.util
 import io
@@ -246,11 +248,24 @@ async def login(request: Request):
                       **integrity(payload)}), flush=True)
     login_payload = {
         "username": payload["account"], "password": payload["password"],
-        "captcha": payload.get("answer") or None, "cdigest": entry.get("digest"),
+        "captcha": payload.get("answer") or None,
+        "cdigest": entry.get("academia_digest") if provider == "academia" else entry.get("digest"),
     }
     response, data = await invoke(request, "/portal/login" if provider == "portal" else "/login", login_payload)
     if response.status_code != 200 or data.get("success") is not True:
         detail = data.get("detail")
+        if provider == "academia" and isinstance(detail, dict) and detail.get("type") == "CAPTCHA_REQUIRED":
+            digest = detail.get("cdigest", "")
+            if not isinstance(digest, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,256}", digest):
+                return failure("PORTAL_UNAVAILABLE", "Academia verification is unavailable.", 502)
+            entry["academia_digest"] = digest
+            async with httpx.AsyncClient(timeout=15) as client:
+                captcha = await client.get(f"https://academia.srmist.edu.in/accounts/p/40-10002227248/webclient/v1/captcha/{digest}?darkmode=false")
+            mime = captcha.headers.get("content-type", "").split(";")[0]
+            if captcha.status_code != 200 or mime not in {"image/png", "image/jpeg"} or len(captcha.content) > 500000:
+                return failure("PORTAL_UNAVAILABLE", "Cannot load Academia verification.", 502)
+            return JSONResponse({"error": {"code": "CAPTCHA_REQUIRED", "message": "Enter the Academia verification code."},
+                                 "image": f"data:{mime};base64,{base64.b64encode(captcha.content).decode()}"}, status_code=401)
         if isinstance(detail, str) and "captcha" in detail.lower():
             return failure("CAPTCHA_REQUIRED", "Ratio-D backend requested a new verification code.")
         return failure("LOGIN_REJECTED", "Ratio-D backend did not establish an SRM session.",

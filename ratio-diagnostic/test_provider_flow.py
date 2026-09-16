@@ -3,6 +3,7 @@ from unittest.mock import patch
 import httpx
 from test_server import DiagnosticTests
 from provider_flow import combined, same_student
+from provider_flow import refresh
 
 
 class ProviderFlowTests(DiagnosticTests):
@@ -46,3 +47,27 @@ class ProviderFlowTests(DiagnosticTests):
     def test_cross_student_connection_rejected(self):
         states = {"academia": {"report": {"profile": {"regNo": "ONE"}}}}
         self.assertFalse(same_student(states, "portal", {"profile": {"regNo": "TWO"}}, "student"))
+
+    async def test_expiry_retries_credentials_and_keeps_other_provider_report(self):
+        calls = []
+        entry = {"providers": {
+            "academia": {"username": "student", "password": "private", "cookies": {},
+                         "report": {"schedule": {"entries": [{"code": "CS1"}]}}},
+            "portal": {"username": "student", "password": "private", "cookies": {},
+                       "report": {"attendance": {"data": [{"code": "CS1", "present": 10}]}}}}}
+
+        async def invoke(request, path, payload):
+            calls.append((path, dict(payload)))
+            if path == "/portal/refresh":
+                return httpx.Response(503), {}
+            if "password" not in payload:
+                return httpx.Response(401), {}
+            return httpx.Response(200), {"success": True, "cookies": {"new": "cookie"}}
+
+        result, success = await refresh(None, entry, invoke, lambda data, previous: previous)
+        self.assertTrue(success)
+        self.assertEqual(calls[-1][1]["password"], "private")
+        self.assertEqual(result["attendance"]["data"][0]["present"], 10)
+        self.assertEqual(result["scheduleProvider"], "academia")
+        self.assertTrue(result["warnings"])
+        self.assertNotIn("private", str(result))
