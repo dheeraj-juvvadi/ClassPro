@@ -61,6 +61,7 @@ function showLogin(text = '', error = false) {
   classproHome.clear();
   academicUI.clear();
   academicSummary.clear();
+  dateAttendance.clear();
   authenticated = false;
   $('startup').hidden = true;
   $('login-view').hidden = false;

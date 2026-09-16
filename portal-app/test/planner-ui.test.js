@@ -36,7 +36,8 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#monthly-attendance tbody tr').count(), 2);
   await page.getByRole('button', { name: 'Home', exact: true }).click();
   await page.getByRole('button', { name: 'Plan attendance for Data Structures, 2 hours' }).click();
-  assert.match(await page.locator('#projection-period').innerText(), /2-hour/);
+  assert.match(await page.locator('#projection-period').innerText(), /1 date selected/);
+  assert.equal(await page.locator('#projection-calendar button[aria-pressed="true"]').count(), 1);
   assert.match(await page.locator('#projection-result').innerText(), /75%/);
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#projection-dialog').isVisible(), false);

@@ -68,6 +68,20 @@ dialog::backdrop { background: #080b08b8; }
 .schedule-heading button { background: transparent; color: #c5cfb4; min-width: 44px; font-size: 22px; padding: 0; }
 dialog .quiet { font-size: 12px; line-height: 1.65; margin: 10px 0 22px; }
 dialog label { font-size: 12px; margin-top: 15px; }
+.date-actions { display: flex; gap: 8px; margin: 16px 0; }
+.date-actions button { flex: 1; min-height: 44px; background: #30382a; color: #eeeede; }
+.date-actions button[aria-pressed="true"] { background: #c5d4a7; color: #233020; }
+.projection-calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 12px 0; }
+.projection-calendar > span { text-align: center; font-size: 10px; color: #adb4a4; padding: 6px 0; }
+.projection-calendar button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; min-height: 48px; padding: 6px 1px; background: #30382a; color: #eeeede; font-variant-numeric: tabular-nums; }
+.projection-calendar button small { font-size: 8px; }
+.projection-calendar button[aria-pressed="true"] { background: #c5d4a7; color: #233020; }
+.projection-calendar button:disabled { opacity: .4; cursor: default; }
+.date-projection-course { padding: 16px 0; border-top: 1px solid #464e3d; font-variant-numeric: tabular-nums; }
+.date-projection-course h3 { font-size: 14px; margin-bottom: 10px; }
+.date-projection-course p { font-size: 12px; margin: 8px 0; }
+.date-projection-course small { font-size: 11px; color: #adb4a4; }
+#projection-result { display: block; }
 dialog select { width: 100%; min-height: 44px; padding: 10px; color: #f1eee3; border: 1px solid #49523e; border-radius: 7px; background: #191d17; font: inherit; font-size: 13px; }
 dialog input { font-size: 16px; }
 .schedule-times { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

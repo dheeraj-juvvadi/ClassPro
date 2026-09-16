@@ -20,6 +20,8 @@
   <script src="/schedule-calendar.js" defer></script>
   <script src="/home.js" defer></script>
   <script src="/quantity-stepper.js" defer></script>
+  <script src="/date-projection.js" defer></script>
+  <script src="/date-attendance.js" defer></script>
   <script src="/academic-ui.js" defer></script>
   <script src="/academic-summary.js" defer></script>
   <script src="/client-ocr.js" defer></script>
@@ -134,15 +136,19 @@
   </dialog>
   <footer class="site-footer">Anon <span>Student Portal</span></footer>
   <dialog id="projection-dialog" aria-labelledby="projection-title">
-    <div class="schedule-heading"><h2 id="projection-title">A little room to plan.</h2><button id="close-projection" type="button" aria-label="Close calculator">×</button></div>
-    <p class="quiet">Explore your attendance at a 75% target. This won’t change your records.</p>
-    <p class="quiet" id="projection-period" role="status"></p>
-    <label for="projection-course">Subject</label><select id="projection-course"></select>
-    <div class="projection-control"><span>Hours to attend</span><div id="projection-attend"></div></div>
-    <div class="projection-control"><span>Hours to miss</span><div id="projection-miss"></div></div>
-    <div class="projection-control"><span>OD correction</span><div id="projection-od"></div></div>
-    <p class="quiet projection-note">OD converts existing absent hours to present, up to your recorded absences.</p>
-    <output id="projection-result" class="projection-result" aria-live="polite" aria-atomic="true"></output>
+    <div class="schedule-heading"><h2 id="projection-title">Attendance by date</h2><button id="close-projection" type="button" aria-label="Close calculator">×</button></div>
+    <p class="quiet">Choose Leave, Attend or OD, then select dates. Hours come from your SRM timetable and day orders.</p>
+    <div id="date-actions" class="date-actions" role="group" aria-label="Attendance action">
+      <button type="button" data-action="leave" aria-pressed="true">Leave</button>
+      <button type="button" data-action="attend" aria-pressed="false">Attend</button>
+      <button type="button" data-action="od" aria-pressed="false">OD</button>
+    </div>
+    <div class="calendar-heading"><button id="projection-prev" type="button" aria-label="Previous month">←</button><strong id="projection-month"></strong><button id="projection-next" type="button" aria-label="Next month">→</button></div>
+    <div id="projection-calendar" class="projection-calendar" role="group" aria-label="Select attendance dates"></div>
+    <p id="projection-period" class="quiet" role="status"></p>
+    <button id="projection-clear" type="button">Clear dates</button>
+    <p class="quiet">Unselected teaching days from today through your last leave date count as attended. Past dates allow OD corrections only, capped at recorded absences. These are projections; your records stay unchanged.</p>
+    <div id="projection-result" aria-live="polite" aria-atomic="true"></div>
   </dialog>
 </body>
 </html>

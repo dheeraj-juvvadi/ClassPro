@@ -50,54 +50,8 @@ globalThis.academicUI = (() => {
     container.append(list);
     get('calculate-attendance').disabled = !data.length;
   }
-  function refreshCalculation() {
-    if (!selected) return;
-    const result = attendanceMath.predict({ present: selected.present, conducted: selected.conducted,
-      attend: controls.attend.value(), miss: controls.miss.value(), od: controls.od.value() });
-    const output = get('projection-result');
-    if (!result.valid || result.percentage === null) { output.textContent = 'No attendance hours to calculate.'; return; }
-    const detail = result.neededToTarget ? `Attend ${result.neededToTarget} more hours to reach 75%.` : `Margin: ${result.canMiss} hours.`;
-    output.replaceChildren(create('strong', '', `${Number(result.percentage.toFixed(1))}%`), create('span', '', detail));
-    output.className = result.neededToTarget ? 'projection-result risk' : 'projection-result healthy';
-  }
-  const controls = {};
-  for (const [key, label] of [['attend', 'Hours to attend'], ['miss', 'Hours to miss'], ['od', 'OD correction hours']]) {
-    controls[key] = createQuantityStepper({ label, max: 99, onChange: () => { if (controls.od) refreshCalculation(); } });
-    get(`projection-${key}`).append(controls[key].element);
-  }
-  function selectCourse(index) {
-    selected = null;
-    for (const control of Object.values(controls)) control.set(0);
-    selected = courses[index];
-    refreshCalculation();
-  }
-  function open(course = courses[0]) {
-    if (!course) return;
-    const selector = get('projection-course');
-    selector.replaceChildren();
-    courses.forEach((entry, index) => {
-      const option = create('option', '', entry.title || entry.code);
-      option.value = index;
-      selector.append(option);
-    });
-    const index = Math.max(0, courses.indexOf(course));
-    selector.value = index;
-    selectCourse(index);
-    get('projection-period').textContent = '';
-    get('projection-dialog').showModal();
-  }
-  get('projection-course').addEventListener('change', event => selectCourse(Number(event.target.value)));
-  get('calculate-attendance').addEventListener('click', () => open());
-  get('close-projection').addEventListener('click', () => get('projection-dialog').close());
-  function plan(code, hours) {
-    const course = courses.find(entry => entry.code === code);
-    if (!course) return;
-    open(course);
-    if (Number.isInteger(hours) && hours > 0 && hours <= 99) {
-      controls.miss.set(hours);
-      get('projection-period').textContent = `What if you miss this ${hours}-hour period? Adjust the hours below. Your records stay unchanged.`;
-    } else get('projection-period').textContent = `This period lasts ${hours} hours. Enter your institution’s counted attendance hours below; partial hours are not rounded automatically.`;
-    refreshCalculation();
-  }
+  get('calculate-attendance').addEventListener('click', () => dateAttendance.open());
+  function open(course) { dateAttendance.open(course?.code); }
+  function plan(code, hours, date) { dateAttendance.open(code, date); }
   return { renderAttendance, margin, plan, clear() { courses = []; selected = null; get('projection-dialog').close(); } };
 })();

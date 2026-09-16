@@ -99,7 +99,7 @@ globalThis.classproHome = (() => {
       if (course) {
         const calculate = element('button', 'next-class-calculate', 'What if I miss this class?');
         calculate.type = 'button';
-        calculate.addEventListener('click', () => academicUI.plan(course.code, model.hours(next)));
+        calculate.addEventListener('click', () => academicUI.plan(course.code, model.hours(next), next.date));
         card.append(calculate);
       }
     } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
@@ -158,7 +158,7 @@ globalThis.classproHome = (() => {
         const plan = element('button', 'period-plan', `Plan ${hours}h ↗`);
         plan.type = 'button';
         plan.setAttribute('aria-label', `Plan attendance for ${entry.title}, ${hours} hours`);
-        plan.addEventListener('click', () => academicUI.plan(course.code, hours));
+        plan.addEventListener('click', () => academicUI.plan(course.code, hours, selectedDate || now()));
         description.append(plan);
       }
       if (entry.allocation || entry.batch) description.append(element('p', '', [entry.allocation, entry.batch].filter(Boolean).join(' · ')));
@@ -214,6 +214,7 @@ globalThis.classproHome = (() => {
       reportError = report?.error?.message || '';
       reportedSchedule = planner.normalize(scheduleReport);
       scheduleInvalid = scheduleReport != null && !reportedSchedule;
+      dateAttendance.update(attendance, reportedSchedule, now(), filters);
       selectedDate = null;
       updateFilters();
       calendar.reset(now());
