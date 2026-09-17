@@ -1,14 +1,14 @@
 import asyncio
 import base64
+import concurrent.futures
 import re
-import contextlib
 import importlib.util
-import io
 import json
 import os
 import secrets
 import sys
 import time
+import weakref
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,23 +24,99 @@ import main as upstream
 from observe import events, instrument, record
 from deep_evidence import integrity, runtime, submitted, workload
 from academic_data import extras
-from provider_flow import providers, combined, same_student, refresh as refresh_providers
+from provider_flow import providers, combined, same_student, normalize_account, refresh as refresh_providers
 from session_store import SessionStore, lifetime, SESSION_SECONDS
 import sync_schedule
 import attendance_trends
 
 upstream.PortalSession = instrument(upstream.PortalSession)
 
+# Upstream diagnostics include identifiers and CAPTCHA answers. Silence only
+# its modules, once, rather than swapping process-wide stdout across awaits.
+def _quiet_upstream(*args, **kwargs):
+    pass
+
+
+for _module in tuple(sys.modules.values()):
+    _file = getattr(_module, "__file__", None)
+    if _file and Path(_file).resolve().is_relative_to(ROOT / "upstream"):
+        _module.print = _quiet_upstream
+
 spec = importlib.util.spec_from_file_location("tinyocr_adapter", ROOT.parent / "portal-python/ocr.py")
 ocr = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ocr)
 
 
+# Admission ceilings, not measured login throughput or resource guarantees.
+def _positive(name, default):
+    try:
+        return max(1, int(os.environ.get(name, default)))
+    except (TypeError, ValueError):
+        return default
+
+
+API_CONCURRENCY = _positive("API_CONCURRENCY", 4)           # parallel /api/* handlers
+OCR_CONCURRENCY = _positive("OCR_CONCURRENCY", 2)           # native inference workers
+SESSION_LIMIT = _positive("SESSION_LIMIT", 200)              # live sessions (>=100)
+RATE_PER_MINUTE = _positive("RATE_PER_MINUTE", 30)           # per-IP/minute
+RATE_TRACKED_KEYS = _positive("RATE_TRACKED_KEYS", 20000)    # bounded bucket table
+PERSIST_INTERVAL = float(os.environ.get("PERSIST_INTERVAL", "5"))  # seconds
+IO_THREADS = _positive("IO_THREADS", 16)
+API_QUEUE = _positive("API_QUEUE", API_CONCURRENCY * 8)      # FCFS waiters before 503
+QUEUE_WAIT = float(os.environ.get("API_QUEUE_WAIT", "12"))   # seconds a waiter may wait
+
+gate = asyncio.Semaphore(API_CONCURRENCY)
+ocr_slots = asyncio.Semaphore(OCR_CONCURRENCY)
+waiters = 0
+session_locks = weakref.WeakValueDictionary()
+
+
+async def dispatch(request, call_next, token):
+    if not token:
+        return await call_next(request)
+    lock = session_locks.setdefault(token, asyncio.Lock())
+    async with lock:
+        return await call_next(request)
+
+
+async def acquire_api():
+    """Strict FCFS admission: callers queue on the semaphore in arrival order.
+    Waiters beyond API_QUEUE, or past QUEUE_WAIT, get 503 with Retry-After.
+    waiters is only touched without an awaiting gap, so the single event loop
+    makes the check-and-increment atomic without a lock (which would also bind
+    to whichever loop first used it and break multi-loop test suites)."""
+    global waiters
+    if waiters >= API_QUEUE:
+        return False
+    waiters += 1
+    try:
+        try:
+            await asyncio.wait_for(gate.acquire(), QUEUE_WAIT)
+            return True
+        except asyncio.TimeoutError:
+            return False
+    finally:
+        waiters -= 1
+
+
 async def solve_image(image):
+    # Bounded separately from the API gate so several logins can read CAPTCHAs
+    # at once without letting OCR inference exhaust CPU or memory.
+    await ocr_slots.acquire()
+    slots = ocr_slots
+    task = asyncio.create_task(asyncio.to_thread(ocr.solve, image))
+    # Cancellation cannot stop a running native inference. Keep its permit until
+    # the worker actually exits, even when its HTTP request has disconnected.
+    def finished(worker):
+        slots.release()
+        if not worker.cancelled():
+            worker.exception()
+    task.add_done_callback(finished)
     try:
         started = time.monotonic()
-        answer = await asyncio.to_thread(ocr.solve, image)
-        record({"stage": "ocr", "completed": bool(answer), "duration_ms": round((time.monotonic() - started) * 1000)})
+        answer = await asyncio.shield(task)
+        record({"stage": "ocr", "completed": bool(answer),
+                "duration_ms": round((time.monotonic() - started) * 1000)})
         return True, answer, 200
     except Exception:
         return False, "OCR unavailable", 503
@@ -52,9 +128,25 @@ secure = origin.startswith("https://")
 required_token = os.environ.get("BACKEND_TOKEN", "")
 sessions = {}
 rates = {}
-gate = asyncio.Lock()
 cookie_name = "classpro_ratio_diagnostic"
 session_store = None
+persisted_at = 0.0
+
+
+def persist(force=False):
+    """Snapshot sessions to disk, throttled so bursts cannot block the loop."""
+    global persisted_at
+    if not session_store:
+        return
+    now = time.monotonic()
+    if not force and now - persisted_at < PERSIST_INTERVAL:
+        return
+    persisted_at = now
+    try:
+        session_store.save(sessions)
+    except Exception as exception:
+        print(json.dumps({"event": "session_persist_failed",
+                          "exception_type": type(exception).__name__}), flush=True)
 
 
 @asynccontextmanager
@@ -63,14 +155,18 @@ async def lifespan(app):
     if os.environ.get("SESSION_STORE_DIR"):
         session_store = SessionStore(os.environ["SESSION_STORE_DIR"])
         sessions.update(session_store.load())
-    print(json.dumps({"event": "ratio_runtime", **runtime()}), flush=True)
+    loop = asyncio.get_running_loop()
+    loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(
+        max_workers=IO_THREADS, thread_name_prefix="anon-io"))
+    print(json.dumps({"event": "ratio_runtime", **runtime(), "api_concurrency": API_CONCURRENCY,
+                      "ocr_concurrency": OCR_CONCURRENCY, "session_limit": SESSION_LIMIT,
+                      "rate_per_minute": RATE_PER_MINUTE, "io_threads": IO_THREADS}), flush=True)
     async with upstream.lifespan(upstream.app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=upstream.app),
                                      base_url="http://ratio-internal", timeout=90) as client:
             app.state.client = client
             yield
-    if session_store:
-        session_store.save(sessions)
+    persist(force=True)
     sessions.clear()
 
 
@@ -105,8 +201,7 @@ async def invoke(request, path, payload):
     trace_id = request.state.diagnostic_id if hasattr(request.state, "diagnostic_id") else secrets.token_hex(8)
     started = time.monotonic()
     try:
-        with contextlib.redirect_stdout(io.StringIO()):
-            response = await request.app.state.client.post(path, json=payload)
+        response = await request.app.state.client.post(path, json=payload)
     finally:
         captured.append({"stage": "workload_after", **workload()})
         submitted.reset(credential_token)
@@ -170,26 +265,30 @@ async def boundary(request, call_next):
             rates.pop(key, None)
     key = request.client.host if request.client else "unknown"
     start, count = rates.get(key, (now, 0))
-    if count >= 30 or (key not in rates and len(rates) >= 4096):
-        return failure("RATE_LIMIT", "Wait a minute before retrying.", 429)
+    if count >= RATE_PER_MINUTE or (key not in rates and len(rates) >= RATE_TRACKED_KEYS):
+        response = failure("RATE_LIMIT", "Wait a minute before retrying.", 429)
+        response.headers["Retry-After"] = str(max(1, int(60 - (now - start))))
+        return response
     rates[key] = (start, count + 1)
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
     if entry and (entry.get("providers") or entry.get("cookies")):
         entry["last_seen"] = time.time()
-    if gate.locked():
-        response = failure("SERVER_BUSY", "ClassPro is processing another request.", 503)
+    if not await acquire_api():
+        response = failure("SERVER_BUSY", "ClassPro is busy. Please retry shortly.", 503)
         response.headers["Retry-After"] = "2"
         return response
-    async with gate:
+    try:
         try:
-            response = await asyncio.wait_for(call_next(request), 95)
+            response = await asyncio.wait_for(dispatch(request, call_next, token), 95)
         except Exception as exception:
             print(json.dumps({"event": "ratio_exception", "request_id": request.state.diagnostic_id,
                               "exception_type": type(exception).__name__}), flush=True)
             response = failure("PORTAL_UNAVAILABLE", "Student Portal request failed.", 502)
         if session_store:
             session_store.save(sessions)
+    finally:
+        gate.release()
     if token in sessions and sessions[token].get("providers"):
         set_session_cookie(response, token, sessions[token])
     response.headers["Cache-Control"] = "no-store"
@@ -232,8 +331,8 @@ async def challenge(request: Request):
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
     if entry is None:
-        if len(sessions) >= 4:
-            return failure("CAPACITY", "Diagnostic sessions are full. Please sign out first.", 503)
+        if len(sessions) >= SESSION_LIMIT:
+            return failure("CAPACITY", "Too many students are signed in. Please try again shortly.", 503)
         token = secrets.token_urlsafe(32)
         entry = {"created": time.monotonic(), "remember": True, "last_seen": time.time()}
         sessions[token] = entry
@@ -272,7 +371,7 @@ async def login(request: Request):
     print(json.dumps({"event": "ratio_evidence", "request_id": request.state.diagnostic_id,
                       **integrity(payload)}), flush=True)
     login_payload = {
-        "username": (payload["account"].strip() + "@srmist.edu.in") if provider == "academia" and "@" not in payload["account"] else payload["account"].strip(),
+        "username": normalize_account(payload["account"], provider),
         "password": payload["password"],
         "captcha": payload.get("answer") or None,
         "cdigest": entry.get("academia_digest") if provider == "academia" else entry.get("digest"),

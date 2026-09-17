@@ -1,5 +1,13 @@
 """Separate provider sessions and merge Ratio-D reports without losing schedules."""
 
+def normalize_account(account, provider):
+    value = account.strip()
+    suffix = "@srmist.edu.in"
+    if provider == "academia":
+        return value if "@" in value else value + suffix
+    # Strip only SRM's known suffix; do not reinterpret unrelated addresses.
+    return value[:-len(suffix)] if value.lower().endswith(suffix) else value
+
 def providers(entry):
     states = entry.setdefault("providers", {})
     if not states and entry.get("cookies"):

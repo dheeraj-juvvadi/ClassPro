@@ -499,7 +499,12 @@ async def portal_captcha(request: Request):
     sid = secrets.token_hex(8)
     _portal_captcha_sessions[sid] = session
     if len(_portal_captcha_sessions) > 20:
-        _portal_captcha_sessions.clear()
+        oldest = next(iter(_portal_captcha_sessions))
+        stale = _portal_captcha_sessions.pop(oldest)
+        try:
+            await stale.client.aclose()
+        except Exception:
+            pass
     return {"session": sid, **info}
 
 

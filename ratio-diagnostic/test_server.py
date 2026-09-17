@@ -15,6 +15,8 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         server.sessions.clear()
         server.rates.clear()
+        server.gate = server.asyncio.Semaphore(server.API_CONCURRENCY)
+        server.waiters = 0
         self.lifespan = server.lifespan(server.app)
         await self.lifespan.__aenter__()
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app),
@@ -61,7 +63,8 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
             Path(directory, "style.css").write_text("body { color: white; }")
             server.app.mount("/test-assets", server.StaticFiles(directory=directory))
             try:
-                await server.gate.acquire()
+                for _ in range(server.API_CONCURRENCY):
+                    await server.gate.acquire()
                 server.rates["127.0.0.1"] = (server.time.monotonic(), 30)
                 response = await self.client.get("/test-assets/style.css")
                 self.assertEqual(response.status_code, 200)
@@ -71,8 +74,14 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 server.rates.clear()
                 response = await self.client.get("/api/session")
                 self.assertEqual(response.status_code, 503)
+                self.assertEqual(response.headers.get("retry-after"), "2")
+                server.waiters = server.API_QUEUE
+                response = await self.client.get("/api/session")
+                self.assertEqual(response.status_code, 503)
+                server.waiters = 0
             finally:
-                server.gate.release()
+                for _ in range(server.API_CONCURRENCY):
+                    server.gate.release()
                 server.app.router.routes.pop()
 
     async def test_real_upstream_asgi_route(self):

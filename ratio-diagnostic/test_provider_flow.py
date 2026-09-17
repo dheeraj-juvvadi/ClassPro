@@ -16,8 +16,8 @@ class ProviderFlowTests(DiagnosticTests):
         self.client.cookies.set(server.cookie_name, "remembered")
         response = await self.client.get("/api/session")
         self.assertTrue(response.json()["authenticated"])
-        self.assertIn("Max-Age=172800", response.headers["set-cookie"])
-        server.sessions["remembered"]["last_seen"] = time.time() - 49 * 3600
+        self.assertIn("Max-Age=604800", response.headers["set-cookie"])
+        server.sessions["remembered"]["last_seen"] = time.time() - 8 * 24 * 3600
         response = await self.client.get("/api/session")
         self.assertFalse(response.json()["authenticated"])
 
@@ -80,6 +80,43 @@ class ProviderFlowTests(DiagnosticTests):
     def test_cross_student_connection_rejected(self):
         states = {"academia": {"report": {"profile": {"regNo": "ONE"}}}}
         self.assertFalse(same_student(states, "portal", {"profile": {"regNo": "TWO"}}, "student"))
+
+    async def test_restart_recovers_persisted_session_with_cookies_only(self):
+        import tempfile
+        import time
+        from session_store import SessionStore
+
+        with tempfile.TemporaryDirectory() as directory:
+            store = SessionStore(directory)
+            entry = {"remember": True, "last_seen": time.time(), "created": time.monotonic(),
+                     "providers": {"portal": {"username": "student", "password": "private",
+                                              "cookies": {"session": "cookie-1"},
+                                              "report": {"attendance": {"data": [
+                                                  {"code": "CS1", "present": 9}]}}}}}
+            store.save({"token-1": entry})
+            restored = SessionStore(directory).load()
+            self.assertIn("token-1", restored)
+            calls = []
+
+            async def invoke(request, path, payload):
+                calls.append((path, dict(payload)))
+                if "password" not in payload:
+                    return httpx.Response(401), {}
+                return httpx.Response(200), {"success": True, "cookies": {"session": "cookie-2"}}
+
+            state = restored["token-1"]["providers"]["portal"]
+            result, succeeded = await refresh(None, restored["token-1"], invoke, lambda data, previous: previous or data)
+            self.assertFalse(state["expired"])
+            self.assertEqual(state["cookies"], {"session": "cookie-2"})
+            self.assertEqual(calls[0][1].get("cookies"), {"session": "cookie-1"})
+            self.assertNotIn("password", calls[0][1])
+            self.assertEqual(calls[1][1].get("cookies"), {"session": "cookie-1"})
+            self.assertEqual(calls[1][1].get("password"), "private")
+            self.assertTrue(succeeded)
+            self.assertEqual(result["connections"]["portal"]["connected"], True)
+            self.assertNotIn("private", str(result))
+            store.save(restored)
+            self.assertEqual(set(SessionStore(directory).load()), {"token-1"})
 
     async def test_expiry_retries_credentials_and_keeps_other_provider_report(self):
         calls = []
