@@ -492,42 +492,56 @@ async def login(request: Request):
 async def refresh_job(token, entry, request):
     state = getattr(request, "state", None)
     queued_at = getattr(state, "queued_at", time.monotonic())
-    started = time.monotonic()
+    started = None
     outcome = "discarded"
     exception_type = None
+    lock = session_locks.setdefault(token, asyncio.Lock())
+    acquired = False
     try:
-        while True:
-            if sessions.get(token) is not entry or time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
-                return False
-            if time.monotonic() - queued_at >= REFRESH_QUEUE_WAIT:
-                entry.update({"sync_failed": True, "sync_attempted_at": time.time()})
-                outcome = "queue_timeout"
-                return False
-            if can_admit(MEMORY_RESERVE_MB):
-                break
-            await asyncio.sleep(1)
-        lock = session_locks.setdefault(token, asyncio.Lock())
-        async with lock:
-            if sessions.get(token) is not entry or time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
-                return False
-            entry["sync_attempted_at"] = time.time()
-            try:
-                data, succeeded = await asyncio.wait_for(
-                    refresh_providers(request, entry, invoke, report), timeout=90)
-            except Exception as error:
-                entry["sync_failed"] = True
-                exception_type = type(error).__name__
-                outcome = "failed"
-                return False
-            entry["sync_failed"] = not succeeded
-            entry.update({"report": data, "cached": time.monotonic()})
-            if succeeded:
-                entry["synced_at"] = time.time()
-                attendance_trends.observe(entry, entry["synced_at"])
-            outcome = "success" if succeeded else "failed"
-            if session_store and sessions.get(token) is entry:
-                session_store.save_changes({token: entry})
-            return succeeded
+        remaining = REFRESH_QUEUE_WAIT - (time.monotonic() - queued_at)
+        async with asyncio.timeout(max(0, remaining)):
+            while True:
+                if sessions.get(token) is not entry or time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
+                    return False
+                if time.monotonic() - queued_at >= REFRESH_QUEUE_WAIT:
+                    raise TimeoutError
+                if not can_admit(MEMORY_RESERVE_MB):
+                    await asyncio.sleep(1)
+                    continue
+                await lock.acquire()
+                acquired = True
+                if sessions.get(token) is not entry or time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
+                    return False
+                if time.monotonic() - queued_at >= REFRESH_QUEUE_WAIT:
+                    raise TimeoutError
+                if can_admit(MEMORY_RESERVE_MB):
+                    break
+                lock.release()
+                acquired = False
+        started = time.monotonic()
+        entry["sync_attempted_at"] = time.time()
+        try:
+            data, succeeded = await asyncio.wait_for(
+                refresh_providers(request, entry, invoke, report), timeout=90)
+        except Exception as error:
+            entry["sync_failed"] = True
+            exception_type = type(error).__name__
+            outcome = "failed"
+            return False
+        entry["sync_failed"] = not succeeded
+        entry.update({"report": data, "cached": time.monotonic()})
+        if succeeded:
+            entry["synced_at"] = time.time()
+            attendance_trends.observe(entry, entry["synced_at"])
+        outcome = "success" if succeeded else "failed"
+        if session_store and sessions.get(token) is entry:
+            session_store.save_changes({token: entry})
+        return succeeded
+    except TimeoutError:
+        if sessions.get(token) is entry:
+            entry.update({"sync_failed": True, "sync_attempted_at": time.time()})
+        outcome = "queue_timeout"
+        return False
     except asyncio.CancelledError:
         outcome = "cancelled"
         raise
@@ -536,10 +550,13 @@ async def refresh_job(token, entry, request):
         exception_type = type(error).__name__
         raise
     finally:
+        if acquired:
+            lock.release()
+        finished = time.monotonic()
         print(json.dumps({"event": "refresh_finished", "outcome": outcome,
                           "request_id": getattr(state, "diagnostic_id", None),
-                          "queue_ms": round((started - queued_at) * 1000),
-                          "duration_ms": round((time.monotonic() - started) * 1000),
+                          "queue_ms": round(((started if started is not None else finished) - queued_at) * 1000),
+                          "duration_ms": round((finished - started) * 1000) if started is not None else 0,
                           "exception_type": exception_type}), flush=True)
 
 

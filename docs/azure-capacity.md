@@ -77,13 +77,20 @@ upstream duration/status/request ID without request bodies or credentials.
 ## Queue lifecycle and operational logs
 
 Queued work expires after ten minutes (`REFRESH_QUEUE_WAIT=600`), including
-memory admission waits. Removed/expired sessions are checked before contacting
+memory admission and session-lock waits. Memory is checked again under the lock,
+which is released before waiting for memory. Removed/expired sessions are checked before contacting
 SRM. A timed-out job preserves cached reports and reports a retryable sync failure;
 it does not silently keep an upstream job alive indefinitely. The deadline is
 for queued admission; a started upstream refresh has its separate 90-second limit.
 
 Each finished refresh logs request ID, outcome, queue milliseconds, execution
-milliseconds and exception type only. No token, account, report, cookie, password
+milliseconds and exception type only. Queue time includes memory and lock waits;
+execution time starts at upstream admission. No token, account, report, cookie, password
 or exception message is logged. Docker logs rotate at 10 MB × 3 files, keeping
 operational logging bounded. Client error JSONL and its daily summary remain in
 `/var/log/anon/client` and `/var/log/anon/reports` as documented separately.
+
+Azure Monitor observation on September 17: hourly CPU credit averages increased
+from 477.92 to 518.31 across the three latest buckets; the latest bucket averaged
+8.34% CPU. This establishes that credits were available during the observation,
+not sustained capacity at a 1,000-user login/sync peak.

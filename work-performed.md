@@ -203,4 +203,25 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   three 10 MB files after live inspection showed unlimited json-file logging.
 - Added regression coverage for expired jobs, removed sessions during memory wait,
   queue timeout and log redaction. All 64 backend tests pass locally.
-- Remaining: validate/release this follow-up, then continue readiness audit.
+- Released as 8a1078a; GitHub run 35170823043 succeeded. Live Azure image matches,
+  health passes and Docker readback confirms 10 MB × 3 log rotation.
+
+## 2026-09-17: Vercel storage cleanup and admission follow-up
+
+- Removed 269 obsolete deployments across the team: 324 before, 55 after.
+  All 76 aliases are unchanged. Protected aliased builds and two recent successful
+  builds per project. Eight apparently empty projects were retained because their
+  domain checks showed assigned domains. No live project was deleted.
+- Set seven-day preview/production and one-day failed/cancelled retention on all
+  26 nonempty projects, verified via API readback. User confirmed storage fell
+  from the 10 GB warning to 2 GB. CLI usage could not independently return totals.
+- Added Vercel exclusion for ten duplicate compressed OCR siblings (13.56 MB),
+  keeping originals and local Express compression. Pending deployed-output check.
+- Queue deadline now also bounds session-lock waits; memory is rechecked under
+  lock. Timing separates all admission waiting from upstream execution.
+- All 67 backend tests pass, including lock timeout/release, memory recheck and
+  timing coverage. Azure CPU credits were available and increasing in the latest
+  observation; this does not prove sustained peak capacity.
+- Next: validated release, verify asset exclusion, continue desktop/mobile audit.
+  Reviewed bidyut10/opensourceui week-strip calendar and React Bits sidebar;
+  Ratio-D upstream remains 413b7f0 after fetch.

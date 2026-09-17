@@ -1,0 +1,4 @@
+# Vercel compresses these original assets at the edge. The Express server uses
+# precompressed siblings locally; uploading those siblings duplicates storage.
+ocr/*.br
+ocr/*.gz

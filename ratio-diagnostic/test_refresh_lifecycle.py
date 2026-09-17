@@ -55,3 +55,52 @@ class RefreshLifecycleTests(unittest.IsolatedAsyncioTestCase):
             server.sessions.pop('removed-job', None)
         with patch.object(server, 'can_admit', return_value=False), patch('server.asyncio.sleep', pause):
             self.assertFalse(await server.refresh_job('removed-job', entry, self.request()))
+
+    async def test_busy_session_lock_respects_queue_deadline(self):
+        entry = self.entry()
+        server.sessions['busy-job'] = entry
+        lock = asyncio.Lock()
+        await lock.acquire()
+        server.session_locks['busy-job'] = lock
+        output = io.StringIO()
+        try:
+            with patch.object(server, 'REFRESH_QUEUE_WAIT', .025), patch.object(server, 'can_admit', return_value=True), patch.object(server, 'refresh_providers', new_callable=AsyncMock) as refresh, patch('sys.stdout', output):
+                result = await asyncio.wait_for(server.refresh_job('busy-job', entry, self.request()), .5)
+            self.assertFalse(result)
+            self.assertTrue(lock.locked(), 'A timed-out waiter must not release another task’s lock')
+            refresh.assert_not_awaited()
+            event = json.loads(output.getvalue())
+            self.assertEqual(event['outcome'], 'queue_timeout')
+            self.assertGreaterEqual(event['queue_ms'], 25)
+            self.assertEqual(event['duration_ms'], 0)
+        finally:
+            lock.release()
+            server.sessions.pop('busy-job', None)
+
+    async def test_memory_is_rechecked_under_lock_and_lock_is_released(self):
+        entry = self.entry()
+        server.sessions['memory-job'] = entry
+        lock = asyncio.Lock()
+        server.session_locks['memory-job'] = lock
+        checks = iter([True, False])
+        try:
+            with patch.object(server, 'REFRESH_QUEUE_WAIT', .025), patch.object(server, 'can_admit', side_effect=lambda _: next(checks, False)), patch.object(server, 'refresh_providers', new_callable=AsyncMock) as refresh:
+                self.assertFalse(await asyncio.wait_for(server.refresh_job('memory-job', entry, self.request()), .5))
+            self.assertFalse(lock.locked())
+            refresh.assert_not_awaited()
+        finally:
+            server.sessions.pop('memory-job', None)
+
+    async def test_success_timing_excludes_admission_wait(self):
+        entry = self.entry()
+        server.sessions['timed-job'] = entry
+        output = io.StringIO()
+        try:
+            with patch.object(server, 'can_admit', return_value=True), patch.object(server, 'refresh_providers', new_callable=AsyncMock, return_value=(entry['report'], True)), patch('sys.stdout', output):
+                self.assertTrue(await server.refresh_job('timed-job', entry, self.request(age=2)))
+            event = json.loads(output.getvalue())
+            self.assertEqual(event['outcome'], 'success')
+            self.assertGreaterEqual(event['queue_ms'], 2000)
+            self.assertLess(event['duration_ms'], 1000)
+        finally:
+            server.sessions.pop('timed-job', None)
