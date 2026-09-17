@@ -32,6 +32,23 @@ class SessionStoreTests(unittest.TestCase):
             store.save({"token": entry})
             self.assertEqual(store.load(), {})
 
+    def test_incremental_save_preserves_others_and_rotates_atomically(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = SessionStore(directory)
+            first, second = self.entry(), self.entry()
+            store.save({"old": first, "other": second})
+            first["providers"]["portal"]["cookies"]["session"] = "rotated"
+            store.save_changes({"new": first}, removed=["old"])
+            loaded = store.load()
+            self.assertEqual(set(loaded), {"new", "other"})
+            self.assertEqual(loaded["other"]["providers"], second["providers"])
+            self.assertEqual(loaded["new"]["providers"], first["providers"])
+            store.save_changes({}, removed=["new"])
+            self.assertEqual(set(store.load()), {"other"})
+            second["remember"] = False
+            store.save_changes({"other": second})
+            self.assertEqual(store.load(), {})
+
     def entry(self, remember=True):
         return {"remember": remember, "last_seen": time.time(), "created": time.monotonic(),
                 "providers": {"portal": {"username": "private-student", "password": "private-password",

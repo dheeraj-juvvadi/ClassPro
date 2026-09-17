@@ -1,7 +1,7 @@
 'use strict';
 
 globalThis.classproAuth = (() => {
-  let enabled = false;
+  let enabled = true;
   let started = Date.now();
   let clicks = 0;
   let keys = 0;
@@ -38,6 +38,8 @@ globalThis.classproAuth = (() => {
   }
   function configure(session) {
     enabled = session.authMode === 'http';
+    element('manual-captcha').hidden = enabled;
+    element('manual-captcha-answer').required = !enabled;
     element('portal-password-group').hidden = !enabled;
     element('password').required = !enabled;
     configuredProvider = 'academia';

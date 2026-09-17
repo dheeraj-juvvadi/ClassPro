@@ -62,11 +62,56 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(response.json()["authenticated"])
             self.assertNotEqual(before, self.client.cookies.get(server.cookie_name))
             self.assertNotIn("secret", response.text)
+            if server.session_store:
+                self.assertEqual(set(server.session_store.load()), {self.client.cookies.get(server.cookie_name)})
             response = await self.client.get("/api/reports")
             self.assertEqual(response.json()["marks"]["data"][0]["scored"], 9)
             self.assertNotIn("cookies", response.text)
             await self.client.delete("/api/session")
             self.assertFalse((await self.client.get("/api/session")).json()["authenticated"])
+
+    async def test_persistence_follows_rotated_token_and_logout(self):
+        from session_store import SessionStore
+        with tempfile.TemporaryDirectory() as directory:
+            store = SessionStore(directory)
+            with patch.object(server, "session_store", store):
+                await self.test_login_report_logout_contract()
+                self.assertEqual(store.load(), {})
+
+    async def test_queued_refresh_deduplicates_and_cached_reads_stay_available(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+        entry = {"created": server.time.monotonic(), "last_seen": server.time.time(),
+                 "providers": {"portal": {"report": {}}}, "report": {}}
+        server.sessions["burst-user"] = entry
+        self.client.cookies.set(server.cookie_name, "burst-user")
+        started, finish = asyncio.Event(), asyncio.Event()
+        async def refresh(*args):
+            started.set()
+            await finish.wait()
+            return {"updatedAt": "synthetic"}, True
+        with patch.object(server, "refresh_providers", side_effect=refresh) as work:
+            try:
+                first = await self.client.get("/api/reports?force=1")
+                self.assertTrue(first.json()["sync"]["pending"])
+                await asyncio.wait_for(started.wait(), 1)
+                second = await self.client.get("/api/reports?force=1")
+                self.assertTrue(second.json()["sync"]["pending"])
+                self.assertTrue((await self.client.get("/api/session")).json()["authenticated"])
+                self.assertEqual(work.call_count, 1)
+            finally:
+                finish.set()
+                await server.app.state.refresh_queue.queue.join()
+            result = await self.client.get("/api/reports?cache=only")
+            self.assertNotIn("pending", result.json()["sync"])
+            self.assertEqual(result.json()["updatedAt"], "synthetic")
+
+    async def test_memory_pressure_blocks_new_work_but_preserves_session_reads(self):
+        with patch.object(server, "can_admit", return_value=False):
+            response = await self.client.post("/api/challenge", json={"provider": "academia"})
+            self.assertEqual(response.status_code, 503)
+            self.assertEqual(len(server.sessions), 0)
+            self.assertEqual((await self.client.get("/api/session")).status_code, 200)
 
     async def test_boundary(self):
         response = await self.client.post("/api/challenge", json={}, headers={"origin": "https://evil.test"})
@@ -90,11 +135,10 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(response.status_code, 429)
                 server.rates.clear()
                 response = await self.client.get("/api/session")
-                self.assertEqual(response.status_code, 503)
-                self.assertEqual(response.headers.get("retry-after"), "2")
+                self.assertEqual(response.status_code, 200)
                 server.waiters = server.API_QUEUE
                 response = await self.client.get("/api/session")
-                self.assertEqual(response.status_code, 503)
+                self.assertEqual(response.status_code, 200)
                 server.waiters = 0
             finally:
                 for _ in range(server.API_CONCURRENCY):

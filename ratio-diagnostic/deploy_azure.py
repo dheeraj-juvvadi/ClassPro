@@ -40,12 +40,15 @@ def main():
     docker("GET", f"{api}/images/{IMAGE}/json")
     config = old["Config"].copy()
     config["Image"] = IMAGE
-    changes = {"APP_ORIGIN": "https://anon-tracker.vercel.app", "SESSION_LIMIT": "200",
-               "API_CONCURRENCY": "4", "OCR_CONCURRENCY": "2", "IO_THREADS": "8",
+    changes = {"APP_ORIGIN": "https://anon-tracker.vercel.app", "SESSION_LIMIT": "2000",
+               "API_CONCURRENCY": "8", "OCR_CONCURRENCY": "2", "IO_THREADS": "8",
+               "REFRESH_CONCURRENCY": "4", "MEMORY_RESERVE_MB": "160",
                "CLIENT_LOG_DIR": "/app/client-logs"}
     config["Env"] = [v for v in config["Env"] if v.split("=", 1)[0] not in changes]
     config["Env"] += [f"{key}={value}" for key, value in changes.items()]
-    config["HostConfig"] = old["HostConfig"]
+    config["HostConfig"] = old["HostConfig"].copy()
+    # 90% of this two-vCPU VM; leave at least 10% CPU for the host.
+    config["HostConfig"]["NanoCpus"] = 1800000000
     log_root = Path("/var/log/anon/client")
     log_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     os.chown(log_root, 65534, 65534)

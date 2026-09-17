@@ -9,6 +9,9 @@ import secrets
 import sys
 import time
 import weakref
+from types import SimpleNamespace
+from capacity import can_admit
+from refresh_queue import RefreshQueue
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,9 +55,13 @@ def _positive(name, default):
         return default
 
 
-API_CONCURRENCY = _positive("API_CONCURRENCY", 4)           # parallel /api/* handlers
+API_CONCURRENCY = _positive("API_CONCURRENCY", 8)           # parallel /api/* handlers
 OCR_CONCURRENCY = _positive("OCR_CONCURRENCY", 2)           # native inference workers
-SESSION_LIMIT = _positive("SESSION_LIMIT", 200)              # live sessions (>=100)
+SESSION_LIMIT = _positive("SESSION_LIMIT", 2000)              # live sessions (>=100)
+REFRESH_CONCURRENCY = _positive("REFRESH_CONCURRENCY", 4)
+MEMORY_RESERVE_MB = _positive("MEMORY_RESERVE_MB", 160)
+REFRESH_COOLDOWN = _positive("REFRESH_COOLDOWN", 60)
+
 RATE_PER_MINUTE = _positive("RATE_PER_MINUTE", 30)           # per-IP/minute
 RATE_TRACKED_KEYS = _positive("RATE_TRACKED_KEYS", 20000)    # bounded bucket table
 PERSIST_INTERVAL = float(os.environ.get("PERSIST_INTERVAL", "5"))  # seconds
@@ -64,6 +71,8 @@ QUEUE_WAIT = float(os.environ.get("API_QUEUE_WAIT", "12"))   # seconds a waiter 
 
 gate = asyncio.Semaphore(API_CONCURRENCY)
 ocr_slots = asyncio.Semaphore(OCR_CONCURRENCY)
+ocr_executor = concurrent.futures.ThreadPoolExecutor(
+    max_workers=OCR_CONCURRENCY, thread_name_prefix="anon-ocr")
 waiters = 0
 client_log_slots = asyncio.Semaphore(2)
 session_locks = weakref.WeakValueDictionary()
@@ -71,6 +80,8 @@ session_locks = weakref.WeakValueDictionary()
 
 async def dispatch(request, call_next, token):
     if not token:
+        return await call_next(request)
+    if request and request.method == "GET":
         return await call_next(request)
     lock = session_locks.setdefault(token, asyncio.Lock())
     async with lock:
@@ -102,7 +113,7 @@ async def solve_image(image):
     # at once without letting OCR inference exhaust CPU or memory.
     await ocr_slots.acquire()
     slots = ocr_slots
-    task = asyncio.create_task(asyncio.to_thread(ocr.solve, image))
+    task = asyncio.get_running_loop().run_in_executor(ocr_executor, ocr.solve, image)
     # Cancellation cannot stop a running native inference. Keep its permit until
     # the worker actually exits, even when its HTTP request has disconnected.
     def finished(worker):
@@ -126,6 +137,7 @@ rates = {}
 cookie_name = "classpro_ratio_diagnostic"
 session_store = None
 persisted_at = 0.0
+cleaned_at = 0.0
 
 
 def persist(force=False):
@@ -144,12 +156,25 @@ def persist(force=False):
                           "exception_type": type(exception).__name__}), flush=True)
 
 
+async def persist_activity():
+    while True:
+        await asyncio.sleep(30)
+        if session_store:
+            try:
+                session_store.touch(sessions)
+            except Exception as error:
+                print(json.dumps({"event": "session_persist_failed",
+                                  "exception_type": type(error).__name__}), flush=True)
+
+
 @asynccontextmanager
 async def lifespan(app):
     global session_store
     if os.environ.get("SESSION_STORE_DIR"):
         session_store = SessionStore(os.environ["SESSION_STORE_DIR"])
         sessions.update(session_store.load())
+        for entry in sessions.values():
+            entry.setdefault("sync_offset", secrets.randbelow(300))
     log_dir = os.environ.get("CLIENT_LOG_DIR")
     app.state.client_logs = ClientLogStore(log_dir) if log_dir else None
     loop = asyncio.get_running_loop()
@@ -162,7 +187,15 @@ async def lifespan(app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=upstream.app),
                                      base_url="http://ratio-internal", timeout=90) as client:
             app.state.client = client
-            yield
+            app.state.refresh_queue = RefreshQueue(REFRESH_CONCURRENCY, SESSION_LIMIT, refresh_job)
+            activity_task = asyncio.create_task(persist_activity())
+            try:
+                yield
+            finally:
+                activity_task.cancel()
+                await asyncio.gather(activity_task, return_exceptions=True)
+                await app.state.refresh_queue.close()
+                app.state.refresh_queue = None
     persist(force=True)
     if app.state.client_logs:
         app.state.client_logs.close()
@@ -213,6 +246,7 @@ async def invoke(request, path, payload):
 
 @app.middleware("http")
 async def boundary(request, call_next):
+    global cleaned_at
     request.state.diagnostic_id = secrets.token_hex(12)
     if request.url.path == "/health":
         return JSONResponse({"ok": True, "backend": "ratio-diagnostic"})
@@ -244,19 +278,30 @@ async def boundary(request, call_next):
         response.headers["Cache-Control"] = "no-store"
         return response
     now = time.monotonic()
-    for key, entry in list(sessions.items()):
-        expired = (time.time() - entry.get("last_seen", time.time()) > lifetime(entry)
-                   if entry.get("providers") or entry.get("cookies") else now - entry["created"] > SESSION_SECONDS)
-        if expired:
-            sessions.pop(key, None)
-            previous = upstream._portal_captcha_sessions.pop(entry.get("digest"), None)
-            if previous:
-                await previous.client.aclose()
-    for key, entry in list(rates.items()):
-        if now - entry[0] > 60:
-            rates.pop(key, None)
-    key = request.client.host if request.client else "unknown"
+    if now - cleaned_at >= 30:
+        cleaned_at = now
+        expired_tokens = []
+        for key, entry in list(sessions.items()):
+            expired = (time.time() - entry.get("last_seen", time.time()) > lifetime(entry)
+                       if entry.get("providers") or entry.get("cookies") else now - entry["created"] > SESSION_SECONDS)
+            if expired:
+                sessions.pop(key, None)
+                expired_tokens.append(key)
+                previous = upstream._portal_captcha_sessions.pop(entry.get("digest"), None)
+                if previous:
+                    await previous.client.aclose()
+        if session_store and expired_tokens:
+            session_store.save_changes({}, removed=expired_tokens)
+        for key, entry in list(rates.items()):
+            if now - entry[0] > 60:
+                rates.pop(key, None)
+    token = request.cookies.get(cookie_name)
+    key = "session:" + token if token in sessions and sessions[token].get("providers") else (
+        request.headers.get("x-anon-client-ip") if required_token else None
+    ) or (request.client.host if request.client else "unknown")
     start, count = rates.get(key, (now, 0))
+    if now - start >= 60:
+        start, count = now, 0
     if count >= RATE_PER_MINUTE or (key not in rates and len(rates) >= RATE_TRACKED_KEYS):
         response = failure("RATE_LIMIT", "Wait a minute before retrying.", 429)
         response.headers["Retry-After"] = str(max(1, int(60 - (now - start))))
@@ -264,9 +309,19 @@ async def boundary(request, call_next):
     rates[key] = (start, count + 1)
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
+    if entry and time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
+        sessions.pop(token, None)
+        if session_store:
+            session_store.save_changes({}, removed=[token])
+        entry = None
     if entry and (entry.get("providers") or entry.get("cookies")):
         entry["last_seen"] = time.time()
-    if not await acquire_api():
+    lightweight = request.method == "GET" and request.url.path in {"/api/session", "/api/reports"}
+    if not lightweight and request.method == "POST" and not can_admit(MEMORY_RESERVE_MB):
+        response = failure("SERVER_BUSY", "Anon is busy. Your saved data is still available.", 503)
+        response.headers["Retry-After"] = "15"
+        return response
+    if not lightweight and not await acquire_api():
         response = failure("SERVER_BUSY", "ClassPro is busy. Please retry shortly.", 503)
         response.headers["Retry-After"] = "2"
         return response
@@ -277,10 +332,14 @@ async def boundary(request, call_next):
             print(json.dumps({"event": "ratio_exception", "request_id": request.state.diagnostic_id,
                               "exception_type": type(exception).__name__}), flush=True)
             response = failure("PORTAL_UNAVAILABLE", "Student Portal request failed.", 502)
-        if session_store:
-            session_store.save(sessions)
+        if session_store and not lightweight:
+            changed_token = getattr(request.state, "session_token", token)
+            changed = {changed_token: sessions[changed_token]} if changed_token in sessions else {}
+            removed = [token] if token and (token != changed_token or token not in sessions) else []
+            session_store.save_changes(changed, removed=removed)
     finally:
-        gate.release()
+        if not lightweight:
+            gate.release()
     if token in sessions and sessions[token].get("providers"):
         set_session_cookie(response, token, sessions[token])
     response.headers["Cache-Control"] = "no-store"
@@ -346,11 +405,12 @@ async def challenge(request: Request):
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
     if entry is None:
-        if len(sessions) >= SESSION_LIMIT:
+        if len(sessions) >= SESSION_LIMIT or not can_admit(MEMORY_RESERVE_MB):
             return failure("CAPACITY", "Too many students are signed in. Please try again shortly.", 503)
         token = secrets.token_urlsafe(32)
-        entry = {"created": time.monotonic(), "remember": True, "last_seen": time.time()}
+        entry = {"created": time.monotonic(), "remember": True, "last_seen": time.time(), "sync_offset": secrets.randbelow(300)}
         sessions[token] = entry
+    request.state.session_token = token
     entry["pending_provider"] = provider
     if provider == "academia":
         result = JSONResponse({"required": False})
@@ -422,28 +482,63 @@ async def login(request: Request):
     entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic(), "synced_at": time.time()})
     attendance_trends.observe(entry, time.time())
     sessions[token] = entry
+    request.state.session_token = token
     result = JSONResponse({"authenticated": True, "connections": entry["report"]["connections"]})
     set_session_cookie(result, token, entry)
     return result
 
 
+async def refresh_job(token, entry, request):
+    while not can_admit(MEMORY_RESERVE_MB):
+        await asyncio.sleep(1)
+    lock = session_locks.setdefault(token, asyncio.Lock())
+    async with lock:
+        if sessions.get(token) is not entry:
+            return False
+        entry["sync_attempted_at"] = time.time()
+        try:
+            data, succeeded = await asyncio.wait_for(
+                refresh_providers(request, entry, invoke, report), timeout=90)
+        except Exception:
+            entry["sync_failed"] = True
+            return False
+        entry["sync_failed"] = not succeeded
+        entry.update({"report": data, "cached": time.monotonic()})
+        if succeeded:
+            entry["synced_at"] = time.time()
+            attendance_trends.observe(entry, entry["synced_at"])
+        if session_store and sessions.get(token) is entry:
+            session_store.save_changes({token: entry})
+        return succeeded
+
+
 @app.get("/api/reports")
 async def reports(request: Request):
-    entry = sessions.get(request.cookies.get(cookie_name))
+    token = request.cookies.get(cookie_name)
+    entry = sessions.get(token)
     if not entry or not providers(entry):
         return failure("SESSION_EXPIRED", "Please sign in again.")
     now = time.time()
     force = request.query_params.get("force") == "1"
     cache_only = request.query_params.get("cache") == "only"
-    if cache_only or (not force and not sync_schedule.due(entry, now)):
-        return sync_schedule.response(entry, now)
-    entry["sync_attempted_at"] = now
-    data, succeeded = await refresh_providers(request, entry, invoke, report)
-    entry.update({"report": data, "cached": time.monotonic()})
-    if succeeded:
-        entry["synced_at"] = time.time()
-        attendance_trends.observe(entry, entry["synced_at"])
-    return sync_schedule.response(entry, time.time())
+    queue = getattr(app.state, "refresh_queue", None)
+    pending = queue and token in queue.jobs
+    recent = now - entry.get("sync_attempted_at", 0) < REFRESH_COOLDOWN
+    wanted = force or sync_schedule.due(entry, now)
+    if not cache_only and wanted and not pending and not recent:
+        if queue:
+            context = SimpleNamespace(app=app, state=SimpleNamespace(
+                diagnostic_id=getattr(getattr(request, "state", None), "diagnostic_id", secrets.token_hex(12))))
+            pending = queue.submit(token, entry, context) is not None
+        else:
+            await refresh_job(token, entry, request)
+    result = sync_schedule.response(entry, time.time())
+    if entry.get("sync_failed"):
+        result["warnings"] = [*result.get("warnings", []), "Sync could not finish. Your last data is still available; try again shortly."]
+    if queue and (pending or (wanted and not recent and not cache_only)):
+        result["sync"].update({"pending": True, "state": "queued" if pending else "busy",
+                               "nextAt": (now + 15 + secrets.randbelow(16)) * 1000})
+    return result
 
 
 

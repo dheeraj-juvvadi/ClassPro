@@ -46,6 +46,8 @@ async function handler(request, response) {
     headers[key] = Array.isArray(value) ? value.join(', ') : value;
   }
   headers['x-classpro-key'] = token;
+  delete headers['x-anon-client-ip'];
+  headers['x-anon-client-ip'] = request.headers['x-vercel-forwarded-for'] || request.socket?.remoteAddress || 'unknown';
   const incoming = new URL(request.url, 'http://internal');
   incoming.searchParams.delete('__path');
   incoming.search = incoming.searchParams.toString();

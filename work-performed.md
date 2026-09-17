@@ -153,3 +153,37 @@
 - Redundant deployments deleted per approval.
 - Remaining: backend FCFS/OCR concurrency implementation + strict FIFO tests, capacity benchmark with 10% headroom, playwright install for portal-app tests.
 - This file is the Astra handoff. Update incrementally; do not record secrets.
+
+## 2026-09-17: authoritative update — capacity and burst agenda
+
+This entry supersedes earlier pending-backend/capacity notes above. Azure FIFO,
+per-session locks, seven-day persistence, cancellation-safe OCR, origin fix,
+client disk logs and automated GitHub deployment shipped through 621ffc8.
+Branding/install icons, desktop sidebar/aligned agenda, shared-ID login, cache-first
+boot, reminders and public readiness pages are shipped. Older estimates are not
+measured login guarantees; see docs/azure-capacity.md for the current evidence.
+
+Capacity release prepared and verified locally:
+- 2,000 session ceiling with memory admission; two dedicated OCR workers, eight
+  mutation slots, four bounded background refresh workers. Repeated syncs share
+  one job; 60-second cooldown; queued status and randomized polling in the UI.
+- Cached/session reads bypass upstream queue and do not save every user's data.
+  Incremental encrypted persistence handles token rotation and logout atomically;
+  activity timestamps batch every 30 seconds. Streaming save/restore reduces peaks.
+- Five-minute session-specific scheduled offsets prevent all clients syncing at
+  exactly 9 a.m. Authenticated rate limits are per session. Proxy sets trusted
+  client address metadata for unauthenticated admission.
+- Deploy config caps service CPU at 1.8 of 2 vCPUs; new heavy work pauses below
+  160 MiB available memory. Reserve exceeds 10%, but admission cannot guarantee
+  every running allocation or unrelated host process stays inside it.
+- Azure synthetic OCR: ~354/sec at 1.8 CPUs, two workers, 100-item bursts, p95
+  270ms including queue. This is inference only, not full sign-in or accuracy.
+- Corrected 2,000-session synthetic persistence passed at ~142MiB peak RSS.
+  1,000-user/2,000-request ASGI burst accepted in 1.667s; four refreshes maximum;
+  all jobs drained with simulated upstream latency. No SRM load test performed.
+- Hidden initial manual CAPTCHA fallback and requested privacy-section removal
+  included; remembered-session storage disclosure remains explicit.
+
+Remaining: verify this revision's GitHub/Azure deployment; observe real mixed-load
+latency and CPU credits; actual 1,000-user SRM throughput/four-second full-login
+maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterward.

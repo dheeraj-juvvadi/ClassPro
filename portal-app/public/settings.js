@@ -82,7 +82,8 @@ globalThis.anonSettings = (() => {
     if (get('settings-sync').disabled) return;
     tell('');
     try { const data = await loadReports({ force: true });
-      if (data?.warnings?.length || data?.attendance?.error || data?.marks?.error) tell('Some data could not refresh. Your last data is still available.');
+      if (data?.sync?.pending) tell('Sync queued. Your last data stays available while we refresh.');
+      else if (data?.warnings?.length || data?.attendance?.error || data?.marks?.error) tell('Some data could not refresh. Your last data is still available.');
       else { tell('Your data is up to date.'); anonFeedback.success('All up to date.'); }
     }
     catch (error) { tell(error.message || 'Could not sync. Try again.'); }

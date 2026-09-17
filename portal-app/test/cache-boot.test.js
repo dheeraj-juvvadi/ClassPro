@@ -20,6 +20,7 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   let sessionChecks = 0;
   let sessionValid = true;
   let offline = false;
+  let pending = false;
   app.get('/api/session', (request, response) => {
     sessionChecks += 1;
     if (offline) return response.status(503).json({ error: { message: 'Offline' } });
@@ -27,7 +28,7 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   });
   app.get('/api/reports', (request, response) => {
     if (request.query.cache === 'only') return response.json(reportsPayload);
-    response.json(reportsPayload);
+    response.json(pending ? { ...reportsPayload, sync: { ...reportsPayload.sync, pending: true, nextAt: Date.now() + 1000 } } : reportsPayload);
   });
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
@@ -50,6 +51,14 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   await page.waitForTimeout(3200);
   assert.ok(sessionChecks >= 1, 'background session validation never ran');
   assert.equal(await page.locator('#home-view').isHidden(), false, 'session check kicked user off cached view');
+  pending = true;
+  await page.locator('[data-page=attendance]:visible').first().click();
+  await page.locator('#refresh').click();
+  await page.waitForFunction(() => document.querySelector('#reports-message').textContent.includes('Sync queued'));
+  assert.equal(await page.locator('#attendance-content').isVisible(), true);
+  pending = false;
+  await page.evaluate(() => { nextAutoSync = 0; resumeSync(); });
+  await page.waitForFunction(() => !document.querySelector('#reports-message').textContent.includes('Sync queued'));
   offline = true;
   await page.reload();
   await page.locator('#home-view').waitFor({ state: 'visible' });

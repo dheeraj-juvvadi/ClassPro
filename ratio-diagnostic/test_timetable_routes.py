@@ -58,7 +58,7 @@ class TimetableRouteTests(unittest.IsolatedAsyncioTestCase):
         server.sessions.clear()
         server.rates.clear()
         server.sessions["synthetic"] = {"created": server.time.monotonic(),
-                                        "cookies": {"JSESSIONID": "synthetic"}, "cached": 0}
+                                        "cookies": {"JSESSIONID": "synthetic"}, "report": {}, "cached": 0}
         try:
             async with server.lifespan(server.app):
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app),
@@ -66,6 +66,9 @@ class TimetableRouteTests(unittest.IsolatedAsyncioTestCase):
                                              cookies={server.cookie_name: "synthetic"}) as client:
                     with patch.object(server.upstream, "PortalClient", FakePortal):
                         response = await client.get("/api/reports")
+                        self.assertTrue(response.json()["sync"]["pending"])
+                        await server.app.state.refresh_queue.queue.join()
+                        response = await client.get("/api/reports?cache=only")
                 self.assertEqual(response.status_code, 200)
                 entry = response.json()["schedule"]["entries"][0]
                 self.assertEqual((entry["code"], entry["dayOrder"], entry["start"], entry["hours"]),

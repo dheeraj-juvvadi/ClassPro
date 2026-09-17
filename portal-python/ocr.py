@@ -2,6 +2,7 @@ import io
 import json
 import os
 import threading
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -26,6 +27,14 @@ def _load_session(root):
     return _session
 
 
+@lru_cache(maxsize=2)
+def _charset(root):
+    vocabulary = json.loads((root / "vocab.json").read_text())
+    if vocabulary.get("blank_idx") != 0:
+        raise ValueError("Invalid OCR vocabulary")
+    return " " + vocabulary["vocab"]
+
+
 def solve(image_bytes):
     root = Path(os.environ.get("OCR_ASSET_DIR", Path(__file__).parent / "model"))
     session = _load_session(root)
@@ -35,10 +44,7 @@ def solve(image_bytes):
         image = source.convert("L")
         pixels = ((np.asarray(image, dtype=np.float32) / 255.0 - 0.5) / 0.5)[None, None, :, :]
     logits = session.run(None, {session.get_inputs()[0].name: pixels})[0]
-    vocabulary = json.loads((root / "vocab.json").read_text())
-    if vocabulary.get("blank_idx") != 0:
-        raise ValueError("Invalid OCR vocabulary")
-    charset = " " + vocabulary["vocab"]
+    charset = _charset(root)
     if logits.shape[-1] != len(charset):
         raise ValueError("Invalid OCR output")
     indices = logits.reshape(-1, len(charset)).argmax(axis=1)

@@ -18,6 +18,11 @@ class SyncScheduleTests(unittest.TestCase):
         self.assertEqual(next_slot(stamp(16, 21)), stamp(16, 23))
         self.assertEqual(next_slot(stamp(16, 23)), stamp(17, 8))
 
+    def test_session_offset_spreads_scheduled_refresh(self):
+        entry = {"synced_at": stamp(16, 8), "sync_offset": 120}
+        self.assertFalse(due(entry, stamp(16, 9, 1)))
+        self.assertTrue(due(entry, stamp(16, 9, 2)))
+
     def test_cached_and_failed_slots_do_not_repeat(self):
         self.assertFalse(due({"synced_at": stamp(16, 9, 15)}, stamp(16, 9, 59)))
         self.assertTrue(due({"synced_at": stamp(16, 9, 15)}, stamp(16, 10)))
@@ -48,6 +53,9 @@ class SyncRouteTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(refresh.await_count, 1)
                 request.query_params = {"force": "1"}
                 await server.reports(request)
+                self.assertEqual(refresh.await_count, 1)
+                with patch("server.time.time", return_value=stamp(16, 10, 2)):
+                    await server.reports(request)
                 self.assertEqual(refresh.await_count, 2)
         finally:
             server.sessions.pop("sync-test", None)

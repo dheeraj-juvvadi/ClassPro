@@ -37,12 +37,17 @@ def next_slot(timestamp):
 def due(entry, timestamp):
     if datetime.fromtimestamp(timestamp, IST).weekday() == 6:
         return False
-    return max(entry.get("synced_at", 0), entry.get("sync_attempted_at", 0)) < latest_slot(timestamp)
+    slot = latest_slot(timestamp)
+    return timestamp >= slot + entry.get("sync_offset", 0) and max(
+        entry.get("synced_at", 0), entry.get("sync_attempted_at", 0)) < slot
 
 
 def response(entry, timestamp):
+    offset = entry.get("sync_offset", 0)
+    delayed = latest_slot(timestamp) + offset
+    next_at = delayed if delayed > timestamp else next_slot(timestamp) + offset
     return {**decorate(entry, timestamp), "sync": {
-        "nextAt": next_slot(timestamp) * 1000,
+        "nextAt": next_at * 1000,
         "due": due(entry, timestamp),
         "syncedAt": entry.get("synced_at", 0) * 1000,
     }}
