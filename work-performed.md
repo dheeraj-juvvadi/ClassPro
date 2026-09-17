@@ -280,3 +280,23 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   eight active calls maximum, 26 safe admission retries, zero leaked waiters.
   This is a queue simulation, not real SRM login latency. Details in
   docs/azure-capacity.md. Next: validated release and live control readback.
+
+## 2026-09-17: installed-app launch and cached sync schedule
+
+- Admission release 510a9c0 passed 40 frontend/82 backend tests and GitHub
+  workflow 35251461005 succeeded. Azure image matches; health passes, CPU cap
+  remains 1.8, memory reserve 160 MiB, pending limit 512, CAPTCHA limit 520,
+  bootstrap/start limits 1200/300 and embedded limiter disabled. Available host
+  memory readback: 320 MiB. Production serves the admission helper.
+- Added installed-app shortcuts for Home, Attendance and Marks; supporting Chrome
+  can focus an existing app window. Launch routing accepts only known sections
+  on this origin, queues navigation while a dialog is open, and preserves login.
+  Regular navigation supports browser Back and restores the selected section.
+- Found an extra startup sync in the new cache test: paintCachedReports did not
+  restore sync.nextAt. It now uses the stored schedule and respects due/pending
+  state. Fresh cached shortcuts/relaunches issue zero report requests in tests.
+- Targeted browser tests pass for shortcut entry, cache reuse, back navigation,
+  off-origin rejection, dialogs and signed-out state. Physical OS shortcut-menu
+  presentation has not been tested; browser support determines availability.
+- Next: staged release, check remaining public-readiness items and client resource
+  lifecycle, then continue feature/refinement work.

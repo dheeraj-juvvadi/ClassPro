@@ -13,6 +13,9 @@ globalThis.classproHome = (() => {
   let scheduleInvalid = false;
   let selectedDate = null;
   const filters = { allocation: '', batch: '' };
+  const pages = new Set(['home', 'attendance', 'marks']);
+  const route = () => pages.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
+  let launchDestination = null;
   const source = () => reportedSchedule || schedule;
   const get = identifier => document.getElementById(identifier);
   const element = (tag, className, text) => {
@@ -52,7 +55,11 @@ globalThis.classproHome = (() => {
   for (const field of ['batch']) get(`${field}-filter`).addEventListener('change', event => { filters[field] = event.target.value; render(); });
   updateFilters();
 
-  function page(destination, focus = true) {
+  function page(destination, focus = true, recordHistory = true) {
+    if (!pages.has(destination)) return;
+    if (recordHistory && route() !== destination) {
+      try { history.pushState(null, '', `${location.pathname}${location.search}#${destination}`); } catch {}
+    }
     globalThis.anonClientLogs?.capture({ kind: 'page_view', page: destination, consent: true });
     document.title = `${{ home: 'Home', attendance: 'Attendance', marks: 'Marks' }[destination] || 'Student Portal'} · Anon`;
     const previousPage = document.body.dataset.page;
@@ -234,11 +241,44 @@ globalThis.classproHome = (() => {
   setInterval(refreshClock, 60000);
   document.addEventListener('visibilitychange', refreshClock);
   window.addEventListener('focus', refreshClock);
+  window.addEventListener('popstate', () => {
+    if (document.body.classList.contains('planner') && (!location.hash || pages.has(location.hash.slice(1)))) page(route(), true, false);
+  });
+  window.addEventListener('hashchange', () => {
+    if (pages.has(location.hash.slice(1)) && document.body.classList.contains('planner') && document.body.dataset.page !== route()) page(route(), true, false);
+  });
+  const applyLaunch = () => {
+    if (!launchDestination || !document.body.classList.contains('planner') || document.querySelector('dialog[open]')) return;
+    const destination = launchDestination;
+    launchDestination = null;
+    page(destination);
+  };
+  document.addEventListener('close', applyLaunch, true);
+  if (typeof globalThis.launchQueue?.setConsumer === 'function') {
+    globalThis.launchQueue.setConsumer(params => {
+      try {
+        const url = new URL(params.targetURL);
+        if (url.origin !== location.origin || url.pathname !== '/') return;
+        const destination = url.hash.slice(1);
+        // Opening the app icon keeps the current section; shortcuts choose one.
+        if (!pages.has(destination)) return;
+        launchDestination = destination;
+        applyLaunch();
+      } catch {}
+    });
+  }
 
   return {
     reminders(enabled) { reminders.enable(enabled); },
     profile(profile) { studentName = profile?.name || ''; greetingExtras = anonGreetings.select(profile); render(); },
-    enter() { render(); page('home'); },
+    enter() {
+      render();
+      if (launchDestination) {
+        try { history.replaceState(null, '', `${location.pathname}${location.search}#${launchDestination}`); } catch {}
+      }
+      page(launchDestination || route(), true, false);
+      launchDestination = null;
+    },
     clear() { reminders.clear(); studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
     update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];

@@ -430,6 +430,9 @@ function paintCachedReports() {
   reportFingerprint.marks = JSON.stringify(cached.marks);
   reportFingerprint.home = JSON.stringify([cached.attendance, cached.schedule]);
   reportFingerprint.connections = JSON.stringify([cached.connections, cached.warnings]);
+  const cachedNextAt = Number(cached.sync?.nextAt);
+  nextAutoSync = cached.sync?.due && !cached.sync?.pending ? 0
+    : Number.isFinite(cachedNextAt) && cachedNextAt > 0 ? cachedNextAt : 0;
   const date = new Date(cached.updatedAt);
   $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Showing your last synced data.' : `Last synced ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
   return true;

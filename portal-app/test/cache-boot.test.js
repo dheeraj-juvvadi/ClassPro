@@ -68,9 +68,9 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   await page.waitForFunction(() => !document.querySelector('#reports-message').textContent.includes('Sync queued'));
   offline = true;
   await page.reload();
-  await page.locator('#home-view').waitFor({ state: 'visible' });
+  await page.locator('#attendance-panel').waitFor({ state: 'visible' });
   await page.waitForFunction(() => document.querySelector('#login-form').getAttribute('aria-busy') === 'false');
-  assert.equal(await page.locator('#home-view').isVisible(), true, 'network failure should retain cached data');
+  assert.equal(await page.locator('#attendance-panel').isVisible(), true, 'network failure should retain cached data and selected section');
   offline = false;
   sessionValid = false;
   await page.reload();
@@ -94,4 +94,56 @@ test('installed app context exposes manifest wiring', { timeout: 20000 }, async 
   const manifest = await (await page.request.get(new URL(manifestLink, `http://127.0.0.1:${server.address().port}`).href)).json();
   assert.equal(manifest.display, 'standalone');
   assert.ok(manifest.icons?.length >= 2, 'manifest needs icons for install prompt');
+  assert.deepEqual(manifest.launch_handler.client_mode, ['focus-existing', 'auto']);
+  assert.deepEqual(manifest.shortcuts.map(item => item.url), ['/#home', '/#attendance', '/#marks']);
+});
+
+test('installed-app shortcuts reuse cached views, respect forms and support back navigation', { timeout: 20000 }, async context => {
+  const app = express();
+  app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  context.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+  context.after(() => browser.close());
+  const page = await browser.newPage();
+  page.setDefaultTimeout(5000);
+  let reportRequests = 0, valid = true;
+  await page.route('**/api/**', route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/api/session') return route.fulfill({ json: { authenticated: valid, authMode: 'http' } });
+    if (path === '/api/reports') { reportRequests++; return route.fulfill({ json: reportsPayload }); }
+    return route.fulfill({ json: { success: true } });
+  });
+  await page.addInitScript(payload => {
+    localStorage.setItem('classpro-reports-cache', JSON.stringify({ ...payload, syncedAt: Date.now() }));
+    localStorage.setItem('anon.analytics-choice.v1', 'decline');
+    Object.defineProperty(window, 'launchQueue', { configurable: true, value: {
+      setConsumer(callback) { window.deliverLaunch = callback; },
+    } });
+  }, reportsPayload);
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  await page.goto(`${origin}/#attendance`);
+  await page.locator('#attendance-panel').waitFor({ state: 'visible' });
+  assert.equal(await page.title(), 'Attendance · Anon');
+  await page.waitForFunction(() => document.querySelector('#login-form').getAttribute('aria-busy') === 'false');
+  assert.equal(reportRequests, 0, 'cached shortcut must not fetch reports');
+  await page.locator('[data-page="marks"]:visible').click();
+  assert.match(page.url(), /#marks$/);
+  await page.goBack();
+  await page.locator('#attendance-panel').waitFor({ state: 'visible' });
+  await page.evaluate(() => deliverLaunch({ targetURL: `${location.origin}/#marks` }));
+  await page.locator('#marks-panel').waitFor({ state: 'visible' });
+  await page.evaluate(() => deliverLaunch({ targetURL: 'https://untrusted.invalid/#home' }));
+  assert.equal(await page.locator('#marks-panel').isVisible(), true);
+  await page.evaluate(() => { document.getElementById('accounts-dialog').showModal(); deliverLaunch({ targetURL: `${location.origin}/#home` }); });
+  assert.equal(await page.locator('#marks-panel').isVisible(), true, 'launch must preserve an open form');
+  await page.evaluate(() => document.getElementById('accounts-dialog').close());
+  await page.locator('#home-view').waitFor({ state: 'visible' });
+  assert.equal(reportRequests, 0, 'relaunch must reuse the document and report cache');
+  valid = false;
+  await page.reload();
+  await page.locator('#login-view').waitFor({ state: 'visible' });
+  await page.evaluate(() => deliverLaunch({ targetURL: `${location.origin}/#marks` }));
+  assert.equal(await page.locator('#login-view').isVisible(), true, 'shortcut does not bypass sign-in');
 });
