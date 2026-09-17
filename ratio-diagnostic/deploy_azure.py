@@ -49,6 +49,8 @@ def main():
     config["HostConfig"] = old["HostConfig"].copy()
     # 90% of this two-vCPU VM; leave at least 10% CPU for the host.
     config["HostConfig"]["NanoCpus"] = 1800000000
+    config["HostConfig"]["LogConfig"] = {"Type": "json-file",
+                                         "Config": {"max-size": "10m", "max-file": "3"}}
     log_root = Path("/var/log/anon/client")
     log_root.mkdir(mode=0o700, parents=True, exist_ok=True)
     os.chown(log_root, 65534, 65534)

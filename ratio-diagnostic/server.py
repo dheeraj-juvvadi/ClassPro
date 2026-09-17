@@ -61,6 +61,7 @@ SESSION_LIMIT = _positive("SESSION_LIMIT", 2000)              # live sessions (>
 REFRESH_CONCURRENCY = _positive("REFRESH_CONCURRENCY", 4)
 MEMORY_RESERVE_MB = _positive("MEMORY_RESERVE_MB", 160)
 REFRESH_COOLDOWN = _positive("REFRESH_COOLDOWN", 60)
+REFRESH_QUEUE_WAIT = _positive("REFRESH_QUEUE_WAIT", 600)
 
 RATE_PER_MINUTE = _positive("RATE_PER_MINUTE", 30)           # per-IP/minute
 RATE_TRACKED_KEYS = _positive("RATE_TRACKED_KEYS", 20000)    # bounded bucket table
@@ -489,27 +490,57 @@ async def login(request: Request):
 
 
 async def refresh_job(token, entry, request):
-    while not can_admit(MEMORY_RESERVE_MB):
-        await asyncio.sleep(1)
-    lock = session_locks.setdefault(token, asyncio.Lock())
-    async with lock:
-        if sessions.get(token) is not entry:
-            return False
-        entry["sync_attempted_at"] = time.time()
-        try:
-            data, succeeded = await asyncio.wait_for(
-                refresh_providers(request, entry, invoke, report), timeout=90)
-        except Exception:
-            entry["sync_failed"] = True
-            return False
-        entry["sync_failed"] = not succeeded
-        entry.update({"report": data, "cached": time.monotonic()})
-        if succeeded:
-            entry["synced_at"] = time.time()
-            attendance_trends.observe(entry, entry["synced_at"])
-        if session_store and sessions.get(token) is entry:
-            session_store.save_changes({token: entry})
-        return succeeded
+    state = getattr(request, "state", None)
+    queued_at = getattr(state, "queued_at", time.monotonic())
+    started = time.monotonic()
+    outcome = "discarded"
+    exception_type = None
+    try:
+        while True:
+            if sessions.get(token) is not entry or time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
+                return False
+            if time.monotonic() - queued_at >= REFRESH_QUEUE_WAIT:
+                entry.update({"sync_failed": True, "sync_attempted_at": time.time()})
+                outcome = "queue_timeout"
+                return False
+            if can_admit(MEMORY_RESERVE_MB):
+                break
+            await asyncio.sleep(1)
+        lock = session_locks.setdefault(token, asyncio.Lock())
+        async with lock:
+            if sessions.get(token) is not entry or time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
+                return False
+            entry["sync_attempted_at"] = time.time()
+            try:
+                data, succeeded = await asyncio.wait_for(
+                    refresh_providers(request, entry, invoke, report), timeout=90)
+            except Exception as error:
+                entry["sync_failed"] = True
+                exception_type = type(error).__name__
+                outcome = "failed"
+                return False
+            entry["sync_failed"] = not succeeded
+            entry.update({"report": data, "cached": time.monotonic()})
+            if succeeded:
+                entry["synced_at"] = time.time()
+                attendance_trends.observe(entry, entry["synced_at"])
+            outcome = "success" if succeeded else "failed"
+            if session_store and sessions.get(token) is entry:
+                session_store.save_changes({token: entry})
+            return succeeded
+    except asyncio.CancelledError:
+        outcome = "cancelled"
+        raise
+    except Exception as error:
+        outcome = "failed"
+        exception_type = type(error).__name__
+        raise
+    finally:
+        print(json.dumps({"event": "refresh_finished", "outcome": outcome,
+                          "request_id": getattr(state, "diagnostic_id", None),
+                          "queue_ms": round((started - queued_at) * 1000),
+                          "duration_ms": round((time.monotonic() - started) * 1000),
+                          "exception_type": exception_type}), flush=True)
 
 
 @app.get("/api/reports")
@@ -528,7 +559,8 @@ async def reports(request: Request):
     if not cache_only and wanted and not pending and not recent:
         if queue:
             context = SimpleNamespace(app=app, state=SimpleNamespace(
-                diagnostic_id=getattr(getattr(request, "state", None), "diagnostic_id", secrets.token_hex(12))))
+                diagnostic_id=getattr(getattr(request, "state", None), "diagnostic_id", secrets.token_hex(12)),
+                queued_at=time.monotonic()))
             pending = queue.submit(token, entry, context) is not None
         else:
             await refresh_job(token, entry, request)

@@ -193,3 +193,14 @@ logs mode 0600. Release validation: 32 frontend and 61 backend tests passed.
 
 Remaining: observe real mixed-load latency and CPU credits; actual 1,000-user SRM throughput/four-second full-login
 maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterward.
+
+## 2026-09-17: queue lifecycle hardening
+
+- Verified follow-up rollout 397c0ca succeeded (GitHub run 35170621076).
+- Fixed indefinite low-memory refresh waits: ten-minute queued-admission deadline,
+  identity/expiry checks before upstream work, cached-data failure on timeout.
+- Added secret-free refresh timing/outcome logs; configured Docker retention at
+  three 10 MB files after live inspection showed unlimited json-file logging.
+- Added regression coverage for expired jobs, removed sessions during memory wait,
+  queue timeout and log redaction. All 64 backend tests pass locally.
+- Remaining: validate/release this follow-up, then continue readiness audit.
