@@ -43,6 +43,7 @@ function syncControls() {
   for (const id of ['sign-in', 'password-toggle', 'refresh', 'logout']) $(id).disabled = busy || (id === 'refresh' && $(id).classList.contains('syncing'));
   $('account').disabled = busy;
   $('password').disabled = busy;
+  $('portal-password').disabled = busy;
   $('remember').disabled = busy;
   $('login-provider').disabled = busy;
   $('manual-captcha-refresh').disabled = busy;
@@ -72,6 +73,7 @@ async function run(action) {
 }
 
 function showLogin(text = '', error = false) {
+  document.title = 'Sign in · Anon';
   document.body.classList.add('garden-login');
   document.body.classList.remove('planner');
   $('home-view').hidden = true;
@@ -102,6 +104,7 @@ function showLogin(text = '', error = false) {
   $('marks-count').textContent = '';
   $('updated-at').textContent = 'Your attendance and marks.';
   message('reports-message');
+  message('home-message');
   message('login-message', text, error);
   $('login-title').tabIndex = -1;
   $('login-title').focus();
@@ -115,6 +118,7 @@ function showReports() {
   manualChallengeAt = 0;
   authenticated = true;
   $('password').value = '';
+  $('portal-password').value = '';
   $('startup').hidden = true;
   $('login-view').hidden = true;
   $('reports-view').hidden = false;
@@ -148,6 +152,7 @@ async function api(path, options = {}, login = false) {
   }
   record({ status: response.status, requestId: response.headers.get('x-request-id'), vercelId: response.headers.get('x-vercel-id'), vercelCache: response.headers.get('x-vercel-cache') });
   if (response.status === 401 && !login) {
+    clearReportsCache();
     showLogin('Your session has expired. Please sign in again.', true);
     throw Object.assign(new Error('Session expired'), { expired: true });
   }
@@ -322,29 +327,19 @@ async function submitCredentials(credentials, answer) {
 $('login-form').addEventListener('submit', (event) => {
   event.preventDefault();
   if (!$('login-form').reportValidity()) return;
-  const credentials = { account: $('account').value.trim(), password: $('password').value, remember: $('remember').checked };
+  const credentials = { account: $('account').value.trim(), password: $('password').value, portalPassword: $('portal-password').value, remember: $('remember').checked };
   run(async () => {
     message('login-message');
     $('sign-in').setAttribute('data-loading', '');
     $('sign-in-status').textContent = 'Connecting to SRM…';
     let data;
     if (classproAuth.enabled) {
-      try {
-        data = await classproAuth.login(api, credentials);
-      } catch (error) {
-        if ($('login-provider').value === 'academia' && !['SERVER_BUSY', 'CAPACITY', 'CAPTCHA_REQUIRED', 'CAPTCHA_INVALID'].includes(error.code)) {
-          $('login-fallback-title').textContent = error.status >= 500 ? 'Academia isn’t responding.' : error.status === 401 ? 'Academia sign-in didn’t complete.' : 'Couldn’t reach Academia.';
-          $('login-fallback-message').textContent = error.status === 401 ? 'Check your Academia details, or use Student Portal to get your attendance and marks.' : 'Your attendance and marks are available through Student Portal, too.';
-          $('password').value = '';
-          $('login-fallback-dialog').showModal();
-          return;
-        }
-        throw error;
-      }
+      data = await classproAuth.loginBoth(api, credentials);
       if (!data) return;
       if (data.authenticated !== true) throw new Error('Sign-in could not be confirmed.');
       showReports();
       await loadReports();
+      if (data.warning) message('home-message', data.warning, true);
       anonFeedback.success('You’re in.');
       return;
     }
@@ -433,7 +428,8 @@ if (designPreview) {
         } else {
           setTimeout(resumeSync, 0);
         }
-      } else if (!authenticated) {
+      } else {
+        clearReportsCache();
         showLogin();
       }
     } catch (error) {

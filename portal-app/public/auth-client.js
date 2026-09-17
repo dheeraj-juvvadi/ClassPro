@@ -11,6 +11,8 @@ globalThis.classproAuth = (() => {
   let serverAuto = false;
   let preparing = null;
   let configuredProvider = 'academia';
+  let flowAccount = '';
+  const connected = new Set();
   const element = id => document.getElementById(id);
   const provider = () => element('login-provider').value;
   const clearChallenge = () => {
@@ -24,16 +26,20 @@ globalThis.classproAuth = (() => {
   };
   function reset() {
     if (!enabled) return;
+    connected.clear();
+    flowAccount = '';
     element('login-provider').value = configuredProvider;
     clearChallenge();
     element('provider-help').textContent = provider() === 'academia'
       ? 'Use your Academia password.' : 'Use your Student Portal password.';
-    element('login-provider-caption').textContent = `Sign in with ${provider() === 'academia' ? 'Academia' : 'Student Portal'}`;
+    element('login-provider-caption').textContent = 'One ID. Both portals, together.';
     started = Date.now();
     clicks = keys = movements = 0;
   }
   function configure(session) {
     enabled = session.authMode === 'http';
+    element('portal-password-group').hidden = !enabled;
+    element('password').required = !enabled;
     configuredProvider = 'academia';
     element('provider-choice').hidden = true;
     if (enabled) {
@@ -130,6 +136,43 @@ globalThis.classproAuth = (() => {
       throw error;
     }
   }
+  async function loginBoth(api, credentials) {
+    const account = credentials.account.trim();
+    if (flowAccount && flowAccount !== account.toLowerCase()) {
+      await api('/api/session', { method: 'DELETE' }, true);
+      connected.clear();
+      clearChallenge();
+    }
+    flowAccount = account.toLowerCase();
+    const attempts = [
+      ['academia', credentials.password, 'password'],
+      ['portal', credentials.portalPassword, 'portal-password'],
+    ].filter(([name, password]) => password && !connected.has(name));
+    if (challengeAt && element('manual-captcha-answer').value) {
+      attempts.sort(([a], [b]) => Number(b === provider()) - Number(a === provider()));
+    }
+    if (!attempts.length && !connected.size) throw new Error('Enter your Academia or Student Portal password.');
+    const warnings = [];
+    for (const [name, password, field] of attempts) {
+      if (provider() !== name) {
+        element('login-provider').value = name;
+        clearChallenge();
+      }
+      const label = name === 'academia' ? 'Academia' : 'Student Portal';
+      element('sign-in-status').textContent = `Connecting ${label}…`;
+      try {
+        const result = await login(api, { account, password, remember: credentials.remember });
+        if (!result) return null; // Keep manual verification in the same form.
+        if (result.authenticated !== true) throw new Error('Sign-in was not confirmed.');
+        connected.add(name);
+        element(field).value = '';
+      } catch (error) {
+        warnings.push(`${label}: ${error.message || 'Could not connect.'}`);
+      }
+    }
+    if (!connected.size) throw new Error(warnings.join(' '));
+    return { authenticated: true, warning: warnings.length ? `${warnings.join(' ')} You can reconnect in Settings.` : '' };
+  }
   document.addEventListener('pointerdown', () => { if (enabled) clicks++; }, { passive: true });
   document.addEventListener('pointermove', () => { if (enabled) movements++; }, { passive: true });
   document.addEventListener('keydown', () => { if (enabled) keys++; }, { passive: true });
@@ -146,5 +189,5 @@ globalThis.classproAuth = (() => {
     reset();
     element('password').focus();
   }
-  return { configure, reset, login, prepare, usePortal, get enabled() { return enabled; } };
+  return { configure, reset, login, loginBoth, prepare, usePortal, get enabled() { return enabled; } };
 })();

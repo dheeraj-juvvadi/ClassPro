@@ -22,6 +22,11 @@ globalThis.classproHome = (() => {
     return result;
   };
   const now = () => preview ? new Date(2026, 8, 14, 9, 48) : planner.clock(reportedSchedule?.timezone || 'Asia/Kolkata');
+  const reminders = createClassReminders({ notify(title, options) {
+    if (preview || globalThis.Notification?.permission !== 'granted') return false;
+    new Notification(title, options);
+    return true;
+  } });
 
   function describe(date) {
     const state = planner.dayState(source(), date);
@@ -48,6 +53,7 @@ globalThis.classproHome = (() => {
   updateFilters();
 
   function page(destination, focus = true) {
+    document.title = `${{ home: 'Home', attendance: 'Attendance', marks: 'Marks' }[destination] || 'Student Portal'} · Anon`;
     const previousPage = document.body.dataset.page;
     document.body.dataset.page = destination;
     get('home-view').hidden = destination !== 'home';
@@ -73,6 +79,7 @@ globalThis.classproHome = (() => {
     const classes = planner.classes(source(), day, filters);
     const minute = date.getHours() * 60 + date.getMinutes();
     const next = planner.next(source(), date, filters);
+    reminders.check(next, date);
     const sameDay = next && planner.key(next.date) === planner.key(date);
     const nextClasses = next ? planner.classes(source(), next.date, filters) : [];
     const nextIndex = nextClasses.findIndex(entry => entry.start === next?.start && entry.code === next?.code);
@@ -101,7 +108,14 @@ globalThis.classproHome = (() => {
       }
       card.append(stats);
 
-    } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
+    } else {
+      const confirmed = planner.dayState(source(), date).kind !== 'unknown' && !reportError;
+      if (confirmed) {
+        title.textContent = 'A little room to breathe.';
+        card.append(confetti());
+        card.append(element('p', 'class-room', 'No more classes on your confirmed schedule. Enjoy the pause.'));
+      } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
+    }
     const bottom = element('div', 'next-class-bottom');
     const following = nextClasses[nextIndex + 1];
     bottom.append(element('p', '', next && following ? `Next · ${following.title} · ${following.start}` : next ? 'Last class of the day' : 'Your attendance'));
@@ -111,7 +125,7 @@ globalThis.classproHome = (() => {
     action.addEventListener('click', () => page('attendance'));
     bottom.append(action);
     card.append(bottom);
-    renderInsights(classes);
+    renderInsights(classes, next?.code);
     const state = describe(day);
     get('today-title').textContent = planner.key(day) === planner.key(date) ? 'Today’s classes' : day.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'short' });
     get('schedule-source').textContent = state.label;
@@ -119,11 +133,18 @@ globalThis.classproHome = (() => {
     calendar.today(date);
   }
 
-  function renderInsights(classes) {
+  function confetti() {
+    const art = element('pre', 'confetti-art', '  .    *       +      .\n     \\  |  /     *\n  +   \\ | /  .      +\n   --  \\|/  --\n  .    /\\     *   .\n      /::\\  +\n  *  /::::\\     .\n    /______\\');
+    art.setAttribute('aria-hidden', 'true');
+    return art;
+  }
+
+  function renderInsights(classes, featuredCode) {
     const container = get('home-insights');
     container.replaceChildren();
     const todaysCodes = new Set(classes.map(entry => entry.code));
-    const ordered = [...attendance].sort((first, second) => Number(todaysCodes.has(second.code)) - Number(todaysCodes.has(first.code)));
+    const ordered = attendance.filter(course => course.code !== featuredCode)
+      .sort((first, second) => Number(todaysCodes.has(second.code)) - Number(todaysCodes.has(first.code)));
     for (const course of ordered.slice(0, 2)) {
       const insight = model.insight(course);
       const card = element('button', `insight-card ${insight.tone}`);
@@ -133,7 +154,8 @@ globalThis.classproHome = (() => {
       card.addEventListener('click', () => page('attendance'));
       container.append(card);
     }
-    if (!ordered.length) container.append(element('p', 'home-empty', reportError || 'Your attendance insights will appear once reports are loaded.'));
+    container.hidden = !ordered.length && !!featuredCode;
+    if (!ordered.length && !featuredCode) container.append(element('p', 'home-empty', reportError || 'Your attendance insights will appear once reports are loaded.'));
   }
 
   function renderTimeline(classes, minute) {
@@ -157,7 +179,9 @@ globalThis.classproHome = (() => {
     }
     if (!classes.length) {
       const state = describe(selectedDate || now());
-      list.append(element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No confirmed classes for this date.' : 'No classes for this date and filter selection.'));
+      const empty = element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No confirmed classes for this date.' : 'No classes for this date and filter selection.');
+      if (state.kind !== 'unknown') empty.prepend(confetti());
+      list.append(empty);
     }
   }
 
@@ -189,6 +213,9 @@ globalThis.classproHome = (() => {
   });
   get('close-accounts').addEventListener('click', () => get('accounts-dialog').close());
   for (const button of document.querySelectorAll('[data-page]')) button.addEventListener('click', () => page(button.dataset.page));
+  for (const button of document.querySelectorAll('[data-sidebar-action]')) {
+    button.addEventListener('click', () => get(button.dataset.sidebarAction).click());
+  }
   document.addEventListener('click', event => {
     if (!get('planner-menu').contains(event.target)) get('planner-menu').open = false;
   });
@@ -198,15 +225,20 @@ globalThis.classproHome = (() => {
       get('planner-menu').querySelector('summary').focus();
     }
   });
-  const refreshClock = () => { if (!get('home-view').hidden && !document.hidden) render(); };
+  const refreshClock = () => {
+    if (!document.body.classList.contains('planner') || document.hidden) return;
+    if (!get('home-view').hidden) render();
+    else { const date = now(); reminders.check(planner.next(source(), date, filters), date); }
+  };
   setInterval(refreshClock, 60000);
   document.addEventListener('visibilitychange', refreshClock);
   window.addEventListener('focus', refreshClock);
 
   return {
+    reminders(enabled) { reminders.enable(enabled); },
     profile(profile) { studentName = profile?.name || ''; greetingExtras = anonGreetings.select(profile); render(); },
     enter() { render(); page('home'); },
-    clear() { studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
+    clear() { reminders.clear(); studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
     update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];
       reportError = report?.error?.message || '';

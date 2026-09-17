@@ -7,15 +7,26 @@
   <meta name="theme-color" content="#191b19" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#191b19" media="(prefers-color-scheme: dark)">
   <title>Anon · Student Portal</title>
-  <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <meta name="description" content="A little room to grow. Keep your SRM attendance, marks and timetable together with Anon.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Anon · A little room to grow">
+  <meta property="og:description" content="Your SRM attendance, marks and timetable. One calm space for your academic day.">
+  <meta property="og:url" content="https://anon-tracker.vercel.app/">
+  <meta property="og:image" content="https://anon-tracker.vercel.app/og-image.png">
+  <meta property="og:image:alt" content="Anon floral mark with the words A little room to grow on a charcoal background.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://anon-tracker.vercel.app/">
+  <link rel="manifest" href="/manifest.webmanifest?v=7f4dc59b0c">
+  <link rel="icon" href="/favicon.f9be9386a0.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/favicon.c9282642a4.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.9864004e08.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Anon">
-  <script defer src="/_vercel/insights/script.js"></script>
-  <script defer src="/_vercel/speed-insights/script.js"></script>
+  <link rel="stylesheet" href="/consent.css?v=c8239834ce">
+  <script defer src="/consent.js?v=be694796ec"></script>
   <link rel="preload" href="/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/style.css?v=6b66244cea">
+  <link rel="stylesheet" href="/style.css?v=825a4406c2">
   <link rel="stylesheet" href="/garden.css?v=1c5b5ccb5f">
   <link rel="stylesheet" href="/login.css?v=3a3182a966">
   <link rel="stylesheet" href="/home.css?v=b88f426dd1">
@@ -26,28 +37,30 @@
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
   <link rel="stylesheet" href="/interaction-feedback.css?v=9965e94781">
-  <script src="/interaction-feedback.js?v=57200f9f85" defer></script>
+  <link rel="stylesheet" href="/desktop.css?v=504f03c73f">
+  <script src="/interaction-feedback.js?v=d80307ad7a" defer></script>
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
   <script src="/home-model.js?v=1adde8e762" defer></script>
   <script src="/schedule-model.js?v=59f9ae9285" defer></script>
+  <script src="/class-reminders.js?v=c0a05bb8cc" defer></script>
   <script src="/schedule-calendar.js?v=80e858b0a7" defer></script>
   <script src="/academic-calendar.js?v=37102b4930" defer></script>
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
   <script src="/course-details.js?v=c862a2bd04" defer></script>
   <script src="/greeting.js?v=f5ef206ccf" defer></script>
-  <script src="/home.js?v=a5ce70b1df" defer></script>
+  <script src="/home.js?v=67de83827a" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=fd8c3b7f24" defer></script>
   <script src="/date-attendance.js?v=9e8de7e9ee" defer></script>
   <script src="/academic-ui.js?v=76011be99e" defer></script>
   <script src="/provider-connections.js?v=d823a1c618" defer></script>
   <script src="/client-ocr.js?v=7a543e9229" defer></script>
-  <script src="/auth-client.js?v=2f54a42c87" defer></script>
+  <script src="/auth-client.js?v=013588fcdd" defer></script>
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=9b80137deb" defer></script>
-  <script src="/settings.js?v=37dad414bc" defer></script>
-  <script src="/app.js?v=cc8cbc6348" defer></script>
+  <script src="/settings.js?v=a753d3590a" defer></script>
+  <script src="/app.js?v=381c010c95" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -55,7 +68,18 @@
   <div class="botanical-backdrop" aria-hidden="true"></div>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
-    <div class="brand">Anon<span class="brand-caption">A LITTLE ROOM TO GROW</span></div>
+    <div class="brand"><img class="brand-mark" src="/logo.svg" width="32" height="32" alt="">Anon<span class="brand-caption">A LITTLE ROOM TO GROW</span></div>
+  <nav id="planner-nav" aria-label="Main navigation" hidden>
+    <button type="button" data-page="home" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></svg>Home</button>
+    <button type="button" data-page="attendance"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m7 12 3 3 7-7"/></svg>Attendance</button>
+    <button type="button" data-page="marks"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 21V11m7 10V3m7 18V7"/></svg>Marks</button>
+    <div class="sidebar-tools">
+      <span class="sidebar-label">Your space</span>
+      <button type="button" data-sidebar-action="open-calendar"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></svg>Academic calendar</button>
+      <button type="button" data-sidebar-action="open-accounts"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>Settings</button>
+      <button type="button" data-sidebar-action="logout"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 4H4v16h6m4-12 4 4-4 4m-6-4h10"/></svg>Sign out</button>
+    </div>
+  </nav>
     <details id="planner-menu" hidden>
       <summary aria-label="More options"><span aria-hidden="true">+</span></summary>
       <div class="planner-menu-items">
@@ -70,22 +94,27 @@
     <section id="login-view" class="login-layout" aria-labelledby="login-title" hidden>
       <div class="login-card">
         <h1 id="login-title">Welcome <span>back.</span></h1>
-        <p id="login-provider-caption" class="quiet">Sign in with Academia</p>
+        <p id="login-provider-caption" class="quiet">One ID. Both portals, together.</p>
         <form id="login-form">
           <div id="provider-choice" hidden>
             <label for="login-provider">Sign in with</label>
             <select id="login-provider" aria-describedby="provider-help"><option value="academia">Academia</option><option value="portal">Student Portal</option></select>
             <p id="provider-help" class="quiet">Use your Academia password.</p>
           </div>
-          <label for="account">NetID</label>
-          <input id="account" name="account" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your SRM NetID" required>
-          <label for="password">Password</label>
+          <label for="account">Your SRM ID</label>
+          <input id="account" name="account" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="NetID or SRM email" required>
+          <label for="password">Academia password</label>
           <div class="password-field">
-            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your Academia password">
             <button id="password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button>
           </div>
+          <div id="portal-password-group">
+            <label for="portal-password">Student Portal password</label>
+            <input id="portal-password" name="portal-password" type="password" autocomplete="current-password" placeholder="Your Student Portal password" aria-describedby="password-help">
+            <p id="password-help" class="quiet login-help">Connect both, or enter one password to start.</p>
+          </div>
           <div class="login-options">
-            <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox" checked>Keep me signed in for 2 days</label>
+            <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox" checked>Keep me signed in for 7 days</label>
             <a href="https://ssp.srmist.edu.in/resetpassword/" target="_blank" rel="noopener noreferrer">Forgot password?</a>
           </div>
           <div id="manual-captcha">
@@ -103,6 +132,7 @@
     </section>
     <section id="home-view" aria-labelledby="home-title" hidden>
       <div class="home-greeting"><h1 id="home-title" tabindex="-1">Good morning.</h1><p id="home-date"></p></div>
+      <p id="home-message" class="message" role="status" hidden></p>
       <p id="home-preview-note" class="preview-note" hidden>Design preview · sample day <a href="/">Back to sign in</a></p>
       <article id="next-class-card" class="next-class-card" aria-labelledby="next-class-title"></article>
       <section class="attendance-insights" aria-label="Attendance at a glance" id="home-insights"></section>
@@ -113,7 +143,7 @@
           <div><label for="batch-filter">Batch</label><select id="batch-filter"><option value="">All batches</option></select></div>
         </div>
         <div class="timeline-heading"><h2 id="today-title">Today’s classes</h2><span id="today-count"></span></div>
-        <ol id="today-classes"></ol>
+        <ol id="today-classes" tabindex="0" aria-label="Classes for the selected date"></ol>
       </section>
     </section>
     <section id="reports-view" aria-labelledby="reports-title" hidden>
@@ -140,11 +170,6 @@
     </section>
     <noscript><p class="message">JavaScript is required to sign in and load your student reports. Please enable it and reload this page.</p></noscript>
   </main>
-  <nav id="planner-nav" aria-label="Main navigation" hidden>
-    <button type="button" data-page="home" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></svg>Home</button>
-    <button type="button" data-page="attendance"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m7 12 3 3 7-7"/></svg>Attendance</button>
-    <button type="button" data-page="marks"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 21V11m7 10V3m7 18V7"/></svg>Marks</button>
-  </nav>
   <dialog id="calendar-dialog" aria-labelledby="calendar-title">
     <div class="calendar-cover">
       <img id="calendar-art" data-src="/calendar-garden.eefc609c1c.svg" alt="" width="1000" height="320" decoding="async">
@@ -174,11 +199,13 @@
     <h3 class="settings-section-title">Connections</h3>
     <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
     <h3 class="settings-section-title">Your preferences</h3>
+    <div class="settings-row"><span>Privacy &amp; analytics<small>Optional analytics are your choice.</small></span><a href="/privacy.html">Manage</a></div>
     <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="clay">Clay</option></select></label>
     <label class="settings-row" for="settings-haptics"><span>Touch feedback<small>Gentle taps on supported devices.</small></span><input id="settings-haptics" type="checkbox" role="switch" checked></label>
     <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
+    <label class="settings-row" for="settings-reminders"><span>Class reminders<small>15 and 5 minutes before class while Anon is open. Uses your selected batch.</small></span><input id="settings-reminders" type="checkbox" role="switch"></label>
     <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg> Sync</button></div>
-    <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 48 hours of inactivity. Signing out deletes that session.</p><p>Your display preferences stay in this browser. Artwork is cached for reuse. Notifications contain no grades or personal details.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
+    <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 7 days of inactivity. Signing out deletes that session.</p><p>Your latest reports and display preferences stay in this browser. Signing out clears the report cache. Optional class reminders include course names and rooms.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
     <details class="settings-detail"><summary>What’s new</summary><p>Academic calendar, date-based attendance projections, recovery dates and scheduled background sync.</p></details>
     <a class="settings-feedback" href="https://github.com/dheeraj-juvvadi/ClassPro/issues/new" target="_blank" rel="noopener noreferrer">Feedback &amp; report a problem ↗</a>
     <button id="settings-signout" class="settings-signout" type="button">Sign out</button>
@@ -194,9 +221,9 @@
       <p id="connect-message" role="status" class="quiet"></p>
       <button id="connect-submit" type="submit">Connect</button>
     </form>
-    <p class="quiet">Remembered sessions are encrypted on the server for automatic reconnection for 2 days of inactivity. Signing out removes this session.</p>
+    <p class="quiet">Remembered sessions are encrypted on the server for automatic reconnection for 7 days of inactivity. Signing out removes this session.</p>
   </dialog>
-  <footer class="site-footer">Anon <span>Student Portal</span></footer>
+  <footer class="site-footer">Anon <span>Student Portal</span><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><button type="button" data-consent-open>Analytics preference</button></footer>
   <dialog id="projection-dialog" aria-labelledby="projection-title">
     <div class="schedule-heading"><h2 id="projection-title">Attendance by date</h2><button id="close-projection" type="button" aria-label="Close calculator">×</button></div>
     <p class="quiet">Choose Leave, Attend or OD, then select dates. Hours come from your SRM timetable and day orders.</p>

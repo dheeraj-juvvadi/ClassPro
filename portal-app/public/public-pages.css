@@ -1,0 +1,27 @@
+@font-face { font-family: Inter; src: url('/InterVariable.woff2') format('woff2'); font-display: swap; }
+:root { color-scheme: dark; font-family: Inter, sans-serif; color: #f1eee3; background: #191b19; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; }
+a { color: #d5dda9; text-underline-offset: 4px; -webkit-tap-highlight-color: transparent; }
+a:focus-visible { outline: 2px solid #d5dda9; outline-offset: 6px; }
+.public-header { max-width: 1160px; margin: auto; padding: 28px 32px; }
+.public-header a { display: inline-flex; gap: 10px; align-items: center; color: #f1eee3; font-size: 21px; font-weight: 700; text-decoration: none; }
+.error-page { position: relative; max-width: 900px; margin: 5vh auto; padding: 32px; }
+.eyebrow { color: #b3b8ab; font-size: 12px; }
+h1 { font-size: clamp(40px, 6vw, 72px); line-height: 1.1; font-weight: 500; margin: 24px 0; }
+h1 em { font-style: normal; color: #c5d4a7; }
+.error-page > p:not(.eyebrow) { max-width: 42ch; color: #b3b8ab; font-size: 16px; line-height: 1.8; }
+.public-cta { display: inline-flex; align-items: center; gap: 32px; min-height: 48px; padding: 12px 20px; margin-top: 16px; border-radius: 8px; background: #d5dda9; color: #252b1c; text-decoration: none; }
+.public-cta:hover { background: #e6edc2; }
+.public-flower { position: absolute; right: 32px; top: 90px; color: #f44b25; font-size: 20px; line-height: 1.25; user-select: none; }
+.public-footer { max-width: 1160px; margin: 48px auto 0; padding: 24px 32px; color: #b3b8ab; font-size: 12px; }
+.document-page { max-width: 780px; margin: 32px auto; padding: 0 32px; }
+.document-page h1 { font-size: clamp(34px, 5vw, 52px); }
+.document-page h2 { font-size: 20px; font-weight: 500; margin-top: 36px; }
+.document-page p { color: #b3b8ab; line-height: 1.8; }
+.document-page button { font: inherit; cursor: pointer; border: 0; }
+@media (max-width: 700px) {
+  .public-header, .public-footer { padding-inline: 24px; }
+  .error-page { margin-top: 16px; padding: 24px; }
+  .public-flower { position: static; margin: 36px auto; text-align: center; font-size: 15px; }
+}

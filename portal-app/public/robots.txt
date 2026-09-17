@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /404.html
+Disallow: /*?preview=
+
+Sitemap: https://anon-tracker.vercel.app/sitemap.xml

@@ -18,9 +18,12 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
   app.use(express.json());
   let sessionChecks = 0;
+  let sessionValid = true;
+  let offline = false;
   app.get('/api/session', (request, response) => {
     sessionChecks += 1;
-    setTimeout(() => response.json({ authenticated: true, authMode: 'http', provider: 'academia' }), 2500);
+    if (offline) return response.status(503).json({ error: { message: 'Offline' } });
+    setTimeout(() => response.json({ authenticated: sessionValid, authMode: 'http', provider: 'academia' }), 2500);
   });
   app.get('/api/reports', (request, response) => {
     if (request.query.cache === 'only') return response.json(reportsPayload);
@@ -47,7 +50,16 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   await page.waitForTimeout(3200);
   assert.ok(sessionChecks >= 1, 'background session validation never ran');
   assert.equal(await page.locator('#home-view').isHidden(), false, 'session check kicked user off cached view');
-  await page.evaluate(() => localStorage.removeItem('classpro-reports-cache'));
+  offline = true;
+  await page.reload();
+  await page.locator('#home-view').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => document.querySelector('#login-form').getAttribute('aria-busy') === 'false');
+  assert.equal(await page.locator('#home-view').isVisible(), true, 'network failure should retain cached data');
+  offline = false;
+  sessionValid = false;
+  await page.reload();
+  await page.locator('#login-view').waitFor({ state: 'visible' });
+  assert.equal(await page.evaluate(() => localStorage.getItem('classpro-reports-cache')), null, 'confirmed expired session must clear cached reports');
 });
 
 test('installed app context exposes manifest wiring', { timeout: 20000 }, async context => {

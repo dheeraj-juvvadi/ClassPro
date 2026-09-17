@@ -1,0 +1,55 @@
+name: Validate and deploy Azure
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: portal-app/package-lock.json
+      - run: npm ci
+        working-directory: portal-app
+      - run: npx playwright install --with-deps chromium
+        working-directory: portal-app
+      - run: npm run build && npm run test:release
+        working-directory: portal-app
+      - run: docker build -f ratio-diagnostic/Dockerfile -t anon-test .
+      - run: docker run --rm --network none -e APP_ORIGIN=http://localhost:8089 anon-test python -m unittest discover
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Deploy tested revision
+        env:
+          DEPLOY_KEY: ${{ secrets.AZURE_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.AZURE_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ vars.AZURE_DEPLOY_HOST }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/anon_deploy
+          chmod 600 ~/.ssh/anon_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          git archive --format=tar.gz HEAD ratio-diagnostic portal-python/ocr.py portal-python/model |
+            ssh -i ~/.ssh/anon_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "azureuser@$DEPLOY_HOST" "$GITHUB_SHA"
+          rm -f ~/.ssh/anon_deploy
+      - name: Verify public service
+        run: curl --fail --retry 3 --retry-delay 3 https://anon-tracker.vercel.app/api/session

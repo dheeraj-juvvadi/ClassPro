@@ -35,7 +35,8 @@ h1:focus, main:focus { outline: none; }
 a { color: var(--accent); }
 .site-header, .site-footer { max-width: 1160px; margin: auto; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .site-header { min-height: 92px; border-bottom: 1px solid var(--line); }
-.brand { font-size: 1.125rem; font-weight: 750; letter-spacing: -.03em; }
+.brand { display: inline-flex; align-items: center; gap: .5rem; font-size: 1.125rem; font-weight: 750; letter-spacing: -.03em; }
+.brand-mark { display: block; width: 32px; height: 32px; flex: none; }
 .brand span { color: var(--muted); font-weight: 450; letter-spacing: -.01em; }
 main { max-width: 1160px; margin: auto; padding: 3rem 2rem 5rem; min-height: calc(100vh - 170px); }
 .site-footer { border-top: 1px solid var(--line); font-size: .8125rem; color: var(--muted); }

@@ -21,15 +21,11 @@ from fastapi.staticfiles import StaticFiles
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "upstream"))
 import main as upstream
-from observe import events, instrument, record
-from deep_evidence import integrity, runtime, submitted, workload
 from academic_data import extras
 from provider_flow import providers, combined, same_student, normalize_account, refresh as refresh_providers
 from session_store import SessionStore, lifetime, SESSION_SECONDS
 import sync_schedule
 import attendance_trends
-
-upstream.PortalSession = instrument(upstream.PortalSession)
 
 # Upstream diagnostics include identifiers and CAPTCHA answers. Silence only
 # its modules, once, rather than swapping process-wide stdout across awaits.
@@ -113,10 +109,7 @@ async def solve_image(image):
             worker.exception()
     task.add_done_callback(finished)
     try:
-        started = time.monotonic()
         answer = await asyncio.shield(task)
-        record({"stage": "ocr", "completed": bool(answer),
-                "duration_ms": round((time.monotonic() - started) * 1000)})
         return True, answer, 200
     except Exception:
         return False, "OCR unavailable", 503
@@ -158,7 +151,7 @@ async def lifespan(app):
     loop = asyncio.get_running_loop()
     loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(
         max_workers=IO_THREADS, thread_name_prefix="anon-io"))
-    print(json.dumps({"event": "ratio_runtime", **runtime(), "api_concurrency": API_CONCURRENCY,
+    print(json.dumps({"event": "service_started", "api_concurrency": API_CONCURRENCY,
                       "ocr_concurrency": OCR_CONCURRENCY, "session_limit": SESSION_LIMIT,
                       "rate_per_minute": RATE_PER_MINUTE, "io_threads": IO_THREADS}), flush=True)
     async with upstream.lifespan(upstream.app):
@@ -195,20 +188,9 @@ def report(data, previous=None):
 
 
 async def invoke(request, path, payload):
-    captured = [{"stage": "workload_before", **workload()}]
-    token = events.set(captured)
-    credential_token = submitted.set(payload)
     trace_id = request.state.diagnostic_id if hasattr(request.state, "diagnostic_id") else secrets.token_hex(8)
     started = time.monotonic()
-    try:
-        response = await request.app.state.client.post(path, json=payload)
-    finally:
-        captured.append({"stage": "workload_after", **workload()})
-        submitted.reset(credential_token)
-        events.reset(token)
-        for index, evidence in enumerate(captured):
-            print(json.dumps({"event": "ratio_evidence", "request_id": trace_id,
-                              "index": index, **evidence}), flush=True)
+    response = await request.app.state.client.post(path, json=payload)
     data = response.json()
     detail = data.get("detail", "") if isinstance(data, dict) else ""
     category = "accepted" if response.status_code == 200 else "unclassified"
@@ -217,7 +199,7 @@ async def invoke(request, path, payload):
             category = "upstream_captcha_classification"
         elif "credentials" in detail.lower():
             category = "upstream_credentials_classification"
-    print(json.dumps({"event": "ratio_diagnostic", "route": path,
+    print(json.dumps({"event": "portal_request", "route": path,
                       "request_id": trace_id, "duration_ms": round((time.monotonic() - started) * 1000),
                       "status": response.status_code, "classification": category}), flush=True)
     return response, data
@@ -368,8 +350,6 @@ async def login(request: Request):
         return failure("SESSION_EXPIRED", "Start a fresh sign-in.")
     if not isinstance(payload.get("account"), str) or not isinstance(payload.get("password"), str):
         return failure("INVALID_REQUEST", "Enter your account and password.", 400)
-    print(json.dumps({"event": "ratio_evidence", "request_id": request.state.diagnostic_id,
-                      **integrity(payload)}), flush=True)
     login_payload = {
         "username": normalize_account(payload["account"], provider),
         "password": payload["password"],

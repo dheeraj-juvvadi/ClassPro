@@ -1,0 +1,100 @@
+/* A wider study desk: today's work beside the agenda, with reachable top navigation. */
+.login-help { font-size: .75rem; line-height: 1.6; margin-top: .65rem; }
+#home-message { grid-column: 1 / -1; }
+button, a, summary, [role="button"] { -webkit-tap-highlight-color: transparent; }
+.confetti-art { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; line-height: 1.35; text-align: center; color: currentColor; margin: 24px auto; user-select: none; }
+body.planner #planner-nav {
+  inset-inline: 0; bottom: 0; transform: none; width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0;
+  padding: 8px max(16px, calc((100vw - 480px) / 2)) max(8px, env(safe-area-inset-bottom));
+  border: 0; border-top: 1px solid #343b30; border-radius: 0;
+  background: #191b19; box-shadow: none;
+}
+body.planner #planner-nav button { border-radius: 0; min-height: 52px; background: transparent; }
+body.planner #planner-nav button[aria-current] { background: transparent; color: #d5dda9; }
+body.planner #planner-nav button[aria-current] svg { stroke-width: 2; }
+body.planner #planner-nav button:active { transform: none; }
+.sidebar-tools { display: none; }
+.report-title-row #refresh, #settings-sync {
+  color: #d5e4bb; text-shadow: 0 0 9px #c5d4a740;
+}
+#refresh .sync-icon, #settings-sync .sync-icon {
+  filter: drop-shadow(0 0 4px #c5d4a766);
+}
+.report-title-row #refresh:hover, #settings-sync:hover { color: #eef6dc; }
+#refresh.syncing, #settings-sync.syncing { opacity: 1; color: #e4efce; }
+@media (min-width: 1000px) {
+  body.planner { --desk-width: 1360px; --sidebar-width: 216px; }
+  body.planner .site-header {
+    position: fixed; inset: 0 auto 0 0; z-index: 20; width: var(--sidebar-width); max-width: none;
+    height: 100dvh; min-height: 0; margin: 0; padding: 32px 16px;
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 36px;
+    background: #191b19; border-right: 1px solid #343b30; overflow-y: auto;
+  }
+  body.planner .site-header .brand { align-self: flex-start; padding-left: 12px; }
+  body.planner .site-header #planner-menu { display: none; }
+  body.planner main,
+  body.planner:is([data-page="attendance"], [data-page="marks"]) main {
+    width: calc(100% - var(--sidebar-width)); max-width: var(--desk-width); margin: 0 0 0 var(--sidebar-width);
+    padding: 40px 32px 64px; min-height: 100svh;
+  }
+  body.planner #planner-nav {
+    position: static; width: 100%; transform: none;
+    display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+    border-radius: 0; background: transparent; border: 0; padding: 0;
+  }
+  body.planner #planner-nav button { flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 48px; padding: 12px; border-radius: 9px; font-size: 13px; text-align: left; }
+  body.planner #planner-nav button[aria-current] { background: #2c3526; color: #d5dda9; box-shadow: none; }
+  body.planner #planner-nav button:hover { background: #232a20; }
+  body.planner #planner-nav svg { flex: none; width: 19px; height: 19px; }
+  .sidebar-tools { display: flex; flex-direction: column; gap: 6px; margin-top: 28px; padding-top: 24px; border-top: 1px solid #343b30; }
+  .sidebar-label { padding: 0 12px 8px; font-size: 11px; color: var(--planner-muted); }
+  body.planner #home-view:not([hidden]) {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 24px 40px; align-items: start;
+  }
+  .planner .home-greeting { grid-column: 1 / -1; margin: 0 0 8px; align-items: center; }
+  .planner .home-greeting h1 { font-size: 27px; line-height: 1.25; }
+  .planner .home-greeting p { font-size: 13px; }
+  .planner #home-preview-note { grid-column: 1 / -1; margin: 0; }
+  .planner .next-class-card { grid-column: 1; grid-row: auto; padding: 28px; border-radius: 22px; }
+  .planner .next-class-card h2 { font-size: 32px; line-height: 1.15; margin-block: 24px 18px; }
+  .planner .next-class-card .class-time { font-size: 24px; }
+  .planner .planner-eyebrow { font-size: 11px; }
+  .planner .class-room, .planner .class-countdown { font-size: 13px; }
+  .planner .next-class-stats { margin-top: 24px; }
+  .planner .next-class-stats span { font-size: 12px; }
+  .planner .next-class-stats strong { font-size: 17px; }
+  .planner .next-class-bottom p { font-size: 12px; }
+  .planner .attendance-insights { grid-column: 1; margin: 0; gap: 16px; }
+  .planner .insight-card { padding: 22px; }
+  .planner .insight-card .planner-eyebrow { font-size: 11px; }
+  .planner .insight-margin { font-size: 13px; }
+  .planner .day-timeline {
+    grid-column: 2; grid-row: 2 / span 2; align-self: stretch;
+    contain: size; min-height: 0; display: flex; flex-direction: column;
+    margin: 0; padding-left: 32px; border-left: 1px solid #343b30;
+  }
+  .planner #home-view:has(#home-preview-note:not([hidden])) .day-timeline,
+  .planner #home-view:has(#home-message:not([hidden])) .day-timeline { grid-row: 3 / span 2; }
+  .planner .day-timeline > :not(#today-classes) { flex: none; }
+  .planner #today-classes { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #626e53 transparent; }
+  .planner .calendar-heading { font-size: 13px; }
+  .planner .calendar-week button { min-height: 86px; }
+  .planner .calendar-week button span:first-child { font-size: 11px; }
+  .planner .calendar-week button span:last-child { font-size: 10px; }
+  .planner #schedule-source { font-size: 12px; }
+  .planner .timeline-heading h2 { font-size: 18px; }
+  .planner .timeline-heading > span { font-size: 12px; }
+  .planner .timeline-row { padding-block: 19px; grid-template-columns: 48px minmax(0, 1fr) auto; }
+  .planner .timeline-times { font-size: 12px; }
+  .planner .timeline-description h3 { font-size: 14px; }
+  .planner .timeline-description p { font-size: 12px; }
+  body.planner:is([data-page="attendance"], [data-page="marks"]) #reports-view > .page-heading {
+    max-width: none; margin: 0 0 32px; align-items: center;
+  }
+  .planner #reports-title { font-size: 32px; }
+  .planner #attendance-content, .planner #marks-content { max-width: 100%; }
+  .planner .report-section { padding: 0; }
+  .planner #marks-panel .course-details > summary { min-height: 94px; }
+}

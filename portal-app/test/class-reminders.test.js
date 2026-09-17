@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import '../public/home-model.js';
+import '../public/schedule-model.js';
+import '../public/class-reminders.js';
+
+test('reminders are opt-in, deduplicated per class/date/window, and skip unknown days', () => {
+  const notifications = [];
+  const reminders = createClassReminders({ notify: (...args) => notifications.push(args) });
+  const date = new Date(2026, 8, 17, 9, 46);
+  const next = { title: 'Maths', code: 'MA101', start: '10:00', room: 'A101', date };
+  reminders.check(next, date);
+  assert.equal(notifications.length, 0);
+  reminders.enable(true);
+  reminders.check({ ...next, unknown: true }, date);
+  assert.equal(notifications.length, 0);
+  reminders.check(next, date);
+  reminders.check(next, new Date(2026, 8, 17, 9, 48));
+  assert.equal(notifications.length, 1);
+  reminders.check(next, new Date(2026, 8, 17, 9, 55));
+  assert.equal(notifications.length, 2);
+  assert.match(notifications[1][1].body, /A101.*5 min/);
+  reminders.check(next, new Date(2026, 8, 17, 10, 0));
+  assert.equal(notifications.length, 2);
+  const tomorrow = new Date(2026, 8, 18, 9, 46);
+  reminders.check({ ...next, date: tomorrow }, tomorrow);
+  assert.equal(notifications.length, 3);
+  reminders.clear();
+  reminders.check(next, date);
+  assert.equal(notifications.length, 3);
+});

@@ -40,7 +40,6 @@ The portal sometimes renders an empty `csrfPreventionSalt`; the adapter preserve
 npm test
 ```
 
-`scripts/probe-login.js` is an explicit bounded diagnostic. It reads credentials only from `PORTAL_TEST_CREDENTIAL_DIR` when `TRY_LOGIN=1`; it never prints credential values. Do not commit credential files. UI mock checks and unit tests are not evidence of successful portal authentication.
 
 Wi-Fi latency update: uncertain client CAPTCHA retries now refresh the existing unauthenticated browser context. Client telemetry separates model wait, challenge loading, recognition, and portal submission. The browser-reuse change remains. Fast typing was rolled back after two failed phone logins. The 72 passing tests are not evidence of live portal acceptance.
 

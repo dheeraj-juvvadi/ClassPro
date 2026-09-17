@@ -4,7 +4,7 @@ globalThis.anonFeedback = (() => {
   let enabled = true, timer, lastTap = 0;
   function haptic(success = false) {
     if (!enabled || reduced.matches || document.hidden || !navigator.vibrate) return;
-    try { navigator.vibrate(success ? [12, 35, 12] : 8); } catch {}
+    try { navigator.vibrate(success ? [14, 35, 14] : 10); } catch {}
   }
   function enter(node) {
     if (!node || reduced.matches || !node.animate) return;

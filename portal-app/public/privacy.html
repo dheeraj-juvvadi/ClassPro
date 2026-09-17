@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191b19">
+  <title>Privacy &amp; storage · Anon</title>
+  <meta name="description" content="How Anon handles portal credentials, academic reports, remembered sessions, browser storage and optional analytics.">
+  <link rel="canonical" href="https://anon-tracker.vercel.app/privacy.html">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/public-pages.css?v=1b52f0ffa5"><link rel="stylesheet" href="/consent.css?v=c8239834ce">
+  <script src="/consent.js?v=be694796ec" defer></script>
+</head>
+<body>
+  <header class="public-header"><a href="/" aria-label="Anon home"><img src="/logo.svg" width="32" height="32" alt="">Anon</a></header>
+  <main class="document-page">
+    <p class="eyebrow">Updated September 17, 2026</p><h1>Privacy &amp; storage.</h1>
+    <p>Anon brings your SRM attendance, marks and timetable into one place. This page describes the data used by the current service.</p>
+    <h2>Portal sign-in and academic records</h2>
+    <p>Your ID and the password you enter for each provider are sent through Anon’s server to the corresponding SRM portal. The server keeps provider cookies and credentials to refresh records and reconnect when an upstream session expires. Passwords and provider cookies are not included in report responses or the browser report cache.</p>
+    <h2>Remembered sessions</h2>
+    <p>If you choose “Keep me signed in,” the server stores your session, credentials, cookies and reports in an encrypted database with a seven-day inactivity expiry. The encryption key is held on the same server. This protects database contents at rest; it does not protect against full server compromise. A session cookie in your browser identifies the server session.</p>
+    <p>Signing out deletes your active Anon session and local report cache. It does not revoke sessions directly with SRM. Deployment rollback backups may retain an earlier encrypted session snapshot; deleting the active session does not immediately erase those backups.</p>
+    <h2>Storage on your device</h2>
+    <p>Anon stores your latest academic reports in localStorage to show them quickly and when the network is unavailable. This includes personal and academic information and is not encrypted by Anon. Display preferences and your analytics choice are also stored locally. Avoid leaving Anon signed in on a shared device.</p>
+    <h2>Optional analytics and notifications</h2>
+    <p>With your permission, Vercel Analytics and Speed Insights measure visits and page performance. Anon does not intentionally send passwords, provider cookies or report contents to analytics. Optional analytics scripts are not loaded until you allow them. Hosting and security request logs can still be generated when the service is used.</p>
+    <p>Browser notifications require a separate permission. Class reminders may display course names and rooms on your device. They run while Anon is open; they are not background push notifications.</p>
+    <button type="button" class="public-cta" data-consent-open>Manage analytics preference</button>
+    <h2>Service providers and your choices</h2>
+    <p>The frontend is hosted by Vercel; the portal service runs on Microsoft Azure. SRM processes the portal requests sent to its systems. You can sign out, clear this site’s browser data, disable notifications in browser settings, and decline optional analytics.</p>
+    <p>For a privacy question, contact the project maintainer through the project’s GitHub profile. Do not post passwords, cookies, academic records or other private information in a public issue.</p>
+    <p><a href="https://github.com/dheeraj-juvvadi" target="_blank" rel="noopener noreferrer">Project maintainer ↗</a> · <a href="/terms.html">Terms of use</a></p>
+  </main>
+  <footer class="public-footer"><a href="/">Back to Anon</a> · A little room to grow.</footer>
+</body>
+</html>

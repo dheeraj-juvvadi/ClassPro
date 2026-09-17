@@ -1,68 +1,31 @@
-# Temporary Ratio-D backend comparison
+# Anon Azure backend
 
-The `upstream/` runtime is copied from projectakshith/ratio-d revision
-`413b7f0055a14794ea11cb858c05abab311f89b4`. Its AGPL license is retained.
-Source: https://github.com/projectakshith/ratio-d
+Production FastAPI service for Anon, retaining the historical directory name.
+The upstream SRM client comes from projectakshith/ratio-d revision
+413b7f0055a14794ea11cb858c05abab311f89b4; its AGPL license is retained.
 
-This diagnostic uses the actual FastAPI `/portal/captcha`, `/portal/login`,
-and `/portal/refresh` handlers, HTTPX client and report parsers. It does not
-use our Go server, Python subprocess adapter or Go report validation.
+## Runtime
+- Dockerfile: ratio-diagnostic/Dockerfile; build context: repository root.
+- APP_ORIGIN=https://anon-tracker.vercel.app; bind port 8080 to loopback.
+- Preserve SESSION_STORE_DIR=/app/session-data as a host bind mount.
+- Current production limits: 200 sessions, 4 API handlers, 2 OCR workers,
+  8 IO threads. These are admission limits, not benchmarked login capacity.
+- Remembered sessions expire after seven days of inactivity. Credentials and
+  provider cookies remain server-side for silent reconnection; encrypted storage
+  and its key reside on the VM. Logout deletes the active session.
+- Same-session operations are serialized. OCR permits survive request cancellation
+  until native inference finishes. Unchanged persisted payloads reuse ciphertext.
+- Logs contain request IDs, fixed route names, duration, status and failure
+  categories. Upstream prints and temporary cookie/network evidence are removed.
+- GET /health is the local health endpoint; /api/session validates public routing.
 
-The small public compatibility layer preserves `/api/*` for the current UI:
-- Routes requests internally to the upstream FastAPI application.
-- Maps attendance and marks into the existing frontend data format.
-- Keeps SRM cookies in bounded, expiring process memory, never browser storage.
-- Uses random HttpOnly session cookies, rotated after successful sign-in.
-- Applies origin checks, request limits and single-request concurrency.
-- Suppresses upstream print output, including predicted CAPTCHA answers.
-- Exposes only the compatibility routes, not upstream proxy/feedback endpoints.
+## Release
+Use scripts/release.mjs after staging a completed agenda. GitHub Actions validates
+frontend and backend, then sends the exact commit to the VM through a restricted
+SSH deployment key. The VM builds and tests before replacing production.
+See docs/releasing.md for setup and rollback details.
 
-One explicit substitution remains: upstream's TinyOCR HTTP helper calls the
-same TinyOCR model locally via ONNX Runtime. No separate Rust HTTP server is
-required. No changes are made to the upstream login algorithm or classifier.
-Consequently upstream may still misclassify a login rejection as a CAPTCHA
-error. Success is not claimed until real reports are returned.
-
-Passwords and cookies stay server-side for provider reauthentication. Remembered
-sessions use encrypted disk storage when `SESSION_STORE_DIR` is configured,
-with a 48-hour inactivity expiry; they are never returned to the browser.
-Logout removes the stored session; it does not
-claim to revoke the upstream SRM session. Restart restores remembered sessions
-from the mounted store; nonremembered sessions are cleared.
-The compatibility layer supports Academia and Student Portal connections with
-separate cookie jars. Portal attendance takes priority; an Academia timetable
-is retained when Portal omits its schedule. See `docs/anon-academic-data.md`.
-
-Render Dockerfile: `ratio-diagnostic/Dockerfile`, build context repository root.
-Required environment: `APP_ORIGIN=https://revamp-tracker.vercel.app`.
-The Docker image sets `OCR_ASSET_DIR`; the startup command uses Render's `PORT`
-or 8080. `TINYOCR_URL` and `TINYOCR_API_KEY` are unused by the local model helper.
-Do not set `HMAC_SECRET` for this internal ASGI setup: upstream would require a
-signature from the compatibility layer. Public requests retain origin checks.
-Vercel uses the existing static rewrite and needs no backend URL environment key.
-Health: `GET /health` returns `backend: ratio-diagnostic`.
-Rollback: restore Render Dockerfile to `portal-go/Dockerfile` and redeploy.
-The existing frontend rewrites and original backend files remain unchanged.
-
-`observe.py` adds read-only HTTPX hooks without modifying upstream form submission
-or failure classification. Logs include OCR completion/duration, cookie continuity
-booleans, form-field presence and fixed alert categories. Cookie values, passwords,
-CAPTCHA answers, dynamic field names and raw responses are never logged.
-
-Deep comparison diagnostics additionally record:
-- Runtime/package versions and source/model/CA-bundle hashes.
-- Proxy/certificate override presence, never their values.
-- TCP/TLS timings, protocol/cipher, certificate hash and SRM destination IP.
-- Request header names, cookie flags/rotation, redirect category and clock offset.
-- Field roles/order, token validity, safe synthetic telemetry fields and timings.
-- Browser credential-integrity match flags and received-to-submitted equality.
-- Process CPU/RSS and Linux container CPU-throttle/memory counters.
-
-Each event has a random request ID; events are split into bounded log lines.
-No credential hashes, nonce values, raw query strings, response bodies or student
-records are emitted. Integrity compares only within a request: it does not prove
-two separate local/hosted sign-ins used identical credentials. Observers do not
-change login fields or retries. Response timing includes observation overhead;
-an HTTP Date comparison has approximately one-second precision, not exact skew.
-
-Tests: `PYTHONPATH=ratio-diagnostic python -m unittest discover -s ratio-diagnostic -p 'test_*.py'`.
+## Tests
+Install requirements.txt with Python 3.11, then run python -m unittest discover
+from this directory. Tests use synthetic sessions and mocked upstream requests.
+benchmark_sessions.py measures synthetic persistence only; it does not contact SRM.

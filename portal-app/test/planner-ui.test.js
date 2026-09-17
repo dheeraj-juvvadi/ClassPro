@@ -20,6 +20,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   const origin = `http://127.0.0.1:${server.address().port}`;
   await page.goto(origin);
   await page.locator('#login-view').waitFor({ state: 'visible' });
+  await page.getByRole('button', { name: 'Essential only', exact: true }).click();
   assert.equal(await page.locator('#sign-in canvas').count(), 0);
   assert.equal(await page.locator('script[src*="sign-in-particles"]').count(), 0);
   assert.equal(await page.locator('#manual-captcha-answer').isVisible(), true);
@@ -36,22 +37,18 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#account').fill('synthetic');
   await page.locator('#password').fill('test-password');
   await page.locator('#sign-in').click();
-  await page.locator('#login-fallback-dialog').waitFor({ state: 'visible' });
-  assert.equal(await page.locator('#password').inputValue(), '');
-  await page.locator('#use-student-portal').click();
-  assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
+  await page.locator('#login-message').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('dialog[open]').count(), 0);
   assert.equal(await page.locator('#account').inputValue(), 'synthetic');
   await page.evaluate(() => classproAuth.configure({ authMode: 'http' }));
   await page.route('**/api/login/client', route => route.fulfill({ status: 401, json: { error: { code: 'LOGIN_REJECTED', message: 'Sign-in rejected.' } } }));
   await page.locator('#password').fill('test-password');
   await page.locator('#sign-in').click();
-  await page.locator('#login-fallback-dialog').waitFor({ state: 'visible' });
-  assert.match(await page.locator('#login-fallback-title').innerText(), /sign-in didn’t complete/);
-  assert.doesNotMatch(await page.locator('#login-fallback-title').innerText(), /unavailable|isn’t responding/);
-  await page.locator('#retry-academia').click();
+  await page.waitForFunction(() => document.querySelector('#login-message').textContent.includes('Sign-in rejected'));
+  assert.equal(await page.locator('dialog[open]').count(), 0);
   await page.goto(`${origin}/?preview=home`);
   await page.locator('#home-view').waitFor({ state: 'visible' });
-  assert.equal(await page.locator('#planner-nav button').count(), 3);
+  assert.equal(await page.locator('#planner-nav > button').count(), 3);
   const menuGeometry = await page.locator('#planner-menu > summary').evaluate(button => {
     const icon = button.querySelector('span'), b = button.getBoundingClientRect(), i = icon.getBoundingClientRect();
     const style = getComputedStyle(button);
@@ -183,8 +180,8 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
     anonSettings.update({ ...report, attendance: { data: [{ code: 'CS', title: 'Computing', present: 9, conducted: 11 }] } });
     globalThis.settingsTestReport = report;
   });
-  await page.locator('#planner-menu summary').click();
-  await page.locator('#open-accounts').click();
+  assert.equal(await page.locator('#planner-menu').isVisible(), false);
+  await page.locator('[data-sidebar-action="open-accounts"]').click();
   await page.locator('#settings-display-name').fill('Test nickname');
   await page.locator('#settings-profile-form button').click();
   await page.evaluate(() => { anonSettings.clear(); anonSettings.update(globalThis.settingsTestReport); });

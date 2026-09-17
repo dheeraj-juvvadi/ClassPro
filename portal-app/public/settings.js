@@ -14,6 +14,8 @@ globalThis.anonSettings = (() => {
     get('settings-haptics').checked = prefs.haptics !== false;
     anonFeedback.setHaptics(prefs.haptics !== false);
     get('settings-notifications').checked = prefs.notifications === true && globalThis.Notification?.permission === 'granted';
+    get('settings-reminders').checked = prefs.reminders === true && globalThis.Notification?.permission === 'granted';
+    classproHome.reminders(get('settings-reminders').checked);
     const name = prefs.name || report.profile?.name || '';
     get('settings-name').textContent = name || 'Your space.';
     get('settings-display-name').value = prefs.name || '';
@@ -65,6 +67,16 @@ globalThis.anonSettings = (() => {
       } catch { event.target.checked = false; tell('Could not enable notifications on this browser.'); return; }
     }
     prefs.notifications = checked; save(); tell(checked ? 'Notifications enabled while Anon is open.' : 'Notifications disabled.');
+  });
+  get('settings-reminders').addEventListener('change', async event => {
+    let enabled = event.target.checked;
+    if (enabled) {
+      try { enabled = !!globalThis.Notification && await Notification.requestPermission() === 'granted'; }
+      catch { enabled = false; }
+    }
+    prefs.reminders = enabled;
+    save(); apply();
+    tell(enabled ? 'Class reminders enabled while Anon is open.' : 'Class reminders are off. Check browser permissions if you tried to enable them.');
   });
   get('settings-sync').addEventListener('click', async () => {
     if (get('settings-sync').disabled) return;
