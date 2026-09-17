@@ -16,7 +16,8 @@
     <p class="eyebrow">Updated September 17, 2026</p><h1>Privacy &amp; storage.</h1>
     <p>Anon brings your SRM attendance, marks and timetable into one place. This page describes the data used by the current service.</p>
     <h2>Portal sign-in and academic records</h2>
-    <p>Your ID and the password you enter for each provider are sent through Anon’s server to the corresponding SRM portal. The server keeps provider cookies and credentials to refresh records and reconnect when an upstream session expires. Passwords and provider cookies are not included in report responses or the browser report cache.</p>
+    <p><strong>Anon stores your provider cookies and credentials on its server</strong> to refresh records and reconnect when an SRM session expires. Your ID and the password for each provider are sent through Anon’s server to the corresponding SRM portal when needed for sign-in.</p>
+    <p>The storage location matters: Anon does not return those passwords or provider cookies to your browser in report responses, and does not put them in the browser’s report cache. Your browser holds a separate Anon session cookie that identifies your server session.</p>
     <h2>Remembered sessions</h2>
     <p>If you choose “Keep me signed in,” the server stores your session, credentials, cookies and reports in an encrypted database with a seven-day inactivity expiry. The encryption key is held on the same server. This protects database contents at rest; it does not protect against full server compromise. A session cookie in your browser identifies the server session.</p>
     <p>Signing out deletes your active Anon session and local report cache. It does not revoke sessions directly with SRM. Deployment rollback backups may retain an earlier encrypted session snapshot; deleting the active session does not immediately erase those backups.</p>
