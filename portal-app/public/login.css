@@ -45,6 +45,7 @@
 .garden-login #sign-in[data-loading] { opacity: 1; cursor: progress; }
 #sign-in-label { position: relative; font-size: .8125rem; font-weight: 600; }
 .sign-in-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.sign-in-status:not(:empty) { position: static; display: block; width: auto; height: auto; margin: -.75rem 0 .875rem; clip-path: none; white-space: normal; text-align: center; color: #c4cfb3; font-size: .75rem; line-height: 1.5; }
 .garden-login #sign-in[data-loading] .sign-in-arrow { background: #c0ce9c; }
 @media (prefers-reduced-motion: reduce) {
   .garden-login #sign-in { transition: none; }

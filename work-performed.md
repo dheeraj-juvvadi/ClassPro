@@ -252,3 +252,31 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   GitHub run 35248397986 succeeded and the 966-byte flower is served in production.
 - Removed the requested “One ID. Both portals, together.” login caption and its
   reset-time assignment. Shared-ID and separate-password behavior is unchanged.
+
+## 2026-09-17: sign-in burst and embedded-client admission
+
+- Caption removal 0afdcdf and loader d8a5979 are live; both GitHub workflows
+  succeeded. Confirmed production HTML, selected flower and caption removal.
+- Added bounded jittered admission retries for challenge/login/reconnection,
+  honoring Retry-After only on explicit pre-processing rejections. Credential,
+  CAPTCHA, uncertain network and upstream failures are not automatically replayed.
+  Waiting status is visible in the form; no countdown timer or animation added.
+- Pending sessions get individual rate buckets; shared-IP bootstrap reads and
+  session starts have separate budgets. Five-minute/512 pending-session bound,
+  CAPTCHA cleanup and preserved rate buckets across token rotation are covered.
+- Same-session waits no longer occupy shared worker permits. Combined admission
+  remains bounded to 64 waiters/12 seconds; memory is rechecked after waiting.
+- Found and fixed two hidden embedded Ratio-D limits: loopback-IP throttling
+  and eviction after 20 CAPTCHA sessions. The private ASGI copy uses wrapper
+  admission; standalone upstream limiting remains on. Reserved CAPTCHA space
+  protects issued challenges. Closing one client no longer closes the shared
+  Portal transport used by other students.
+- Full local checks passed 40 frontend/81 backend tests before final stale-code
+  coverage; staged release will rerun the complete suites. Real embedded-route
+  tests use fake SRM clients: 50 CAPTCHA entries preserved, 50 Academia calls
+  reach the adapter. No credentials or external SRM load tests used.
+- Local 50-user simulation, one provider, four-second mocked upstream calls:
+  50/50 complete, first 4.049s, median 18.303s, p95 26.543s, last 30.331s;
+  eight active calls maximum, 26 safe admission retries, zero leaked waiters.
+  This is a queue simulation, not real SRM login latency. Details in
+  docs/azure-capacity.md. Next: validated release and live control readback.

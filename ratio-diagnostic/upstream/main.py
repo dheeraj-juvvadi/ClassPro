@@ -15,7 +15,7 @@ import uvicorn
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 from core.academia_client import AcademiaClient
-from core.portal_client import PortalClient, PortalSession
+from core.portal_client import PortalClient, PortalSession, close_shared_transport
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,6 +43,10 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env.local'))
 async def lifespan(app: FastAPI):
     app.state.http_client = httpx.AsyncClient(timeout=10.0)
     yield
+    for session in list(_portal_captcha_sessions.values()):
+        await session.client.aclose()
+    _portal_captcha_sessions.clear()
+    await close_shared_transport()
     await app.state.http_client.aclose()
 
 
@@ -485,27 +489,34 @@ async def login(creds: LoginCredentials, request: Request):
 
 
 _portal_captcha_sessions = {}
+PORTAL_CAPTCHA_LIMIT = 20  # The embedding server supplies its bounded admission limit.
+_portal_captcha_inflight = 0
 
 
 @app.post("/portal/captcha")
 @limiter.limit("15/minute")
 async def portal_captcha(request: Request):
-    session = PortalSession()
+    global _portal_captcha_inflight
+    if len(_portal_captcha_sessions) + _portal_captcha_inflight >= PORTAL_CAPTCHA_LIMIT:
+        raise HTTPException(status_code=503, detail={"type": "CAPTCHA_CAPACITY"})
+    _portal_captcha_inflight += 1
+    session = None
+    retained = False
     try:
-        info = await session.load_captcha()
-    except Exception as e:
-        print(f"{get_now()}\n  -> [API] ERROR loading portal captcha: {e}", flush=True)
-        raise HTTPException(status_code=503, detail="Portal unavailable right now.")
-    sid = secrets.token_hex(8)
-    _portal_captcha_sessions[sid] = session
-    if len(_portal_captcha_sessions) > 20:
-        oldest = next(iter(_portal_captcha_sessions))
-        stale = _portal_captcha_sessions.pop(oldest)
+        session = PortalSession()
         try:
-            await stale.client.aclose()
-        except Exception:
-            pass
-    return {"session": sid, **info}
+            info = await session.load_captcha()
+        except Exception as e:
+            print(f"{get_now()}\n  -> [API] ERROR loading portal captcha: {e}", flush=True)
+            raise HTTPException(status_code=503, detail="Portal unavailable right now.")
+        sid = secrets.token_hex(8)
+        _portal_captcha_sessions[sid] = session
+        retained = True
+        return {"session": sid, **info}
+    finally:
+        _portal_captcha_inflight -= 1
+        if session and not retained:
+            await session.client.aclose()
 
 
 @app.post("/portal/login")

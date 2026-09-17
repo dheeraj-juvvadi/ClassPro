@@ -94,3 +94,38 @@ Azure Monitor observation on September 17: hourly CPU credit averages increased
 from 477.92 to 518.31 across the three latest buckets; the latest bucket averaged
 8.34% CPU. This establishes that credits were available during the observation,
 not sustained capacity at a 1,000-user login/sync peak.
+
+## Sign-in burst admission and embedded-client fixes
+
+The September 17 continuation removes two previously missed internal bottlenecks:
+the embedded Ratio-D limiter counted every request against its loopback IP
+(Academia 5/minute, Portal login/challenge 15/minute), and its 20-entry CAPTCHA
+pool evicted active challenges. The private ASGI copy now uses the outer
+service's admission rules. Its standalone limiter remains enabled by default.
+CAPTCHA reservations are bounded before loading; overflow leaves existing codes
+intact. A client's close no longer shuts down the shared Portal connection pool.
+
+- Issued sessions, including unfinished sign-ins, have separate 30/minute buckets.
+  Token rotation preserves the bucket. Shared-IP bootstrap reads get 1,200/minute;
+  new-session starts get 300/minute. These ceilings do not imply that many full
+  logins can complete per minute.
+- At most 512 unfinished sessions, expiring after five minutes. Abandoned
+  reconnection challenges expire too, preserving the connected account.
+- The 64-waiter cap includes session-lock and worker waits. Both share the same
+  12-second admission deadline. Duplicate requests wait outside the eight-worker
+  pool, and memory is rechecked after waiting. Session/cache reads remain available.
+- Login and reconnection retry only explicit pre-processing admission rejections.
+  They honor Retry-After and add jitter, stop after five total attempts or the
+  retry deadline, and do not resubmit credentials after network/timeout/password
+  failures. A started request can outlast the retry window; it is never replayed
+  on an uncertain outcome. CAPTCHA age further limits retries.
+
+Local synthetic 50-user test, all on one IP, one provider per user, each mocked
+upstream login taking exactly four seconds: all 50 completed; first 4.049s,
+median 18.303s, p95 26.543s, last 30.331s, eight upstream calls maximum,
+26 admission retries, zero remaining waiters. No SRM requests or real accounts.
+This illustrates queue behavior and must not be described as measured SRM speed.
+
+Regression checks also exercise 50 real embedded CAPTCHA routes with fake SRM
+clients, 50 embedded Academia routes, client/pool ownership, cancellation,
+overflow, stale challenges, memory rechecks and non-retryable failures.

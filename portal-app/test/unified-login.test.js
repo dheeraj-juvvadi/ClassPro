@@ -55,4 +55,28 @@ test('one ID connects both providers and keeps failures inline', { timeout: 3000
   await page.locator('#login-message').waitFor({ state: 'visible' });
   assert.match(await page.locator('#login-message').innerText(), /Academia.*Temporarily unavailable/);
   assert.equal(await page.locator('dialog[open]').count(), 0);
+  // A busy response explicitly rejected before processing can be retried.
+  failed = false;
+  requests.length = 0;
+  let rejectedAt = 0, retriedAt = 0;
+  await page.route('**/api/login/client', async route => {
+    requests.push(route.request().postDataJSON());
+    if (!rejectedAt) {
+      rejectedAt = Date.now();
+      return route.fulfill({ status: 503, headers: { 'Retry-After': '2' },
+        json: { error: { code: 'SERVER_BUSY', message: 'Sign-in is busy', retryable: true } } });
+    }
+    retriedAt = Date.now();
+    return route.fulfill({ json: { authenticated: true } });
+  });
+  await page.locator('#password').fill('synthetic secret');
+  await page.locator('#sign-in').click();
+  await page.waitForFunction(() => document.querySelector('#sign-in-status').textContent.includes('Retrying'));
+  assert.equal(await page.locator('#sign-in-status').evaluate(el => getComputedStyle(el).clipPath), 'none');
+  assert.equal(await page.locator('#sign-in').isDisabled(), true);
+  await page.locator('#home-view').waitFor({ state: 'visible' });
+  assert.equal(requests.length, 2);
+  assert.deepEqual(requests[0], requests[1], 'retry preserves the same provider, CAPTCHA and credentials');
+  assert.ok(retriedAt - rejectedAt >= 2000, 'must honor the server Retry-After');
+  assert.doesNotMatch(await page.evaluate(() => JSON.stringify(localStorage)), /synthetic secret/);
 });

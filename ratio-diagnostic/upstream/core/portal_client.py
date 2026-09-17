@@ -30,6 +30,19 @@ _shared_transport = httpx.AsyncHTTPTransport(
 )
 
 
+class _BorrowedTransport(httpx.AsyncBaseTransport):
+    """Individual cookie jars share connections without owning pool shutdown."""
+    async def handle_async_request(self, request):
+        return await _shared_transport.handle_async_request(request)
+
+    async def aclose(self):
+        pass
+
+
+async def close_shared_transport():
+    await _shared_transport.aclose()
+
+
 def canvas_hash():
     seed = random.randint(0, 0x7FFFFFFF)
     return format(seed, "06x")
@@ -65,7 +78,7 @@ def telemetry_payload():
 
 class PortalSession:
     def __init__(self):
-        self.client = httpx.AsyncClient(transport=_shared_transport, headers=HEADERS, follow_redirects=True, timeout=30.0)
+        self.client = httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0)
         self.nonce = None
         self.login_form_fields = {}
         self.captcha_page = None
@@ -189,7 +202,7 @@ class PortalSession:
 
 class PortalClient:
     def __init__(self, cookies=None):
-        self.client = httpx.AsyncClient(transport=_shared_transport, headers=HEADERS, follow_redirects=True, timeout=30.0)
+        self.client = httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0)
         if cookies:
             self.client.cookies.update(cookies)
 

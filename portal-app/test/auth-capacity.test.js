@@ -5,13 +5,16 @@ import vm from 'node:vm';
 
 function harness() {
   const elements = new Map();
+  let clock = 0;
   const context = vm.createContext({
     document: { addEventListener() {}, getElementById(id) {
       if (!elements.has(id)) elements.set(id, { value: id === 'login-provider' ? 'portal' : '', focus() {} });
       return elements.get(id);
     } },
-    setTimeout(callback) { callback(); },
+    performance: { now: () => clock },
+    setTimeout(callback, delay) { clock += delay; callback(); },
   });
+  vm.runInContext(readFileSync(new URL('../public/login-admission.js', import.meta.url), 'utf8'), context);
   vm.runInContext(readFileSync(new URL('../public/auth-client.js', import.meta.url), 'utf8'), context);
   return context.classproAuth;
 }
@@ -22,7 +25,7 @@ test('challenge capacity retries are bounded and never submit credentials', asyn
   await assert.rejects(auth.prepare(async path => {
     assert.equal(path, '/api/challenge');
     calls++;
-    throw Object.assign(new Error('busy'), { code: 'SERVER_BUSY' });
+    throw Object.assign(new Error('busy'), { code: 'SERVER_BUSY', status: 503, retryable: true, retryAfterMs: 2000 });
   }, false), /busy/);
   assert.equal(calls, 5);
 });

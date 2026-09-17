@@ -187,7 +187,11 @@ async function api(path, options = {}, login = false) {
     }
   }
   if (!response.ok) {
-      throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code, image: data.image, status: response.status });
+    throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), {
+      code: data.error?.code, image: data.image, status: response.status,
+      retryable: data.error?.retryable === true,
+      retryAfterMs: classproAdmission.retryAfter(response.headers.get('Retry-After')),
+    });
   }
   return data;
 }

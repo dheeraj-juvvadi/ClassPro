@@ -8,8 +8,16 @@ The upstream SRM client comes from projectakshith/ratio-d revision
 - Dockerfile: ratio-diagnostic/Dockerfile; build context: repository root.
 - APP_ORIGIN=https://anon-tracker.vercel.app; bind port 8080 to loopback.
 - Preserve SESSION_STORE_DIR=/app/session-data as a host bind mount.
-- Current production limits: 200 sessions, 4 API handlers, 2 OCR workers,
-  8 IO threads. These are admission limits, not benchmarked login capacity.
+- Production limits: 2,000 sessions, 8 mutation handlers, 2 OCR workers,
+  4 background refresh workers and 8 IO threads, with a 160 MiB memory reserve.
+  These are admission limits, not benchmarked login capacity.
+- Each issued session has a 30/minute request budget. Unsigned session checks
+  and new-session starts have separate shared-IP budgets (1,200 and 300/minute).
+  Unfinished sign-ins expire after five minutes, with at most 512 pending.
+- The embedded Ratio-D app has no network listener. Its duplicate shared-IP
+  limiter is disabled only by this wrapper; public rate/resource controls remain.
+  CAPTCHA admission reserves space before upstream work instead of evicting an
+  active challenge. Individual cookie jars borrow a shared connection pool.
 - Remembered sessions expire after seven days of inactivity. Credentials and
   provider cookies remain server-side for silent reconnection; encrypted storage
   and its key reside on the VM. Logout deletes the active session.

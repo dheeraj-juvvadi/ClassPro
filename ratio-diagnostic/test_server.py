@@ -34,6 +34,7 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
         server.rates.clear()
         server.gate = server.asyncio.Semaphore(server.API_CONCURRENCY)
         server.waiters = 0
+        server.admission_waiters = 0
         self.lifespan = server.lifespan(server.app)
         await self.lifespan.__aenter__()
         self.client = httpx.AsyncClient(transport=httpx.ASGITransport(app=server.app),
@@ -127,7 +128,7 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
             try:
                 for _ in range(server.API_CONCURRENCY):
                     await server.gate.acquire()
-                server.rates["127.0.0.1"] = (server.time.monotonic(), 30)
+                server.rates["bootstrap:127.0.0.1"] = (server.time.monotonic(), server.BOOTSTRAP_PER_MINUTE)
                 response = await self.client.get("/test-assets/style.css")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn("text/css", response.headers["content-type"])

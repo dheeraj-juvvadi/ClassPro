@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT / "upstream"))
 import main as upstream
 from academic_data import extras
 from provider_flow import providers, combined, same_student, normalize_account, refresh as refresh_providers
-from session_store import SessionStore, lifetime, SESSION_SECONDS
+from session_store import SessionStore, lifetime
 import sync_schedule
 import attendance_trends
 from client_logs import ClientLogStore
@@ -63,7 +63,15 @@ MEMORY_RESERVE_MB = _positive("MEMORY_RESERVE_MB", 160)
 REFRESH_COOLDOWN = _positive("REFRESH_COOLDOWN", 60)
 REFRESH_QUEUE_WAIT = _positive("REFRESH_QUEUE_WAIT", 600)
 
-RATE_PER_MINUTE = _positive("RATE_PER_MINUTE", 30)           # per-IP/minute
+RATE_PER_MINUTE = _positive("RATE_PER_MINUTE", 30)           # per issued session
+BOOTSTRAP_PER_MINUTE = _positive("BOOTSTRAP_PER_MINUTE", 1200)
+SESSION_STARTS_PER_MINUTE = _positive("SESSION_STARTS_PER_MINUTE", 300)
+PENDING_SESSION_LIMIT = min(SESSION_LIMIT, _positive("PENDING_SESSION_LIMIT", 512))
+PENDING_SESSION_SECONDS = _positive("PENDING_SESSION_SECONDS", 300)
+# This copy is reachable only through the private in-process ASGI client.
+# Public admission already enforces per-session, campus and resource limits.
+upstream.limiter.enabled = False
+upstream.PORTAL_CAPTCHA_LIMIT = PENDING_SESSION_LIMIT + API_CONCURRENCY
 RATE_TRACKED_KEYS = _positive("RATE_TRACKED_KEYS", 20000)    # bounded bucket table
 PERSIST_INTERVAL = float(os.environ.get("PERSIST_INTERVAL", "5"))  # seconds
 IO_THREADS = _positive("IO_THREADS", 16)
@@ -75,21 +83,35 @@ ocr_slots = asyncio.Semaphore(OCR_CONCURRENCY)
 ocr_executor = concurrent.futures.ThreadPoolExecutor(
     max_workers=OCR_CONCURRENCY, thread_name_prefix="anon-ocr")
 waiters = 0
+admission_waiters = 0
 client_log_slots = asyncio.Semaphore(2)
 session_locks = weakref.WeakValueDictionary()
 
 
-async def dispatch(request, call_next, token):
+class AdmissionTimeout(Exception):
+    """The request has not entered its handler and can safely be resubmitted."""
+
+
+async def dispatch(request, call_next, token, deadline=None):
     if not token:
         return await call_next(request)
     if request and request.method == "GET":
         return await call_next(request)
     lock = session_locks.setdefault(token, asyncio.Lock())
-    async with lock:
+    try:
+        if deadline is None:
+            await lock.acquire()
+        else:
+            await asyncio.wait_for(lock.acquire(), max(0, deadline - time.monotonic()))
+    except asyncio.TimeoutError as error:
+        raise AdmissionTimeout from error
+    try:
         return await call_next(request)
+    finally:
+        lock.release()
 
 
-async def acquire_api():
+async def acquire_api(deadline=None):
     """Strict FCFS admission: callers queue on the semaphore in arrival order.
     Waiters beyond API_QUEUE, or past QUEUE_WAIT, get 503 with Retry-After.
     waiters is only touched without an awaiting gap, so the single event loop
@@ -101,7 +123,8 @@ async def acquire_api():
     waiters += 1
     try:
         try:
-            await asyncio.wait_for(gate.acquire(), QUEUE_WAIT)
+            timeout = QUEUE_WAIT if deadline is None else min(QUEUE_WAIT, deadline - time.monotonic())
+            await asyncio.wait_for(gate.acquire(), max(0, timeout))
             return True
         except asyncio.TimeoutError:
             return False
@@ -183,7 +206,10 @@ async def lifespan(app):
         max_workers=IO_THREADS, thread_name_prefix="anon-io"))
     print(json.dumps({"event": "service_started", "api_concurrency": API_CONCURRENCY,
                       "ocr_concurrency": OCR_CONCURRENCY, "session_limit": SESSION_LIMIT,
-                      "rate_per_minute": RATE_PER_MINUTE, "io_threads": IO_THREADS}), flush=True)
+                      "rate_per_minute": RATE_PER_MINUTE, "io_threads": IO_THREADS,
+                      "session_starts_per_minute": SESSION_STARTS_PER_MINUTE,
+                      "bootstrap_per_minute": BOOTSTRAP_PER_MINUTE,
+                      "pending_session_limit": PENDING_SESSION_LIMIT}), flush=True)
     async with upstream.lifespan(upstream.app):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=upstream.app),
                                      base_url="http://ratio-internal", timeout=90) as client:
@@ -208,6 +234,31 @@ app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None
 
 def failure(code, message, status=401):
     return JSONResponse({"error": {"code": code, "message": message}}, status_code=status)
+
+
+def admission_failure(code="SERVER_BUSY", message="Anon is busy. Please retry shortly.", wait=2):
+    response = JSONResponse({"error": {"code": code, "message": message, "retryable": True}},
+                            status_code=429 if code == "RATE_LIMIT" else 503)
+    response.headers["Retry-After"] = str(wait)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+def rate_admission(key, limit, now):
+    start, count = rates.get(key, (now, 0))
+    if now - start >= 60:
+        start, count = now, 0
+    if count >= limit or (key not in rates and len(rates) >= RATE_TRACKED_KEYS):
+        return admission_failure("RATE_LIMIT", "Please wait before retrying.",
+                                 max(1, int(60 - (now - start)) + 1))
+    rates[key] = (start, count + 1)
+    return None
+
+
+def session_expired(entry, now):
+    if entry.get("providers") or entry.get("cookies"):
+        return time.time() - entry.get("last_seen", time.time()) > lifetime(entry)
+    return now - entry.get("created", now) > PENDING_SESSION_SECONDS
 
 
 def report(data, previous=None):
@@ -247,7 +298,7 @@ async def invoke(request, path, payload):
 
 @app.middleware("http")
 async def boundary(request, call_next):
-    global cleaned_at
+    global cleaned_at, admission_waiters
     request.state.diagnostic_id = secrets.token_hex(12)
     if request.url.path == "/health":
         return JSONResponse({"ok": True, "backend": "ratio-diagnostic"})
@@ -283,64 +334,91 @@ async def boundary(request, call_next):
         cleaned_at = now
         expired_tokens = []
         for key, entry in list(sessions.items()):
-            expired = (time.time() - entry.get("last_seen", time.time()) > lifetime(entry)
-                       if entry.get("providers") or entry.get("cookies") else now - entry["created"] > SESSION_SECONDS)
-            if expired:
-                sessions.pop(key, None)
-                expired_tokens.append(key)
-                previous = upstream._portal_captcha_sessions.pop(entry.get("digest"), None)
+            expired = session_expired(entry, now)
+            stale_challenge = now - entry.get("challenge_at", entry.get("created", now)) > PENDING_SESSION_SECONDS
+            if expired or stale_challenge:
+                previous = upstream._portal_captcha_sessions.pop(entry.pop("digest", None), None)
                 if previous:
                     await previous.client.aclose()
+            if expired:
+                sessions.pop(key, None)
+                rates.pop("session:" + key, None)
+                expired_tokens.append(key)
         if session_store and expired_tokens:
             session_store.save_changes({}, removed=expired_tokens)
         for key, entry in list(rates.items()):
             if now - entry[0] > 60:
                 rates.pop(key, None)
     token = request.cookies.get(cookie_name)
-    key = "session:" + token if token in sessions and sessions[token].get("providers") else (
-        request.headers.get("x-anon-client-ip") if required_token else None
-    ) or (request.client.host if request.client else "unknown")
-    start, count = rates.get(key, (now, 0))
-    if now - start >= 60:
-        start, count = now, 0
-    if count >= RATE_PER_MINUTE or (key not in rates and len(rates) >= RATE_TRACKED_KEYS):
-        response = failure("RATE_LIMIT", "Wait a minute before retrying.", 429)
-        response.headers["Retry-After"] = str(max(1, int(60 - (now - start))))
-        return response
-    rates[key] = (start, count + 1)
-    token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
-    if entry and time.time() - entry.get("last_seen", time.time()) > lifetime(entry):
+    if entry and session_expired(entry, now):
         sessions.pop(token, None)
+        rates.pop("session:" + token, None)
+        previous = upstream._portal_captcha_sessions.pop(entry.pop("digest", None), None)
+        if previous:
+            await previous.client.aclose()
         if session_store:
             session_store.save_changes({}, removed=[token])
         entry = None
+    address = (request.headers.get("x-anon-client-ip") if required_token else None) or (
+        request.client.host if request.client else "unknown")
+    lightweight = request.method == "GET" and request.url.path in {"/api/session", "/api/reports"}
+    if entry:
+        key, limit = "session:" + token, RATE_PER_MINUTE
+    elif lightweight:
+        key, limit = "bootstrap:" + address, BOOTSTRAP_PER_MINUTE
+    elif request.method == "POST" and request.url.path == "/api/challenge":
+        key, limit = "start:" + address, SESSION_STARTS_PER_MINUTE
+    else:
+        key, limit = address, RATE_PER_MINUTE
+    rejected = rate_admission(key, limit, now)
+    if rejected is not None:
+        return rejected
     if entry and (entry.get("providers") or entry.get("cookies")):
         entry["last_seen"] = time.time()
-    lightweight = request.method == "GET" and request.url.path in {"/api/session", "/api/reports"}
     if not lightweight and request.method == "POST" and not can_admit(MEMORY_RESERVE_MB):
-        response = failure("SERVER_BUSY", "Anon is busy. Your saved data is still available.", 503)
-        response.headers["Retry-After"] = "15"
-        return response
-    if not lightweight and not await acquire_api():
-        response = failure("SERVER_BUSY", "ClassPro is busy. Please retry shortly.", 503)
-        response.headers["Retry-After"] = "2"
-        return response
-    try:
+        return admission_failure(wait=15)
+    if not lightweight and admission_waiters >= API_QUEUE:
+        return admission_failure()
+    counted = not lightweight
+    if counted:
+        admission_waiters += 1
+    deadline = time.monotonic() + QUEUE_WAIT
+
+    async def admitted(current_request):
+        nonlocal counted
+        global admission_waiters
+        if not lightweight and not await acquire_api(deadline):
+            raise AdmissionTimeout
+        if counted:
+            admission_waiters -= 1
+            counted = False
         try:
-            response = await asyncio.wait_for(dispatch(request, call_next, token), 95)
-        except Exception as exception:
-            print(json.dumps({"event": "ratio_exception", "request_id": request.state.diagnostic_id,
-                              "exception_type": type(exception).__name__}), flush=True)
-            response = failure("PORTAL_UNAVAILABLE", "Student Portal request failed.", 502)
-        if session_store and not lightweight:
-            changed_token = getattr(request.state, "session_token", token)
-            changed = {changed_token: sessions[changed_token]} if changed_token in sessions else {}
-            removed = [token] if token and (token != changed_token or token not in sessions) else []
-            session_store.save_changes(changed, removed=removed)
+            if not lightweight and request.method == "POST" and not can_admit(MEMORY_RESERVE_MB):
+                return admission_failure(wait=15)
+            try:
+                response = await asyncio.wait_for(call_next(current_request), 95)
+            except Exception as exception:
+                print(json.dumps({"event": "ratio_exception", "request_id": request.state.diagnostic_id,
+                                  "exception_type": type(exception).__name__}), flush=True)
+                response = failure("PORTAL_UNAVAILABLE", "Student Portal request failed.", 502)
+            if session_store and not lightweight:
+                changed_token = getattr(request.state, "session_token", token)
+                changed = {changed_token: sessions[changed_token]} if changed_token in sessions else {}
+                removed = [token] if token and (token != changed_token or token not in sessions) else []
+                session_store.save_changes(changed, removed=removed)
+            return response
+        finally:
+            if not lightweight:
+                gate.release()
+
+    try:
+        response = await dispatch(request, admitted, token if entry else None, deadline)
+    except AdmissionTimeout:
+        response = admission_failure()
     finally:
-        if not lightweight:
-            gate.release()
+        if counted:
+            admission_waiters -= 1
     if token in sessions and sessions[token].get("providers"):
         set_session_cookie(response, token, sessions[token])
     response.headers["Cache-Control"] = "no-store"
@@ -387,7 +465,10 @@ async def session_status(request: Request):
 
 @app.delete("/api/session")
 async def logout(request: Request):
-    entry = sessions.pop(request.cookies.get(cookie_name), None)
+    token = request.cookies.get(cookie_name)
+    entry = sessions.pop(token, None)
+    if token:
+        rates.pop("session:" + token, None)
     if entry and entry.get("digest"):
         previous = upstream._portal_captcha_sessions.pop(entry["digest"], None)
         if previous:
@@ -406,13 +487,17 @@ async def challenge(request: Request):
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
     if entry is None:
-        if len(sessions) >= SESSION_LIMIT or not can_admit(MEMORY_RESERVE_MB):
-            return failure("CAPACITY", "Too many students are signed in. Please try again shortly.", 503)
+        pending = sum(not (item.get("providers") or item.get("cookies")) for item in sessions.values())
+        if len(sessions) >= SESSION_LIMIT or pending >= PENDING_SESSION_LIMIT:
+            return admission_failure("CAPACITY", "Sign-in is busy. Please try again shortly.", 15)
+        if not can_admit(MEMORY_RESERVE_MB):
+            return admission_failure(wait=15)
         token = secrets.token_urlsafe(32)
         entry = {"created": time.monotonic(), "remember": True, "last_seen": time.time(), "sync_offset": secrets.randbelow(300)}
         sessions[token] = entry
     request.state.session_token = token
     entry["pending_provider"] = provider
+    entry["challenge_at"] = time.monotonic()
     if provider == "academia":
         result = JSONResponse({"required": False})
         set_session_cookie(result, token, entry)
@@ -421,9 +506,22 @@ async def challenge(request: Request):
         previous = upstream._portal_captcha_sessions.pop(entry["digest"], None)
         if previous:
             await previous.client.aclose()
-    response, data = await invoke(request, "/portal/captcha", {})
+    # Return the issued session even on an upstream failure, so a retry reuses
+    # its bounded slot instead of leaving an unreachable pending session.
+    try:
+        response, data = await invoke(request, "/portal/captcha", {})
+    except Exception:
+        result = failure("PORTAL_UNAVAILABLE", "Cannot load SRM verification.", 502)
+        set_session_cookie(result, token, entry)
+        return result
+    if response.status_code == 503 and data.get("detail") == {"type": "CAPTCHA_CAPACITY"}:
+        result = admission_failure("CAPACITY", "Verification is busy. Please retry shortly.", 15)
+        set_session_cookie(result, token, entry)
+        return result
     if response.status_code != 200 or not data.get("captcha_image"):
-        return failure("PORTAL_UNAVAILABLE", "Cannot load SRM verification.", 502)
+        result = failure("PORTAL_UNAVAILABLE", "Cannot load SRM verification.", 502)
+        set_session_cookie(result, token, entry)
+        return result
     entry["digest"] = data["session"]
     result = JSONResponse({"required": True, "serverAuto": True, "image": data["captcha_image"]})
     set_session_cookie(result, token, entry)
@@ -479,7 +577,10 @@ async def login(request: Request):
     entry["remember"] = payload.get("remember", entry.get("remember", True)) is not False
     entry["last_seen"] = time.time()
     sessions.pop(token, None)
+    previous_rate = rates.pop("session:" + token, None)
     token = secrets.token_urlsafe(32)
+    if previous_rate:
+        rates["session:" + token] = previous_rate
     entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic(), "synced_at": time.time()})
     attendance_trends.observe(entry, time.time())
     sessions[token] = entry

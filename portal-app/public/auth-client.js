@@ -77,21 +77,14 @@ globalThis.classproAuth = (() => {
     preparing = prepareChallenge(api, automatic).finally(() => { preparing = null; });
     return preparing;
   }
+  function waiting(delay) {
+    element('sign-in-status').textContent = `Anon is busy. Retrying in ${Math.ceil(delay / 1000)}s…`;
+  }
   async function prepareChallenge(api, automatic) {
     clearChallenge();
-    let result;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      try {
-        result = await api('/api/challenge', {
-          method: 'POST', body: JSON.stringify({ provider: provider() }),
-        }, true);
-        break;
-      } catch (error) {
-        if (error.code !== 'SERVER_BUSY' || attempt === 4) throw error;
-        element('sign-in-status').textContent = 'Waiting for Anon…';
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
+    const result = await classproAdmission.request(() => api('/api/challenge', {
+      method: 'POST', body: JSON.stringify({ provider: provider() }),
+    }, true), waiting);
     challengeAt = Date.now();
     if (result.required === false) return;
     if (!result.image || !/^data:image\/(png|jpeg);base64,/.test(result.image)) {
@@ -118,10 +111,11 @@ globalThis.classproAuth = (() => {
     if (provider() === 'portal' && !answer && !serverAuto) return null;
     const integrity = await createCredentialIntegrity(credentials.account, credentials.password, answer);
     try {
-      const result = await api('/api/login/client', { method: 'POST', body: JSON.stringify({
+      const deadline = performance.now() + Math.max(0, Math.min(60000, 75000 - (Date.now() - challengeAt)));
+      const result = await classproAdmission.request(() => api('/api/login/client', { method: 'POST', body: JSON.stringify({
         ...credentials, provider: provider(), answer, integrity,
         ...(provider() === 'portal' ? { telemetry: telemetry() } : {}),
-      }) }, true);
+      }) }, true), waiting, deadline);
       clearChallenge();
       return result;
     } catch (error) {
