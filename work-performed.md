@@ -225,3 +225,25 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
 - Next: validated release, verify asset exclusion, continue desktop/mobile audit.
   Reviewed bidyut10/opensourceui week-strip calendar and React Bits sidebar;
   Ratio-D upstream remains 413b7f0 after fetch.
+
+## 2026-09-17: block-print loader and responsive calendar
+
+- Previous release 527e8c1 verified: Azure workflow 35172244236 succeeded;
+  live image matches, CPU cap and log rotation retained. Removed duplicate OCR
+  compression siblings return 404 while original ONNX/WASM assets return 200.
+- User reviewed three loading-mark styles and chose 02, the block-print flower,
+  replacing the earlier ASCII draft. New local SVG is 966 bytes uncompressed.
+  One CSS transform turns 360 degrees then pauses; reduced-motion users see a
+  still mark. Visibility/off-screen pauses and cleanup after startup avoid a
+  permanent animation loop. Copy is now “Dilly-dallying…”.
+- Cache-first report paint remains immediate. Targeted startup/cache and planner
+  checks pass; full staged release validation follows. Desktop week calendar has
+  month/range headings, circular dates and concise unknown-day indicators.
+- Grouped greeting/warnings keep desktop columns stable. Container-relative
+  attendance type fixes clipping. Browser geometry checks at 320–1440px pass;
+  T3 desktop readback shows 0px difference between agenda and insight bottoms.
+- Mobile-size preview has no horizontal overflow and pauses off-screen artwork.
+  T3 frame callbacks were throttled, so they cannot establish frame-rate or
+  battery performance on a real mobile device. No physical-phone claim made.
+- Next: release this UI agenda, then safe busy-response login retries and
+  shared-campus admission, followed by installed-app and Ratio-D improvements.

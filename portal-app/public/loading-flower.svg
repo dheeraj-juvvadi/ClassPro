@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <title>Block print botanical flower</title>
+  <defs><path id="p" d="M58 55C46 43 42 21 51 11C63 1 80 15 73 34L65 55Z"/></defs>
+  <g fill="#999ad0" transform="translate(3 -2)"><use href="#p"/><use href="#p" transform="rotate(72 60 60)"/><use href="#p" transform="rotate(144 60 60)"/><use href="#p" transform="rotate(216 60 60)"/><use href="#p" transform="rotate(288 60 60)"/></g>
+  <g fill="#ef613a"><use href="#p"/><use href="#p" transform="rotate(72 60 60)"/><use href="#p" transform="rotate(144 60 60)"/><use href="#p" transform="rotate(216 60 60)"/><use href="#p" transform="rotate(288 60 60)"/></g>
+  <g stroke="#efc475" stroke-width="2.2" stroke-linecap="round"><path d="m60 23 1 19m32 6-18 8m8 29L71 69m-26 22 9-20M28 48l17 8"/></g>
+  <path d="m51 49 14-2 10 12-5 13-14 3-10-12Z" fill="#315940"/>
+  <path d="m56 53 3 6m6 4 2-6m-11 9 6 2" stroke="#d3d8a1" stroke-width="2.2"/>
+</svg>

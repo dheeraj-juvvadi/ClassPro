@@ -39,6 +39,12 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   page.setDefaultTimeout(8000);
   const origin = `http://127.0.0.1:${server.address().port}`;
   await page.goto(origin);
+  assert.match(await page.locator('#startup').innerText(), /Dilly-dallying…/);
+  assert.equal(await page.locator('.startup-flower').getAttribute('aria-hidden'), 'true');
+  assert.equal(await page.locator('.startup-flower').evaluate(el => el.getAnimations().length), 1);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(await page.locator('.startup-flower').evaluate(el => el.getAnimations().length), 0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.evaluate(payload => localStorage.setItem('classpro-reports-cache', JSON.stringify({ ...payload, syncedAt: Date.now() })), reportsPayload);
   await page.reload();
   const waitStart = Date.now();
@@ -48,6 +54,7 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   assert.match(await page.locator('#updated-at').innerText(), /Last synced|Updated/);
   assert.ok(await page.locator('#attendance-content').innerText().then(text => text.includes('CS101')));
   assert.equal(await page.locator('#startup').isHidden(), true);
+  assert.equal(await page.locator('.startup-flower').evaluate(el => el.getAnimations().length), 0, 'hidden startup must not keep animating');
   await page.waitForTimeout(3200);
   assert.ok(sessionChecks >= 1, 'background session validation never ran');
   assert.equal(await page.locator('#home-view').isHidden(), false, 'session check kicked user off cached view');

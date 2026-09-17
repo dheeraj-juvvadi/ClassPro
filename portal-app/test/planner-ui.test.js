@@ -70,6 +70,41 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('.calendar-week button').count(), 7);
   assert.match(await page.locator('#next-class-card').innerText(), /Margin: 2h/);
   assert.match(await page.locator('#next-class-card').innerText(), /81.8%/);
+  assert.match(await page.locator('.calendar-month').innerText(), /September 2026/);
+  assert.equal(await page.locator('.calendar-week button[aria-pressed="true"]').getAttribute('data-date'), '2026-09-14');
+  for (const width of [320, 390, 768, 1000, 1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await page.evaluate(() => {
+      const insights = document.querySelector('.attendance-insights').getBoundingClientRect();
+      const agenda = document.querySelector('.day-timeline').getBoundingClientRect();
+      const list = document.querySelector('#today-classes');
+      const cards = [...document.querySelectorAll('.insight-card, #next-class-card, .calendar-week button')];
+      return { overflow: document.documentElement.scrollWidth > innerWidth,
+        clipped: cards.filter(el => el.scrollWidth > el.clientWidth + 1).map(el => el.className),
+        bottomDifference: Math.abs(insights.bottom - agenda.bottom),
+        listHeight: list.clientHeight };
+    });
+    assert.equal(layout.overflow, false, `home overflow at ${width}px`);
+    assert.deepEqual(layout.clipped, [], `clipped home cards at ${width}px`);
+    if (width >= 1000) {
+      assert.ok(layout.bottomDifference < 2, `agenda and insight bottoms align at ${width}px`);
+      assert.ok(layout.listHeight > 100, `agenda remains usable at ${width}px`);
+    }
+  }
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await page.evaluate(() => {
+    const message = document.querySelector('#home-message');
+    message.textContent = 'Sync could not finish. Your last data is still available.';
+    message.hidden = false;
+  });
+  assert.ok(await page.evaluate(() => {
+    const agenda = document.querySelector('.day-timeline').getBoundingClientRect();
+    const card = document.querySelector('#next-class-card').getBoundingClientRect();
+    const insights = document.querySelector('.attendance-insights').getBoundingClientRect();
+    return Math.abs(agenda.top - card.top) < 2 && Math.abs(agenda.bottom - insights.bottom) < 2;
+  }), 'sync warnings preserve desktop column alignment');
+  await page.evaluate(() => { document.querySelector('#home-message').hidden = true; });
+  await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.locator('#schedule-form').count(), 0);
   await page.evaluate(() => providerConnections.update({ connections: { portal: { connected: true } } }));
   assert.equal(await page.getByRole('button', { name: 'Connect Student Portal', exact: true }).count(), 0);
@@ -135,7 +170,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('.academic-month button').count(), 31);
   assert.match(await page.locator('#calendar-month-title').innerText(), /October 2026/);
   await page.getByRole('button', { name: 'Return to today', exact: true }).click();
-  for (const width of [320, 390, 1280]) {
+  for (const width of [320, 390, 768, 1024, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.locator('#calendar-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
   }

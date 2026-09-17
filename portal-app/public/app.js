@@ -9,6 +9,23 @@ let reportFingerprint = {};
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
 const REPORTS_CACHE = 'classpro-reports-cache';
+const dismissStartup = (() => {
+  const startup = $('startup');
+  let onScreen = true;
+  const pause = () => startup.toggleAttribute('data-paused', document.hidden || !onScreen);
+  const observer = typeof IntersectionObserver === 'function' ? new IntersectionObserver(([entry]) => {
+    onScreen = entry.isIntersecting;
+    pause();
+  }) : null;
+  observer?.observe(startup);
+  document.addEventListener('visibilitychange', pause);
+  pause();
+  return () => {
+    startup.hidden = true;
+    observer?.disconnect();
+    document.removeEventListener('visibilitychange', pause);
+  };
+})();
 
 function readReportsCache() {
   try {
@@ -88,7 +105,7 @@ function showLogin(text = '', error = false) {
   reportFingerprint = {};
   nextAutoSync = 0;
   authenticated = false;
-  $('startup').hidden = true;
+  dismissStartup();
   $('login-view').hidden = false;
   $('reports-view').hidden = true;
   $('logout').hidden = true;
@@ -119,7 +136,7 @@ function showReports() {
   authenticated = true;
   $('password').value = '';
   $('portal-password').value = '';
-  $('startup').hidden = true;
+  dismissStartup();
   $('login-view').hidden = true;
   $('reports-view').hidden = false;
   $('logout').hidden = false;

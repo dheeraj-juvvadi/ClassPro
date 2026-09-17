@@ -53,7 +53,9 @@ body.planner #planner-nav button:active { transform: none; }
     display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
     gap: 24px 40px; align-items: start;
   }
-  .planner .home-greeting { grid-column: 1 / -1; margin: 0 0 8px; align-items: center; }
+  .planner .home-intro { grid-column: 1 / -1; display: grid; gap: 12px; margin-bottom: 8px; }
+  .planner .home-intro > [hidden] { display: none; }
+  .planner .home-greeting { margin: 0; align-items: center; }
   .planner .home-greeting h1 { font-size: 27px; line-height: 1.25; }
   .planner .home-greeting p { font-size: 13px; }
   .planner #home-preview-note { grid-column: 1 / -1; margin: 0; }
@@ -75,8 +77,6 @@ body.planner #planner-nav button:active { transform: none; }
     contain: size; min-height: 0; display: flex; flex-direction: column;
     margin: 0; padding-left: 32px; border-left: 1px solid #343b30;
   }
-  .planner #home-view:has(#home-preview-note:not([hidden])) .day-timeline,
-  .planner #home-view:has(#home-message:not([hidden])) .day-timeline { grid-row: 3 / span 2; }
   .planner .day-timeline > :not(#today-classes) { flex: none; }
   .planner #today-classes { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #626e53 transparent; }
   .planner .calendar-heading { font-size: 13px; }

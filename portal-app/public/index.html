@@ -27,25 +27,25 @@
   <script defer src="/consent.js?v=be694796ec"></script>
   <script src="/client-logs.js?v=ea4ad937e7" defer></script>
   <link rel="preload" href="/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/style.css?v=825a4406c2">
+  <link rel="stylesheet" href="/style.css?v=50386d73a1">
   <link rel="stylesheet" href="/garden.css?v=1c5b5ccb5f">
   <link rel="stylesheet" href="/login.css?v=3a3182a966">
-  <link rel="stylesheet" href="/home.css?v=b88f426dd1">
-  <link rel="stylesheet" href="/academic.css?v=36d27fa7e4">
+  <link rel="stylesheet" href="/home.css?v=1e13fb0c57">
+  <link rel="stylesheet" href="/academic.css?v=ce2c0b2e04">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
   <link rel="stylesheet" href="/settings.css?v=5c6b6dc0bc">
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
   <link rel="stylesheet" href="/interaction-feedback.css?v=9965e94781">
-  <link rel="stylesheet" href="/desktop.css?v=504f03c73f">
+  <link rel="stylesheet" href="/desktop.css?v=5af5323f81">
   <script src="/interaction-feedback.js?v=d80307ad7a" defer></script>
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
   <script src="/home-model.js?v=1adde8e762" defer></script>
   <script src="/schedule-model.js?v=59f9ae9285" defer></script>
   <script src="/class-reminders.js?v=c0a05bb8cc" defer></script>
-  <script src="/schedule-calendar.js?v=80e858b0a7" defer></script>
+  <script src="/schedule-calendar.js?v=87fe6fea1d" defer></script>
   <script src="/academic-calendar.js?v=37102b4930" defer></script>
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
   <script src="/course-details.js?v=c862a2bd04" defer></script>
@@ -61,7 +61,7 @@
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=9b80137deb" defer></script>
   <script src="/settings.js?v=628f38c1dd" defer></script>
-  <script src="/app.js?v=7bb8a6c4b1" defer></script>
+  <script src="/app.js?v=1ac21403c1" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -91,7 +91,10 @@
     </details>
   </header>
   <main id="main" tabindex="-1">
-    <div id="startup" class="startup" role="status">Checking your session…</div>
+    <div id="startup" class="startup" role="status" aria-live="polite">
+      <img class="startup-flower" src="/loading-flower.svg" width="104" height="104" alt="" aria-hidden="true" decoding="async" fetchpriority="low">
+      <span>Dilly-dallying…</span>
+    </div>
     <section id="login-view" class="login-layout" aria-labelledby="login-title" hidden>
       <div class="login-card">
         <h1 id="login-title">Welcome <span>back.</span></h1>
@@ -132,9 +135,11 @@
       </div>
     </section>
     <section id="home-view" aria-labelledby="home-title" hidden>
+      <div class="home-intro">
       <div class="home-greeting"><h1 id="home-title" tabindex="-1">Good morning.</h1><p id="home-date"></p></div>
       <p id="home-message" class="message" role="status" hidden></p>
       <p id="home-preview-note" class="preview-note" hidden>Design preview · sample day <a href="/">Back to sign in</a></p>
+      </div>
       <article id="next-class-card" class="next-class-card" aria-labelledby="next-class-title"></article>
       <section class="attendance-insights" aria-label="Attendance at a glance" id="home-insights"></section>
       <section class="day-timeline" aria-labelledby="today-title">

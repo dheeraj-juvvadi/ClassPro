@@ -108,7 +108,14 @@ summary:focus-visible { outline-offset: -4px; }
 .assessment-name { font-weight: 550; }
 .assessment-date { font-size: .75rem; margin-top: .25rem; }
 .assessment-score { text-align: right; flex-shrink: 0; max-width: 45%; overflow-wrap: anywhere; }
-.startup { text-align: center; padding: 5rem 0; color: var(--muted); }
+.startup { display: grid; justify-items: center; align-content: center; gap: 30px; min-height: min(60svh, 420px); padding: 3rem 0; text-align: center; color: var(--muted); }
+.startup-flower { display: block; width: 104px; height: 104px; object-fit: contain; user-select: none; }
+.startup > span { font-size: .8125rem; letter-spacing: .035em; }
+@keyframes startup-turn { 0% { transform: rotate(0deg); } 55%, 100% { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  .startup:not([hidden]) .startup-flower { animation: startup-turn 2.8s cubic-bezier(.45, 0, .2, 1) infinite; will-change: transform; }
+  .startup[data-paused] .startup-flower { animation-play-state: paused; will-change: auto; }
+}
 .skip-link { position: absolute; top: .5rem; left: 1rem; z-index: 10; padding: .75rem 1rem; background: var(--surface); border: 1px solid var(--line); transform: translateY(-160%); }
 .skip-link:focus { transform: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
