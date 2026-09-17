@@ -184,6 +184,12 @@ Capacity release prepared and verified locally:
 - Hidden initial manual CAPTCHA fallback and requested privacy-section removal
   included; remembered-session storage disclosure remains explicit.
 
-Remaining: verify this revision's GitHub/Azure deployment; observe real mixed-load
-latency and CPU credits; actual 1,000-user SRM throughput/four-second full-login
+Deployment verified: commit 2c44f56, GitHub run 35170387989 succeeded in both
+validation and deploy. Azure live image matches the commit; NanoCpus=1800000000,
+SESSION_LIMIT=2000, API_CONCURRENCY=8, OCR_CONCURRENCY=2, REFRESH_CONCURRENCY=4,
+MEMORY_RESERVE_MB=160. Public session API and local health passed. Host available
+memory was 332 MiB, container 62.47 MiB. Daily client review timer active and raw
+logs mode 0600. Release validation: 32 frontend and 61 backend tests passed.
+
+Remaining: observe real mixed-load latency and CPU credits; actual 1,000-user SRM throughput/four-second full-login
 maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterward.

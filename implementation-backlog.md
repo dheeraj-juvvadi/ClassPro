@@ -6,7 +6,8 @@ Updated September 17, 2026. User requested this checklist while directing contin
 - [x] Verify expired-session cache clearing and offline cache behavior.
 - [x] Measure repeated synthetic persistence/resource usage on Azure; distinguish this from real login capacity.
 - [ ] Complete desktop/mobile interaction and empty-state verification.
-- [ ] Deploy subsequent verified fixes and keep work-performed.md current.
+- [x] Deploy capacity/burst revision 2c44f56; update work-performed.md with live verification.
+- [ ] Observe real mixed-load latency, upstream queue drain time and CPU credits; synthetic capacity results are in docs/azure-capacity.md.
 
 ## Requested readiness checklist
 - [ ] Custom 404 page.
