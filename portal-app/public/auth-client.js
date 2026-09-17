@@ -32,7 +32,6 @@ globalThis.classproAuth = (() => {
     clearChallenge();
     element('provider-help').textContent = provider() === 'academia'
       ? 'Use your Academia password.' : 'Use your Student Portal password.';
-    element('login-provider-caption').textContent = 'One ID. Both portals, together.';
     started = Date.now();
     clicks = keys = movements = 0;
   }

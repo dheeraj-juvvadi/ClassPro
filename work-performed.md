@@ -247,3 +247,8 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   battery performance on a real mobile device. No physical-phone claim made.
 - Next: release this UI agenda, then safe busy-response login retries and
   shared-campus admission, followed by installed-app and Ratio-D improvements.
+
+- Loader/calendar release d8a5979 passed 32 frontend and 67 backend tests;
+  GitHub run 35248397986 succeeded and the 966-byte flower is served in production.
+- Removed the requested “One ID. Both portals, together.” login caption and its
+  reset-time assignment. Shared-ID and separate-password behavior is unchanged.
