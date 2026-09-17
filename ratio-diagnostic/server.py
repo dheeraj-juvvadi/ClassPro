@@ -26,6 +26,7 @@ from provider_flow import providers, combined, same_student, normalize_account, 
 from session_store import SessionStore, lifetime, SESSION_SECONDS
 import sync_schedule
 import attendance_trends
+from client_logs import ClientLogStore
 
 # Upstream diagnostics include identifiers and CAPTCHA answers. Silence only
 # its modules, once, rather than swapping process-wide stdout across awaits.
@@ -64,6 +65,7 @@ QUEUE_WAIT = float(os.environ.get("API_QUEUE_WAIT", "12"))   # seconds a waiter 
 gate = asyncio.Semaphore(API_CONCURRENCY)
 ocr_slots = asyncio.Semaphore(OCR_CONCURRENCY)
 waiters = 0
+client_log_slots = asyncio.Semaphore(2)
 session_locks = weakref.WeakValueDictionary()
 
 
@@ -148,6 +150,8 @@ async def lifespan(app):
     if os.environ.get("SESSION_STORE_DIR"):
         session_store = SessionStore(os.environ["SESSION_STORE_DIR"])
         sessions.update(session_store.load())
+    log_dir = os.environ.get("CLIENT_LOG_DIR")
+    app.state.client_logs = ClientLogStore(log_dir) if log_dir else None
     loop = asyncio.get_running_loop()
     loop.set_default_executor(concurrent.futures.ThreadPoolExecutor(
         max_workers=IO_THREADS, thread_name_prefix="anon-io"))
@@ -160,6 +164,8 @@ async def lifespan(app):
             app.state.client = client
             yield
     persist(force=True)
+    if app.state.client_logs:
+        app.state.client_logs.close()
     sessions.clear()
 
 
@@ -233,6 +239,10 @@ async def boundary(request, call_next):
             if len(body) > 8192:
                 return failure("INVALID_REQUEST", "Request too large.", 413)
         request._body = bytes(body)
+    if request.url.path == "/api/client-events":
+        response = await receive_client_events(request)
+        response.headers["Cache-Control"] = "no-store"
+        return response
     now = time.monotonic()
     for key, entry in list(sessions.items()):
         expired = (time.time() - entry.get("last_seen", time.time()) > lifetime(entry)
@@ -282,6 +292,29 @@ async def boundary(request, call_next):
 def set_session_cookie(response, token, entry):
     response.set_cookie(cookie_name, token, httponly=True, secure=secure, samesite="strict",
                         max_age=lifetime(entry) if entry.get("remember", True) else None)
+
+
+async def receive_client_events(request):
+    if request.method != "POST":
+        return failure("METHOD_NOT_ALLOWED", "Method not allowed.", 405)
+    store = getattr(request.app.state, "client_logs", None)
+    if store is None:
+        return JSONResponse({"accepted": 0}, status_code=202)
+    try:
+        payload = await request.json()
+    except ValueError:
+        return failure("INVALID_REQUEST", "Send an event batch.", 400)
+    values = payload.get("events") if isinstance(payload, dict) else None
+    if not isinstance(values, list) or len(values) > 10:
+        return failure("INVALID_REQUEST", "Send up to ten events.", 400)
+    if client_log_slots.locked():
+        return JSONResponse({"accepted": 0}, status_code=202)
+    async with client_log_slots:
+        try:
+            count = await asyncio.to_thread(store.append, values)
+        except OSError:
+            return JSONResponse({"accepted": 0}, status_code=202)
+    return JSONResponse({"accepted": count}, status_code=202)
 
 
 @app.get("/api/session")

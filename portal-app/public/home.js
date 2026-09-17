@@ -53,6 +53,7 @@ globalThis.classproHome = (() => {
   updateFilters();
 
   function page(destination, focus = true) {
+    globalThis.anonClientLogs?.capture({ kind: 'page_view', page: destination, consent: true });
     document.title = `${{ home: 'Home', attendance: 'Attendance', marks: 'Marks' }[destination] || 'Student Portal'} · Anon`;
     const previousPage = document.body.dataset.page;
     document.body.dataset.page = destination;

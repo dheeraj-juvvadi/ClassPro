@@ -24,6 +24,8 @@
     <h2>Storage on your device</h2>
     <p>Anon stores your latest academic reports in localStorage to show them quickly and when the network is unavailable. This includes personal and academic information and is not encrypted by Anon. Display preferences and your analytics choice are also stored locally. Avoid leaving Anon signed in on a shared device.</p>
     <h2>Optional analytics and notifications</h2>
+    <p>To diagnose failures, Anon sends limited operational events to its server: error categories, affected app sections, fixed API route names, status codes, timing, script locations and release identifiers. These records exclude error-message text, stack traces, form values, cookies and academic reports. Files are kept for up to seven UTC calendar days and capped at 2 MB per day. They may be dropped when rate or storage limits are reached.</p>
+    <p>If you allow analytics, the same bounded log can also count app-section visits without an account identifier. Operational error reporting works independently of optional usage analytics.</p>
     <p>With your permission, Vercel Analytics and Speed Insights measure visits and page performance. Anon does not intentionally send passwords, provider cookies or report contents to analytics. Optional analytics scripts are not loaded until you allow them. Hosting and security request logs can still be generated when the service is used.</p>
     <p>Browser notifications require a separate permission. Class reminders may display course names and rooms on your device. They run while Anon is open; they are not background push notifications.</p>
     <button type="button" class="public-cta" data-consent-open>Manage analytics preference</button>

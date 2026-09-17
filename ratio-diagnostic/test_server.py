@@ -10,6 +10,25 @@ import server
 
 
 class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
+    async def test_client_events_are_bounded_private_and_do_not_touch_sessions(self):
+        from client_logs import ClientLogStore
+        with tempfile.TemporaryDirectory() as directory:
+            store = ClientLogStore(directory)
+            with patch.object(server.app.state, "client_logs", store):
+                rejected = await self.client.post('/api/client-events', json={'events': []}, headers={'Origin': 'https://evil.test'})
+                self.assertEqual(rejected.status_code, 403)
+                malformed = await self.client.post('/api/client-events', json={'events': [{}] * 11})
+                self.assertEqual(malformed.status_code, 400)
+                server.rates['127.0.0.1'] = (server.time.monotonic(), server.RATE_PER_MINUTE)
+                response = await self.client.post('/api/client-events', json={'events': [{
+                    'kind': 'api_error', 'route': '/api/reports', 'status': 502,
+                    'password': 'synthetic-secret', 'message': 'synthetic-secret'}]})
+                self.assertEqual(response.status_code, 202)
+                self.assertEqual(response.json()['accepted'], 1)
+                self.assertNotIn('set-cookie', response.headers)
+                self.assertEqual(len(server.sessions), 0)
+                self.assertNotIn('synthetic-secret', next(Path(directory).glob('*.jsonl')).read_text())
+
     async def asyncSetUp(self):
         server.sessions.clear()
         server.rates.clear()

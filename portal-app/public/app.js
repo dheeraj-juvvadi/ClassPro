@@ -136,7 +136,11 @@ async function api(path, options = {}, login = false) {
   const record = (details) => {
     const entry = { time: new Date().toISOString(), path, method: options.method || 'GET', clientTrace, loginMode, durationMs: Math.round(performance.now() - started), ...details };
     window.classproDiagnostics = [...(window.classproDiagnostics || []), entry].slice(-30);
-    console.info('classpro_request', entry);
+    if (details.failure || details.status >= 400) globalThis.anonClientLogs?.capture({
+      kind: 'api_error', route: path.split('?')[0], status: details.status,
+      code: details.failure === 'timeout' ? 'TIMEOUT' : details.failure ? 'NETWORK_ERROR' : 'HTTP_ERROR',
+      duration_ms: entry.durationMs, request_id: details.requestId,
+    });
     if (login) $('request-trace').textContent = `Request ${entry.requestId || clientTrace} · ${entry.status || entry.failure}`;
   };
   let response;
@@ -160,7 +164,10 @@ async function api(path, options = {}, login = false) {
   const text = await response.text();
   if (text) {
     try { data = JSON.parse(text); }
-    catch { throw new Error('The server returned an unexpected response.\nPlease try again.'); }
+    catch {
+      globalThis.anonClientLogs?.capture({ kind: 'api_error', route: path.split('?')[0], code: 'INVALID_RESPONSE' });
+      throw new Error('The server returned an unexpected response.\nPlease try again.');
+    }
   }
   if (!response.ok) {
       throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), { code: data.error?.code, image: data.image, status: response.status });

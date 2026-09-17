@@ -1,0 +1,8 @@
+[Unit]
+Description=Summarize Anon client errors and prune expired logs
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/anon-client-review
+UMask=0077

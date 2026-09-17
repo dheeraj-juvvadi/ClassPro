@@ -41,10 +41,17 @@ def main():
     config = old["Config"].copy()
     config["Image"] = IMAGE
     changes = {"APP_ORIGIN": "https://anon-tracker.vercel.app", "SESSION_LIMIT": "200",
-               "API_CONCURRENCY": "4", "OCR_CONCURRENCY": "2", "IO_THREADS": "8"}
+               "API_CONCURRENCY": "4", "OCR_CONCURRENCY": "2", "IO_THREADS": "8",
+               "CLIENT_LOG_DIR": "/app/client-logs"}
     config["Env"] = [v for v in config["Env"] if v.split("=", 1)[0] not in changes]
     config["Env"] += [f"{key}={value}" for key, value in changes.items()]
     config["HostConfig"] = old["HostConfig"]
+    log_root = Path("/var/log/anon/client")
+    log_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chown(log_root, 65534, 65534)
+    mounts = config["HostConfig"].get("Binds") or []
+    if not any(":/app/client-logs" in mount for mount in mounts):
+        config["HostConfig"]["Binds"] = mounts + [f"{log_root}:/app/client-logs:rw"]
     backup = Path("/root") / ROLLBACK
     backup.mkdir(mode=0o700, exist_ok=True)
     (backup / "container.json").write_text(json.dumps(old))
