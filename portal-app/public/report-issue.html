@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191b19">
+  <title>Report an issue · Anon</title>
+  <meta name="description" content="Let Anon know about sign-in, sync, timetable or display problems without sharing private academic information.">
+  <link rel="canonical" href="https://anon-tracker.vercel.app/report-issue.html">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/public-pages.css?v=cb1b873866"><link rel="stylesheet" href="/consent.css?v=c8239834ce">
+  <script src="/consent.js?v=be694796ec" defer></script><script src="/report-issue.js?v=a47ef6a95b" defer></script>
+  <meta property="og:title" content="Report an issue · Anon">
+  <meta property="og:description" content="Let Anon know about sign-in, sync, timetable or display problems without sharing private academic information.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://anon-tracker.vercel.app/report-issue.html">
+  <meta property="og:image" content="https://anon-tracker.vercel.app/og-image.png">
+  <meta property="og:image:alt" content="Anon floral mark on a charcoal background.">
+  <meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+  <header class="public-header"><a href="/" aria-label="Anon home"><img src="/logo.svg" width="32" height="32" alt="">Anon</a></header>
+  <main class="document-page issue-page">
+    <p class="eyebrow">A little help goes a long way</p><h1>Something not right?</h1>
+    <p>Choose what happened. Your report joins our error review without your name, passwords or academic records.</p>
+    <form id="issue-form" aria-busy="false">
+      <label for="issue-category">What went wrong?</label>
+      <select id="issue-category" required>
+        <option value="">Choose an issue</option><option value="SIGN_IN_PROBLEM">Sign-in trouble</option>
+        <option value="SYNC_PROBLEM">Reports won’t sync</option><option value="SCHEDULE_PROBLEM">Timetable or day order</option>
+        <option value="MARKS_PROBLEM">Marks or attendance display</option><option value="LAYOUT_PROBLEM">Layout or controls</option>
+      </select>
+      <label for="issue-page">Where did you notice it?</label>
+      <select id="issue-page"><option value="unknown">Not sure</option><option value="login">Sign in</option><option value="home">Home</option><option value="attendance">Attendance</option><option value="marks">Marks</option><option value="settings">Settings</option></select>
+      <button id="issue-send" class="public-cta" type="submit">Send report <span aria-hidden="true">↗</span></button>
+      <p id="issue-status" role="status" aria-live="polite"></p>
+    </form>
+    <p class="issue-note">We receive the issue category, app section, screen-size category and app version. Reports have no contact details, so we can’t reply individually. Storage limits can delay or prevent submission.</p>
+    <p><a href="/privacy.html">How reports are stored</a> · <a href="/">Back to Anon</a></p>
+  </main>
+  <footer class="public-footer"><a href="/privacy.html">Privacy &amp; storage</a> · <a href="/terms.html">Terms</a></footer>
+</body>
+</html>

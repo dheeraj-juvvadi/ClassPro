@@ -7,20 +7,24 @@ import re
 import threading
 import time
 
-KINDS = {"runtime_error", "promise_error", "api_error", "asset_error", "page_view"}
+KINDS = {"runtime_error", "promise_error", "api_error", "asset_error", "page_view", "user_report"}
+REPORT_CODES = {"SIGN_IN_PROBLEM", "SYNC_PROBLEM", "SCHEDULE_PROBLEM", "MARKS_PROBLEM", "LAYOUT_PROBLEM"}
 PAGES = {"login", "home", "attendance", "marks", "settings", "privacy", "terms", "unknown"}
 CODES = {"TypeError", "ReferenceError", "SyntaxError", "RangeError", "Error", "UnknownError",
-         "NETWORK_ERROR", "TIMEOUT", "INVALID_RESPONSE", "HTTP_ERROR", "ASSET_FAILED"}
+         "NETWORK_ERROR", "TIMEOUT", "INVALID_RESPONSE", "HTTP_ERROR", "ASSET_FAILED"} | REPORT_CODES
 ROUTES = {"/api/session", "/api/challenge", "/api/login/client", "/api/reports"}
 SOURCES = {"app.js", "home.js", "settings.js", "auth-client.js", "provider-connections.js",
            "academic-ui.js", "schedule-calendar.js", "class-reminders.js", "client-logs.js",
-           "consent.js", "date-attendance.js", "date-projection.js", "unknown"}
+           "consent.js", "date-attendance.js", "date-projection.js", "sync-control.js",
+           "marks-target.js", "marks-target-math.js", "offline-shell.js", "report-issue.js", "unknown"}
 
 
 def clean_event(value):
     if not isinstance(value, dict) or not isinstance(value.get("kind"), str) or value["kind"] not in KINDS:
         return None
     if value["kind"] == "page_view" and value.get("consent") is not True:
+        return None
+    if value["kind"] == "user_report" and (not isinstance(value.get("code"), str) or value["code"] not in REPORT_CODES):
         return None
     page = value.get("page")
     result = {"kind": value["kind"], "page": page if isinstance(page, str) and page in PAGES else "unknown"}

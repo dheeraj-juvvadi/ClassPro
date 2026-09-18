@@ -369,3 +369,23 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   sign-out cache clearing, API exclusions and install/activation lifecycle.
 - Next: full staged release, live shell verification and remaining readiness
   checklist (thank-you flow, public metadata, mobile CTA and imagery audit).
+
+## 2026-09-18: public readiness and issue reporting
+
+- Offline release 3f31e0c passed 48 frontend/88 backend checks; GitHub run
+  35292770682 succeeded. Production serves the generated service worker.
+- Added Report a problem from sign-in and Settings, with fixed issue categories
+  stored in the existing bounded client log. No free text, credentials, reports
+  or contact details are collected. Backend independently allowlists categories.
+- Thank-you page confirms only an accepted write; offline/dropped writes retain
+  a retryable form. Direct thank-you visits do not claim a report was submitted.
+- All public pages have sharing metadata. Sitemap includes the issue form;
+  confirmation/404 pages are noindex. Asset hashes now update across all public
+  pages, and their offline versions are included in the same bounded shell.
+- Mobile sign-in CTA is sticky on short screens, returns to normal flow while
+  typing/consent is open, and fits 390x844 above the fold. Checks at 320x568 pass.
+- Consent withdrawal, truthful report submission, privacy filtering and public
+  page overflow checks pass. Docs now reflect seven-day sessions and sync slots.
+- Next: staged release, final checklist reconciliation and image/font payload
+  optimization. Physical-device frame-rate/battery and real SRM burst latency
+  remain unmeasured; no four-second full-login guarantee is claimed.

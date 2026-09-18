@@ -9,7 +9,7 @@
   "scripts": {
     "build": "node scripts/check-build.mjs && node scripts/build-offline.mjs --check",
     "build:offline": "node scripts/build-offline.mjs",
-    "test:release": "node --test test/attendance-math.test.js test/schedule-model.test.js test/class-reminders.test.js test/client-logs.test.js test/consent.test.js test/planner-ui.test.js test/cache-boot.test.js test/unified-login.test.js test/report-sync.test.js test/sync-notice.test.js test/marks-target.test.js test/offline-shell.test.js test/auth-capacity.test.js test/login-admission.test.js",
+    "test:release": "node --test test/attendance-math.test.js test/schedule-model.test.js test/class-reminders.test.js test/client-logs.test.js test/consent.test.js test/planner-ui.test.js test/cache-boot.test.js test/unified-login.test.js test/report-sync.test.js test/sync-notice.test.js test/marks-target.test.js test/offline-shell.test.js test/readiness.test.js test/auth-capacity.test.js test/login-admission.test.js",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "node --test",

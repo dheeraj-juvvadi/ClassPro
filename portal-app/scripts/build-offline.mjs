@@ -4,21 +4,26 @@ import { load } from 'cheerio';
 
 const root = new URL('../public/', import.meta.url);
 const check = process.argv.includes('--check');
-const pages = ['/', '/privacy.html', '/terms.html', '/404.html'];
+const pages = ['/', '/privacy.html', '/terms.html', '/404.html', '/report-issue.html', '/thank-you.html'];
 const assets = new Set(pages);
 const digest = createHash('sha256');
-const indexPath = new URL('index.html', root);
-let index = await readFile(indexPath, 'utf8');
+const versions = [];
 // Release validation reuses the exact same content-derived asset URLs.
 for (const name of await readdir(root)) {
   if (!/\.(?:js|css)$/.test(name) || name === 'service-worker.js') continue;
   const hash = createHash('sha256').update(await readFile(new URL(name, root))).digest('hex').slice(0, 10);
   const pattern = new RegExp('/' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:\\?v=[a-f0-9]+)?(?=")', 'g');
-  index = index.replace(pattern, '/' + name + '?v=' + hash);
+  versions.push([pattern, '/' + name + '?v=' + hash]);
 }
-if (index !== await readFile(indexPath, 'utf8')) {
-  if (check) throw new Error('Asset versions changed. Run npm run build:offline and stage the generated files.');
-  await writeFile(indexPath, index);
+for (const page of pages) {
+  const path = new URL(page === '/' ? 'index.html' : page.slice(1), root);
+  const source = await readFile(path, 'utf8');
+  let html = source;
+  for (const [pattern, replacement] of versions) html = html.replace(pattern, replacement);
+  if (html !== source) {
+    if (check) throw new Error('Asset versions changed. Run npm run build:offline and stage the generated files.');
+    await writeFile(path, html);
+  }
 }
 const add = value => {
   if (!value?.startsWith('/') || value.startsWith('//') || /^\/(api|_vercel|ocr)\//.test(value)) return;

@@ -1,6 +1,7 @@
 @font-face { font-family: Inter; src: url('/InterVariable.woff2') format('woff2'); font-display: swap; }
 :root { color-scheme: dark; font-family: Inter, sans-serif; color: #f1eee3; background: #191b19; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; min-height: 100svh; }
 a { color: #d5dda9; text-underline-offset: 4px; -webkit-tap-highlight-color: transparent; }
 a:focus-visible { outline: 2px solid #d5dda9; outline-offset: 6px; }
@@ -20,8 +21,23 @@ h1 em { font-style: normal; color: #c5d4a7; }
 .document-page h2 { font-size: 20px; font-weight: 500; margin-top: 36px; }
 .document-page p { color: #b3b8ab; line-height: 1.8; }
 .document-page button { font: inherit; cursor: pointer; border: 0; }
+.issue-page { max-width: 640px; }
+.issue-page h1 { margin-bottom: 14px; }
+.issue-page > p:first-of-type + h1 + p { font-size: 14px; }
+#issue-form { margin-top: 24px; }
+#issue-form label { display: block; margin: 18px 0 8px; font-size: 13px; color: #d5ddc7; }
+#issue-form select { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #59664a; border-radius: 7px; background: #20271d; color: #f1eee3; font: inherit; font-size: 16px; }
+#issue-form button { min-width: 155px; justify-content: space-between; }
+#issue-form button:disabled { opacity: .65; cursor: progress; }
+#issue-form :focus-visible { outline: 2px solid #d5dda9; outline-offset: 4px; }
+#issue-status { color: #edbd99; font-size: 13px; min-height: 1.5em; margin: 12px 0 0; }
+.issue-page .issue-note { margin-top: 24px; font-size: 12px; }
+.thanks-flower { display: block; margin-bottom: 28px; }
+.thanks-page > p:last-child { font-size: 13px; }
 @media (max-width: 700px) {
   .public-header, .public-footer { padding-inline: 24px; }
   .error-page { margin-top: 16px; padding: 24px; }
   .public-flower { position: static; margin: 36px auto; text-align: center; font-size: 15px; }
+  .issue-page { padding-inline: 24px; margin-top: 16px; }
+  .issue-page h1 { font-size: 34px; }
 }

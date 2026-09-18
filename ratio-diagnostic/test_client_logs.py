@@ -20,6 +20,13 @@ class ClientLogTests(unittest.TestCase):
         self.assertIsNone(clean_event({"kind": []}))
         self.assertIsNone(clean_event({"kind": "page_view", "page": "home"}))
 
+    def test_user_reports_accept_only_fixed_categories_and_drop_free_text(self):
+        event = clean_event({"kind": "user_report", "page": "marks", "code": "MARKS_PROBLEM",
+                             "message": "private", "account": "private", "source": "marks-target.js"})
+        self.assertEqual(event, {"kind": "user_report", "page": "marks", "code": "MARKS_PROBLEM", "source": "marks-target.js"})
+        for code in [None, [], {}, "private", "HTTP_ERROR"]:
+            self.assertIsNone(clean_event({"kind": "user_report", "code": code}))
+
     def test_disk_permissions_rate_bound_and_retention(self):
         with tempfile.TemporaryDirectory() as directory:
             store = ClientLogStore(directory)

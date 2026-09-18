@@ -20,6 +20,10 @@ report contents. The server independently allowlists every stored field. Events
 are untrusted client reports, not proof of a backend incident.
 
 Optional page-view counts require analytics consent; operational errors do not.
+The issue form sends `user_report` with one fixed issue category and app section,
+screen-size category and release. It has no free-text or contact fields. These
+events use the same limits and review summaries; success requires accepted=1.
+An issue report is not sent through email or an external ticketing service.
 Each page load sends at most 30 events, with batches of at most ten. The server
 accepts at most 120 events per minute globally and two concurrent file writes.
 Network failures, full logs and rate limits can drop events; this is best-effort

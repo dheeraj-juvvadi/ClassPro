@@ -1,25 +1,27 @@
 # Anon academic data
 
-Production: https://revamp-tracker.vercel.app
-Vercel project: `revamp-tracker`, linked to `dheeraj-juvvadi/ClassPro`, branch
-`main`, root directory `portal-app/public`. Pushes to main deploy the frontend.
+Production: https://anon-tracker.vercel.app
+Deployment repository: `dheeraj-juvvadi/revamp-tracker`, branch `main`, root
+directory `portal-app/public`. Validated pushes through remote `revamp` deploy
+Vercel and trigger the Azure workflow. See docs/releasing.md.
 The Python backend runs separately in the Azure `classpro-test` VM.
 
 Academia uses Ratio-D's `/login` and `/refresh`; Portal uses `/portal/login`
 and `/portal/refresh`. The public compatibility endpoints select these based
-on the requested provider. Home offers account connection buttons without
+on the requested provider. Settings offers account connections without
 discarding the other connection. Accounts must match by registration number
 or, when unavailable, normalized username. Separate cookies and credentials
 remain on the server for retry after SRM session expiry. Remembered sessions
-are encrypted at rest and expire after 48 hours of inactivity. A failed
+are encrypted at rest and expire after seven days of inactivity. A failed
 provider refresh preserves previous reports and displays a warning.
 
 `SESSION_STORE_DIR` points to the mounted persistent session directory. The
 Fernet key and encrypted SQLite records must survive container replacement;
 both are restricted to the container user. Logout removes the stored session.
 Unchecked "Keep me signed in" uses a browser-session cookie, a 30-minute idle
-timeout, and no disk persistence. The frontend syncs on reopening, focus,
-network reconnection and every five minutes while visible. SRM CAPTCHA or
+timeout, and no disk persistence. The frontend checks the persisted schedule on
+reopening, focus and network reconnection, using jittered IST sync slots while
+visible. Queue status rechecks use the server-provided nextAt. SRM CAPTCHA or
 rejected credentials can still require user action.
 
 Academia builds its schedule from `My_Time_Table_2023_24` course allocation and
