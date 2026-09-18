@@ -4,6 +4,10 @@ Stage only the completed agenda. The release command validates that exact Git
 index snapshot in a temporary directory, commits it, and pushes to `revamp/main`.
 Unstaged work is excluded. No force push or automatic staging is performed.
 
+For frontend edits, run `npm run build:offline` from portal-app before staging.
+Include the generated index.html asset hashes and service-worker.js. Build
+validation fails if the staged offline shell does not match its public assets.
+
 ```sh
 PLAYWRIGHT_CHANNEL=chrome RELEASE_PYTHON=/tmp/anon-release-venv/bin/python \
   node scripts/release.mjs "Describe the completed agenda"

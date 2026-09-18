@@ -351,3 +351,21 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   focus, scheme changes, session clearing and 320–1280px dialog overflow.
   Release validation includes the added mark-update coverage.
 - Next: release and live verification, then public readiness and offline shell.
+
+## 2026-09-18: offline app reopening
+
+- Marks planner release 3c1a050 passed 45 frontend/88 backend checks; GitHub
+  run 35292201631 succeeded and the planner script is served in production.
+- Added a versioned offline app shell: public pages/scripts/styles/fonts/icons
+  only, about 2 MiB uncompressed. APIs, OCR assets, analytics, external URLs and
+  arbitrary query pages are excluded. Report data remains in its existing
+  localStorage cache. Cached reopen shows an explicit offline notice.
+- Installation waits for an idle visible page and completed sign-in, limits
+  downloads to three, and reuses versioned HTTP assets. New workers wait for old
+  windows to close; failed installs drain work and remove incomplete caches.
+- Build now verifies generated asset hashes and shell contents. Frontend edits
+  require `npm run build:offline` before staging/release; docs updated.
+- Three targeted checks pass, including a real offline browser reload, local
+  sign-out cache clearing, API exclusions and install/activation lifecycle.
+- Next: full staged release, live shell verification and remaining readiness
+  checklist (thank-you flow, public metadata, mobile CTA and imagery audit).

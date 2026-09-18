@@ -69,6 +69,11 @@ globalThis.anonSyncControl = (() => {
   });
   return {
     observe, reset, fail, end,
+    offline() {
+      if (active || pending) return;
+      show('offline', 'Offline · showing saved data');
+      hideTimer = setTimeout(dismiss, 5000);
+    },
     begin({ notify = true } = {}) {
       clearTimeout(settleTimer); clearTimeout(hideTimer);
       if (!active && !pending) {

@@ -446,6 +446,7 @@ function paintCachedReports() {
     : Number.isFinite(cachedNextAt) && cachedNextAt > 0 ? cachedNextAt : 0;
   const date = new Date(cached.updatedAt);
   $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Showing your last synced data.' : `Last synced ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
+  if (!navigator.onLine) anonSyncControl.offline();
   return true;
 }
 
@@ -461,6 +462,10 @@ if (designPreview) {
   paintCachedReports();
   run(async () => {
     try {
+      if (!navigator.onLine) {
+        if (!authenticated) showLogin('You’re offline. Connect to sign in; your saved reports are available if this device has them.');
+        return;
+      }
       const session = await api('/api/session');
       classproAuth.configure(session);
       if (session.authenticated) {
