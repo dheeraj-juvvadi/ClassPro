@@ -1,33 +1,41 @@
 # Anon implementation backlog
 
-Updated September 17, 2026. User requested this checklist while directing continued work on the current session/cache and Azure checks.
+Updated September 18, 2026. Shipped items below are supported by release checks
+and work-performed.md; remaining performance limits are listed explicitly.
 
 ## Current work
 - [x] Verify expired-session cache clearing and offline cache behavior.
 - [x] Measure repeated synthetic persistence/resource usage on Azure; distinguish this from real login capacity.
-- [ ] Complete desktop/mobile interaction and empty-state verification.
+- [x] Desktop/mobile interaction, aligned home widgets and empty states verified in browser checks (320–1440px).
 - [x] Deploy capacity/burst revision 2c44f56; update work-performed.md with live verification.
 - [ ] Observe real mixed-load latency, upstream queue drain time and CPU credits; synthetic capacity results are in docs/azure-capacity.md.
 
 ## Requested readiness checklist
-- [ ] Custom 404 page.
-- [ ] Meta title on every public page and meaningful titles for app sections.
-- [ ] Meta description on every public page.
-- [ ] Primary CTA above the fold, verified at mobile breakpoints.
+- [x] Custom 404 page.
+- [x] Meta title on every public page and meaningful titles for app sections.
+- [x] Meta description on every public page.
+- [x] Primary CTA above the fold, verified at mobile breakpoints.
 - [x] Favicon set; shared floral app mark and install icons deployed.
-- [ ] robots.txt, excluding private/API paths as appropriate.
-- [ ] sitemap.xml listing public pages only.
-- [ ] Open Graph image and sharing metadata.
-- [ ] Audit alt text on every image; decorative artwork uses empty alt or aria-hidden.
-- [ ] Mobile breakpoint audit across login, reports, dialogs and public pages.
-- [ ] Sticky mobile CTA where useful, without obscuring form fields or navigation.
-- [ ] Loading-state audit; existing sign-in/sync states need full verification.
-- [ ] Form-error audit; shared sign-in errors are inline, more edge cases pending.
-- [ ] Thank-you page tied to an actual completed action.
-- [ ] Privacy policy based on actual credential, report, analytics and persistence behavior.
-- [ ] Terms and conditions aligned with the service and operator details.
-- [ ] Cookie/consent behavior based on actual storage and analytics behavior.
-- [x] Vercel Analytics and Speed Insights installed; consent behavior still to review.
-- [ ] Image compression audit; new logo/favicons are SVG and generated PNG, large artwork still to inspect.
+- [x] robots.txt, excluding private/API paths as appropriate.
+- [x] sitemap.xml listing public pages only.
+- [x] Open Graph image and sharing metadata.
+- [x] Alt text audited; decorative artwork uses empty alt or aria-hidden. Build checks enforce HTML alt attributes.
+- [x] Mobile breakpoints checked across login, reports, dialogs and public pages.
+- [x] Sticky mobile CTA; returns to normal flow while typing or consent is open.
+- [x] Sign-in/sync loading states checked, including queued, unchanged, partial and offline results.
+- [x] Inline form errors and retry states checked for sign-in and issue reports.
+- [x] Thank-you page confirms an accepted issue report; direct visits do not claim success.
+- [x] Privacy policy reflects actual credentials, cookies, reports, analytics and persistence.
+- [x] Terms describe the service without inventing operator details.
+- [x] Cookie/consent behavior and consent withdrawal verified.
+- [x] Vercel Analytics and Speed Insights installed with optional consent.
+- [x] Image compression audit recorded in docs/asset-performance.md; SVG/WebP artwork and generated install icons.
+
+## Next refinement work
+- [ ] Finish WOFF2 font compression release and live verification.
+- [ ] Keep open date-based attendance projections current after report refresh.
+- [ ] Reduce background artwork rendering cost while preserving the selected style.
+- [ ] Verify motion, scrolling and battery behavior on a physical phone.
+- [ ] Measure real SRM login/sync bursts with controlled accounts; retain resource headroom.
 
 Do not present unchecked items as shipped. Public/legal copy must describe the actual service without inventing operator details or promises. Analytics, credentials and reports must not enter public metadata or the sitemap.

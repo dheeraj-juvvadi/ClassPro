@@ -1,4 +1,4 @@
-@font-face { font-family: 'Anon Editorial'; src: url('/Newsreader.ttf') format('truetype'); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Anon Editorial'; src: url('/Newsreader.woff2') format('woff2'); font-weight: 200 800; font-style: normal; font-display: swap; }
 /* A single pale-sage sheet within the dark sign-in screen. */
 #login-fallback-dialog { width: min(448px, calc(100% - 32px)); padding: 30px 30px 20px; background: #d9dfc7; border: 0; border-radius: 20px 20px 6px 6px; color: #283122; box-shadow: 0 24px 80px #0005; }
 #login-fallback-dialog::backdrop { background: #10160dd9; }

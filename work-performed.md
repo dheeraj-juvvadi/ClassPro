@@ -389,3 +389,18 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
 - Next: staged release, final checklist reconciliation and image/font payload
   optimization. Physical-device frame-rate/battery and real SRM burst latency
   remain unmeasured; no four-second full-login guarantee is claimed.
+
+## 2026-09-18: smaller editorial font and readiness reconciliation
+
+- Public-readiness release fae7f4f deployed successfully through GitHub run
+  35293908279; the live thank-you page includes the confirmed-report flow.
+- Converted Newsreader to WOFF2: 451,664 → 214,960 bytes, 52.4% smaller.
+  Glyph order, Unicode map and variable-axis bounds/defaults are unchanged.
+  Original TTF remains the source; conversion tooling is optional and separate
+  from runtime dependencies. Browser confirms the WOFF2 loads at all weights.
+- Regenerated the offline shell: 69 public assets, 1.78 MiB. Static build and
+  asset checks pass. Documented artwork costs and reconciled the requested
+  readiness checklist with verified releases; physical-device checks and real
+  SRM burst measurements remain open.
+- Next: staged release validation, then correct date-planner refresh behavior
+  and investigate background rendering without changing the selected style.
