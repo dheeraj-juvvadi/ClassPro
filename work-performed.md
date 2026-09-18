@@ -421,3 +421,19 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   holiday corrections, past OD, date rollover and missing timetables. The
   projection suite now participates in every staged release.
 - Next: release and live verification, then reduce static artwork drawing cost.
+
+## 2026-09-18: identical artwork with less SVG work
+
+- Projection release 73b66d2 passed 53 frontend/89 backend checks and deployed
+  through successful GitHub run 35295140846.
+- Added a conservative geometry pass that removes texture marks completely
+  outside their existing polygon clip. Visible paths, colors and transforms
+  are unchanged. It retains unsupported shapes and padded edge intersections.
+- Removed 827 desktop and 868 mobile marks. SVG sizes fell to 401,850 and
+  313,848 bytes; gzip sizes to 52,586 and 41,945 bytes. This also reduces the
+  public offline shell. The original artwork generator remains unchanged.
+- Six before/after Sharp raster comparisons show zero changed channels at
+  desktop 1440/1920/2880 and mobile 480/960/1440 widths. Both assets decode in
+  the browser. Physical-phone rendering performance remains unmeasured.
+- Next: release, then the requested calculator redesign with actual component
+  usage and a responsive, visually clear projection workflow.

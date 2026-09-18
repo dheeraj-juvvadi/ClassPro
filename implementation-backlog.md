@@ -33,8 +33,9 @@ and work-performed.md; remaining performance limits are listed explicitly.
 
 ## Next refinement work
 - [x] WOFF2 font compression released as 9037e75; Azure succeeded and live CSS verified.
-- [x] Date-based attendance projections reconcile refreshes, date rollover and sign-out; staged release pending.
-- [ ] Reduce background artwork rendering cost while preserving the selected style.
+- [x] Date-based attendance projections reconcile refreshes, date rollover and sign-out; released as 73b66d2.
+- [x] Removed invisible background texture paths; six raster comparisons have zero pixel differences. Release pending.
+- [ ] Redesign the date attendance calculator with modern components, visual results and responsive layout.
 - [ ] Verify motion, scrolling and battery behavior on a physical phone.
 - [ ] Measure real SRM login/sync bursts with controlled accounts; retain resource headroom.
 
