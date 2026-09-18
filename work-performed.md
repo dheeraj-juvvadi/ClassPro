@@ -300,3 +300,18 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   presentation has not been tested; browser support determines availability.
 - Next: staged release, check remaining public-readiness items and client resource
   lifecycle, then continue feature/refinement work.
+
+## 2026-09-18: portal client lifecycle
+
+- Previous shortcut release 00b29e4 verified: GitHub run 35252404819 succeeded;
+  production manifest includes the installed-app shortcuts.
+- Request scopes now close temporary Academia/Portal clients on success, error
+  and cancellation. Failed parallel fetches cancel and drain their siblings
+  before cleanup. Pending CAPTCHA clients are explicitly retained for retries.
+- Reauthentication closes replaced cookie jars without closing the shared HTTP
+  transport. OCR password rejections retain their correct error classification.
+- Six lifecycle regression tests pass, including embedded-route cleanup,
+  cancellation order, challenge retention and password rejection. The preceding
+  full suite passed 87 tests; release validation reruns it with the sixth case.
+- Next: top sync popdown with truthful queued/completed/error states, then
+  public-readiness verification and Ratio-D feature refinements.

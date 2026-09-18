@@ -7,6 +7,7 @@ import time
 import httpx
 import asyncio
 from services.portal_marks_service import PortalMarksService
+from core.client_lifecycle import track
 
 LOGIN_URL = "https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp"
 BASE_URL = "https://sp.srmist.edu.in/srmiststudentportal"
@@ -78,7 +79,7 @@ def telemetry_payload():
 
 class PortalSession:
     def __init__(self):
-        self.client = httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0)
+        self.client = track(httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0))
         self.nonce = None
         self.login_form_fields = {}
         self.captcha_page = None
@@ -202,7 +203,7 @@ class PortalSession:
 
 class PortalClient:
     def __init__(self, cookies=None):
-        self.client = httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0)
+        self.client = track(httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0))
         if cookies:
             self.client.cookies.update(cookies)
 

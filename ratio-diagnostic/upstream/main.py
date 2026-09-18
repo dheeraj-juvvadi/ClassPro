@@ -15,6 +15,7 @@ import uvicorn
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 from core.academia_client import AcademiaClient
+from core.client_lifecycle import client_scope, track, retain, close as close_client, gather_complete
 from core.portal_client import PortalClient, PortalSession, close_shared_transport
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -301,6 +302,7 @@ async def pyq_proxy(path: str, q: str = None, limit: int = None, cursor: str = N
 
 @app.post("/refresh")
 @limiter.limit("3/minute")
+@client_scope
 async def refresh_data(creds: Credentials, request: Request):
     start_total = time.time()
     print(f"[API] Incoming REFRESH request for: {creds.username}", flush=True)
@@ -312,7 +314,7 @@ async def refresh_data(creds: Credentials, request: Request):
         if not creds.cookies:
             await client.authenticate(creds.captcha, creds.cdigest)
 
-        res_prof, res_g1, res_g2, res_att = await asyncio.gather(
+        res_prof, res_g1, res_g2, res_att = await gather_complete(
             client.get_profile_html(),
             client.get_grid_html("Batch_1"),
             client.get_grid_html("batch_2"),
@@ -329,7 +331,7 @@ async def refresh_data(creds: Credentials, request: Request):
             print(f"{get_now()}\n  -> [AUTH] Session invalid or site glitch. Attempting re-auth...", flush=True)
             try:
                 await client.authenticate(creds.captcha, creds.cdigest)
-                res_prof, res_g1, res_g2, res_att = await asyncio.gather(
+                res_prof, res_g1, res_g2, res_att = await gather_complete(
                     client.get_profile_html(),
                     client.get_grid_html("Batch_1"),
                     client.get_grid_html("batch_2"),
@@ -404,6 +406,7 @@ async def refresh_data(creds: Credentials, request: Request):
 
 @app.post("/login")
 @limiter.limit("5/minute")
+@client_scope
 async def login(creds: LoginCredentials, request: Request):
     start_total = time.time()
     print(f"[API] Incoming login request for: {creds.username}", flush=True)
@@ -412,7 +415,7 @@ async def login(creds: LoginCredentials, request: Request):
         if not creds.cookies:
             await client.authenticate(creds.captcha, creds.cdigest)
             
-        res_prof, res_g1, res_g2, res_att = await asyncio.gather(
+        res_prof, res_g1, res_g2, res_att = await gather_complete(
             client.get_profile_html(),
             client.get_grid_html("Batch_1"),
             client.get_grid_html("batch_2"),
@@ -428,7 +431,7 @@ async def login(creds: LoginCredentials, request: Request):
         if session_dead:
             print(f"{get_now()}\n  -> [AUTH] Re-authenticating...", flush=True)
             await client.authenticate(creds.captcha, creds.cdigest)
-            res_prof, res_g1, res_g2, res_att = await asyncio.gather(
+            res_prof, res_g1, res_g2, res_att = await gather_complete(
                 client.get_profile_html(),
                 client.get_grid_html("Batch_1"),
                 client.get_grid_html("batch_2"),
@@ -521,10 +524,11 @@ async def portal_captcha(request: Request):
 
 @app.post("/portal/login")
 @limiter.limit("15/minute")
+@client_scope
 async def portal_login(creds: PortalCredentials, request: Request):
     if creds.cookies:
         client = PortalClient(creds.cookies)
-        att_html, marks, tt_html, prof_html = await asyncio.gather(
+        att_html, marks, tt_html, prof_html = await gather_complete(
             client.get_attendance_html(),
             client.get_marks_data(),
             client.get_timetable_html(),
@@ -555,6 +559,7 @@ async def portal_login(creds: PortalCredentials, request: Request):
     session = _portal_captcha_sessions.pop(creds.cdigest, None) if creds.cdigest else None
     if not session:
         raise HTTPException(status_code=401, detail="captcha required")
+    track(session.client)
 
     netid = (creds.username or "").strip().split("@")[0]
     password = creds.password or ""
@@ -582,6 +587,7 @@ async def portal_login(creds: PortalCredentials, request: Request):
                     login_res = res
                     break
                 if res.get("reason") == "wrong_captcha":
+                    await close_client(session.client)
                     session = PortalSession()
                     await session.load_captcha()
                 else:
@@ -594,8 +600,9 @@ async def portal_login(creds: PortalCredentials, request: Request):
                 print(f"  -> [OCR] Portal login error: {e}", flush=True)
                 break
 
-    if not captcha_val:
+    if not captcha_val and not login_res:
         _portal_captcha_sessions[creds.cdigest] = session
+        retain(session.client)
         raise HTTPException(status_code=401, detail="wrong captcha, try the new one")
 
     if not login_res:
@@ -616,11 +623,13 @@ async def portal_login(creds: PortalCredentials, request: Request):
             "session_expired": "session expired, refresh the captcha and retry",
         }.get(reason, "login failed")
         _portal_captcha_sessions[creds.cdigest] = session
+        retain(session.client)
         raise HTTPException(status_code=401, detail=msg)
 
+    await close_client(session.client)
     client = PortalClient(login_res["cookies"])
     try:
-        att_html, marks, tt_html, prof_html = await asyncio.gather(
+        att_html, marks, tt_html, prof_html = await gather_complete(
             client.get_attendance_html(),
             client.get_marks_data(),
             client.get_timetable_html(),
@@ -652,12 +661,13 @@ async def portal_login(creds: PortalCredentials, request: Request):
 
 @app.post("/portal/refresh")
 @limiter.limit("60/minute")
+@client_scope
 async def portal_refresh(creds: PortalCredentials, request: Request):
     if not creds.cookies:
         raise HTTPException(status_code=401, detail={"type": "SESSION_EXPIRED"})
     client = PortalClient(creds.cookies)
     await client.keepalive()
-    att_html, marks, tt_html, prof_html = await asyncio.gather(
+    att_html, marks, tt_html, prof_html = await gather_complete(
         client.get_attendance_html(),
         client.get_marks_data(),
         client.get_timetable_html(),
@@ -674,6 +684,7 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
             while ocr_attempts < 4:
                 ocr_attempts += 1
                 print(f"  -> [OCR] Portal background re-auth attempt {ocr_attempts}/4", flush=True)
+                session = None
                 try:
                     session = PortalSession()
                     await session.load_captcha()
@@ -686,8 +697,9 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
                     if res.get("ok"):
                         print(f"  -> [OCR] Portal background re-auth successful!", flush=True)
                         reauth_success = True
+                        await close_client(client.client)
                         client = PortalClient(res["cookies"])
-                        att_html, marks = await asyncio.gather(
+                        att_html, marks = await gather_complete(
                             client.get_attendance_html(),
                             client.get_marks_data()
                         )
@@ -696,6 +708,9 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
                         print(f"  -> [OCR] Portal background re-auth attempt {ocr_attempts} failed. Reason: {res.get('reason')}", flush=True)
                 except Exception as e:
                     print(f"  -> [OCR] Background Portal re-auth error: {e}", flush=True)
+                finally:
+                    if session:
+                        await close_client(session.client)
 
             if not reauth_success:
                 print("  -> [OCR] Background Portal re-auth failed after 4 attempts", flush=True)

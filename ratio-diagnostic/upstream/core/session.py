@@ -3,11 +3,12 @@ import json
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from core.config import BASE_URL, LOGIN_URL, HEADERS
-from core.portal_client import _shared_transport
+from core.portal_client import _BorrowedTransport
+from core.client_lifecycle import track, close
 
 class SessionHandler:
     def __init__(self, cookies=None):
-        self.client = httpx.AsyncClient(transport=_shared_transport, headers=HEADERS, follow_redirects=True, timeout=30.0)
+        self.client = track(httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0))
         if cookies:
             print("  -> [SESSION] Injected existing cookies from frontend.", flush=True)
             self.client.cookies.update(cookies)
@@ -51,7 +52,8 @@ class SessionHandler:
 
     async def login(self, username, password, captcha=None, cdigest=None):
         print(f"  -> [SESSION] Executing hard login for {username}...", flush=True)
-        self.client = httpx.AsyncClient(transport=_shared_transport, headers=HEADERS, follow_redirects=True, timeout=30.0)
+        await close(self.client)
+        self.client = track(httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0))
         
         payload = {
             'username': username, 'password': password, 'client_portal': 'true',
