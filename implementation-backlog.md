@@ -32,8 +32,8 @@ and work-performed.md; remaining performance limits are listed explicitly.
 - [x] Image compression audit recorded in docs/asset-performance.md; SVG/WebP artwork and generated install icons.
 
 ## Next refinement work
-- [ ] Finish WOFF2 font compression release and live verification.
-- [ ] Keep open date-based attendance projections current after report refresh.
+- [x] WOFF2 font compression released as 9037e75; Azure succeeded and live CSS verified.
+- [x] Date-based attendance projections reconcile refreshes, date rollover and sign-out; staged release pending.
 - [ ] Reduce background artwork rendering cost while preserving the selected style.
 - [ ] Verify motion, scrolling and battery behavior on a physical phone.
 - [ ] Measure real SRM login/sync bursts with controlled accounts; retain resource headroom.

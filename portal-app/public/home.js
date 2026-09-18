@@ -235,6 +235,7 @@ globalThis.classproHome = (() => {
   });
   const refreshClock = () => {
     if (!document.body.classList.contains('planner') || document.hidden) return;
+    dateAttendance.clock(now());
     if (!get('home-view').hidden) render();
     else { const date = now(); reminders.check(planner.next(source(), date, filters), date); }
   };
@@ -285,9 +286,9 @@ globalThis.classproHome = (() => {
       reportError = report?.error?.message || '';
       reportedSchedule = planner.normalize(scheduleReport);
       scheduleInvalid = scheduleReport != null && !reportedSchedule;
-      dateAttendance.update(attendance, reportedSchedule, now(), filters);
       selectedDate = null;
       updateFilters();
+      dateAttendance.update(attendance, reportedSchedule, now(), filters);
       calendar.reset(now());
       render();
     },

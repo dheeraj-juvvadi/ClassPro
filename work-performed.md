@@ -404,3 +404,20 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   SRM burst measurements remain open.
 - Next: staged release validation, then correct date-planner refresh behavior
   and investigate background rendering without changing the selected style.
+
+## 2026-09-18: live attendance projection reconciliation
+
+- Font release 9037e75 passed 49 frontend/89 backend checks. GitHub run
+  35294629235 succeeded and production CSS serves the WOFF2 font.
+- Report updates now retain valid date selections and immediately recompute an
+  open attendance projection. Dates that become holidays, unknown or past
+  non-OD selections are removed with a visible explanation. Past OD remains.
+- Existing visibility/minute clock checks handle date rollover without another
+  timer. Updated batch filters settle before projections render. Calendar focus
+  survives refresh or moves to an enabled date when the old date is disabled.
+- Opening a class leave plan selects Leave consistently. Sign-out resets the
+  action and clears both scenario data and rendered course/date contents.
+- Four projection math/browser checks pass; coverage includes changed reports,
+  holiday corrections, past OD, date rollover and missing timetables. The
+  projection suite now participates in every staged release.
+- Next: release and live verification, then reduce static artwork drawing cost.
