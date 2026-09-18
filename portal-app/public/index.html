@@ -39,6 +39,9 @@
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
   <link rel="stylesheet" href="/interaction-feedback.css?v=022af5fcc0">
   <link rel="stylesheet" href="/desktop.css?v=5af5323f81">
+  <link rel="stylesheet" href="/marks-target.css?v=d9baa76b5f">
+  <script src="/marks-target-math.js?v=7e3f5a6115" defer></script>
+  <script src="/marks-target.js?v=7612a406a0" defer></script>
   <script src="/interaction-feedback.js?v=d80307ad7a" defer></script>
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
   <script src="/secure-context-shim.js?v=16224827b7" defer></script>
@@ -62,7 +65,7 @@
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=f47be6847f" defer></script>
   <script src="/settings.js?v=8833d1edfa" defer></script>
-  <script src="/app.js?v=4dd4115b61" defer></script>
+  <script src="/app.js?v=24683e21e3" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -176,6 +179,32 @@
     </section>
     <noscript><p class="message">JavaScript is required to sign in and load your student reports. Please enable it and reload this page.</p></noscript>
   </main>
+  <dialog id="marks-target-dialog" aria-labelledby="marks-target-title" aria-describedby="marks-target-assumption">
+    <div class="schedule-heading"><h2 id="marks-target-title">Aim a little higher.</h2><button id="close-marks-target" type="button" aria-label="Close marks planner">×</button></div>
+    <p id="marks-target-course"></p><p id="marks-target-recorded" class="quiet"></p>
+    <form id="marks-target-form" novalidate>
+      <label for="target-scheme">Marking scheme</label>
+      <select id="target-scheme" aria-describedby="marks-target-assumption">
+        <option value="">Choose your course scheme</option>
+        <option value="theory">60 internal + 40 final · exam out of 75</option>
+        <option value="practical">60 internal + 40 final · exam out of 40</option>
+        <option value="internal">100 internal · no final exam</option>
+        <option value="custom">Custom scheme</option>
+      </select>
+      <div id="target-custom" class="target-field-grid" hidden>
+        <div><label for="target-internal-max">Total internal marks</label><input id="target-internal-max" type="number" min="1" max="100" step="any" value="60" inputmode="decimal" aria-describedby="marks-target-error"></div>
+        <div><label for="target-exam-max">Final exam out of</label><input id="target-exam-max" type="number" min="0" max="1000" step="any" value="75" inputmode="decimal" aria-describedby="marks-target-error"></div>
+      </div>
+      <div class="target-field-grid">
+        <div><label for="target-total">Target total / 100</label><input id="target-total" type="number" min="0" max="100" step="any" value="80" inputmode="decimal" aria-describedby="marks-target-error"></div>
+        <div><label for="target-expected">Expected remaining internals</label><input id="target-expected" type="number" min="0" step="any" value="0" inputmode="decimal" aria-describedby="target-remaining marks-target-error" disabled></div>
+      </div>
+      <p id="target-remaining" class="quiet"></p>
+      <p id="marks-target-error" class="message error" role="status" hidden></p>
+      <output id="marks-target-result" aria-live="polite" aria-atomic="true"></output>
+    </form>
+    <p id="marks-target-assumption" class="quiet">Use the scheme confirmed for your course. Enter internal points on that scale, not raw assessment percentages. This is an estimate; separate exam pass requirements still apply. Plans last for this visit.</p>
+  </dialog>
   <dialog id="calendar-dialog" aria-labelledby="calendar-title">
     <div class="calendar-cover">
       <img id="calendar-art" data-src="/calendar-garden.eefc609c1c.svg" alt="" width="1000" height="320" decoding="async">

@@ -334,3 +334,20 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
 - Removed “Leaving already?” from the entire greeting pool as requested.
 - Next: validated release and live asset verification, then reconcile the
   readiness checklist and implement the next useful Ratio-D feature.
+
+## 2026-09-18: marks target planner
+
+- Sync notice/greeting release d26f626 passed 42 frontend/88 backend checks;
+  GitHub run 35291530328 succeeded. Live JavaScript confirms both changes.
+- Refetched Ratio-D; origin/main remains 413b7f0. Reviewed its marks-target
+  workflow and implemented an Anon planner inside each course's assessment view.
+- Students choose their marking scheme, target total and expected remaining
+  internals. Supports theory/practical 60/40, internal-only and custom weights.
+  No course scheme or official grade is inferred. Invalid/missing marks and
+  impossible targets have explicit states; exam pass minimums remain separate.
+- Calculations run locally without network requests. Scenarios last for this
+  visit, clear on sign-out, and reconcile with new report values while open.
+- Targeted math and browser checks pass: boundary/rounding cases, keyboard
+  focus, scheme changes, session clearing and 320–1280px dialog overflow.
+  Release validation includes the added mark-update coverage.
+- Next: release and live verification, then public readiness and offline shell.

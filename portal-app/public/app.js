@@ -98,6 +98,7 @@ function showLogin(text = '', error = false) {
   $('planner-menu').hidden = true;
   classproHome.clear();
   academicUI.clear();
+  anonMarksTarget.clear();
   dateAttendance.clear();
   providerConnections.clear();
   anonSettings.clear();
@@ -233,6 +234,7 @@ function renderAttendance(report, schedule) {
 
 function renderMarks(report) {
   const { container, data } = reportState('marks', report);
+  anonMarksTarget.update(data);
   const list = node('div', 'marks-list');
   for (const course of data) {
     const details = node('details', 'course-details');
@@ -255,6 +257,12 @@ function renderMarks(report) {
       row.append(info, node('span', 'assessment-score', score(component)));
       content.append(row);
     }
+    const target = node('button', 'marks-target-button', 'Plan a target');
+    target.type = 'button';
+    target.setAttribute('aria-haspopup', 'dialog');
+    target.setAttribute('aria-label', `Plan a marks target for ${course.title || course.code}`);
+    target.addEventListener('click', () => anonMarksTarget.open(course, target));
+    content.append(target);
     details.append(summary, content);
     list.append(details);
   }

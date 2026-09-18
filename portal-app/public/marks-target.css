@@ -1,0 +1,31 @@
+.marks-target-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 44px; margin-top: 20px; padding: 10px 14px; border: 1px solid #505c40; border-radius: 8px; background: transparent; color: #d5dda9; font-size: 12px; font-weight: 500; }
+#marks-target-dialog { width: min(600px, calc(100% - 32px)); max-height: calc(100dvh - 32px); padding: 28px; background: #1d231b; border: 1px solid #48533d; border-radius: 16px; color: #f1eee3; overflow-y: auto; overscroll-behavior: contain; }
+#marks-target-dialog::backdrop { background: #10160dd9; }
+#marks-target-dialog .schedule-heading { gap: 12px; margin-bottom: 18px; }
+#marks-target-title { font-size: 26px; letter-spacing: -.035em; font-weight: 500; }
+#close-marks-target { flex: none; min-width: 44px; min-height: 44px; background: transparent; color: #d5dda9; font-size: 25px; padding: 8px; }
+#marks-target-course { font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+#marks-target-recorded { font-size: 12px; margin-top: 5px; color: #afb8a3; }
+#marks-target-form { margin-top: 26px; }
+#marks-target-form label { font-size: 12px; font-weight: 500; line-height: 1.5; color: #cdd4c2; }
+#marks-target-form input, #marks-target-form select { width: 100%; min-width: 0; min-height: 46px; background: #191d17; color: #f1eee3; border: 1px solid #49523e; border-radius: 7px; padding: 10px; }
+#marks-target-form input { font-size: 16px; font-variant-numeric: tabular-nums; }
+#marks-target-form input[aria-invalid="true"] { border-color: #da9979; }
+.target-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; align-items: end; }
+.target-field-grid[hidden] { display: none; }
+.target-field-grid > div { min-width: 0; }
+#target-remaining { margin-top: 10px; font-size: 11px; color: #afb8a3; line-height: 1.6; }
+#marks-target-error { margin-top: 14px; color: #f0b795; font-size: 12px; line-height: 1.6; }
+#marks-target-result { display: block; margin-top: 24px; padding: 20px 0; border-top: 1px solid #49523e; border-bottom: 1px solid #49523e; font-size: 13px; color: #cdd4c2; }
+#marks-target-result strong { display: block; font-size: clamp(23px, 6vw, 30px); font-weight: 500; color: #d5dda9; letter-spacing: -.035em; }
+#marks-target-result[data-tone="limited"] strong { color: #e7c6a1; }
+#marks-target-result p { margin-top: 10px; font-size: 12px; line-height: 1.7; }
+#marks-target-result small { display: block; margin-top: 14px; font-size: 11px; color: #afb8a3; line-height: 1.6; }
+#marks-target-assumption { margin-top: 18px; font-size: 11px; line-height: 1.7; color: #afb8a3; }
+@media (hover: hover) and (pointer: fine) { .marks-target-button:hover { background: #2c3526; } }
+@media (max-width: 440px) {
+  #marks-target-dialog { padding: 20px; }
+  #marks-target-title { font-size: 23px; }
+  .target-field-grid { grid-template-columns: 1fr; gap: 16px; }
+  #marks-target-form select { font-size: 12px; }
+}
