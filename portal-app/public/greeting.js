@@ -7,7 +7,7 @@ globalThis.anonGreetings = (() => {
     'Back again?', 'Oh, hello.', 'Well, hello.', 'Hey there.', 'There’s {name}.',
     'Just checking?', 'Checking in?', 'Quick look?', 'Another look?', 'One more?',
     'You returned.', 'Still looking?', 'Looking around?', 'Passing through?', 'Quick visit?',
-    'Staying awhile?', 'Leaving already?', 'Missed something?', 'Forgot something?',
+    'Staying awhile?', 'Missed something?', 'Forgot something?',
     'Something new?', 'What’s new?', 'We’re back.', 'Here again.', 'Here’s {name}.',
     'Back, {name}?', 'Another visit?', 'Welcome, {name}.', 'Hello, {name}.', 'Hey, {name}.',
   ];

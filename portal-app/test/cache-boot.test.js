@@ -21,6 +21,7 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   let sessionValid = true;
   let offline = false;
   let pending = false;
+  let syncedAt = reportsPayload.sync.syncedAt;
   app.get('/api/session', (request, response) => {
     sessionChecks += 1;
     if (offline) return response.status(503).json({ error: { message: 'Offline' } });
@@ -28,7 +29,8 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   });
   app.get('/api/reports', (request, response) => {
     if (request.query.cache === 'only') return response.json(reportsPayload);
-    response.json(pending ? { ...reportsPayload, sync: { ...reportsPayload.sync, pending: true, nextAt: Date.now() + 1000 } } : reportsPayload);
+    response.json({ ...reportsPayload, sync: { ...reportsPayload.sync, syncedAt,
+      pending, nextAt: pending ? Date.now() + 1000 : reportsPayload.sync.nextAt } });
   });
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
@@ -63,9 +65,16 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   await page.locator('#refresh').click();
   await page.waitForFunction(() => document.querySelector('#reports-message').textContent.includes('Sync queued'));
   assert.equal(await page.locator('#attendance-content').isVisible(), true);
+  assert.equal(await page.locator('#sync-notice-label').innerText(), 'Dilly-dallying…');
+  assert.equal(await page.locator('#refresh').isDisabled(), true, 'queued work must retain the syncing state');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  assert.equal(await page.locator('.sync-notice-flower').evaluate(el => el.getAnimations().length), 0);
   pending = false;
+  syncedAt = Date.now();
   await page.evaluate(() => { nextAutoSync = 0; resumeSync(); });
   await page.waitForFunction(() => !document.querySelector('#reports-message').textContent.includes('Sync queued'));
+  await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Synced');
+  assert.equal(await page.locator('#refresh').isDisabled(), false);
   offline = true;
   await page.reload();
   await page.locator('#attendance-panel').waitFor({ state: 'visible' });

@@ -31,13 +31,13 @@
   <link rel="stylesheet" href="/garden.css?v=1c5b5ccb5f">
   <link rel="stylesheet" href="/login.css?v=335378791b">
   <link rel="stylesheet" href="/home.css?v=1e13fb0c57">
-  <link rel="stylesheet" href="/academic.css?v=ce2c0b2e04">
+  <link rel="stylesheet" href="/academic.css?v=900a31841b">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
   <link rel="stylesheet" href="/settings.css?v=5c6b6dc0bc">
   <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
-  <link rel="stylesheet" href="/interaction-feedback.css?v=9965e94781">
+  <link rel="stylesheet" href="/interaction-feedback.css?v=022af5fcc0">
   <link rel="stylesheet" href="/desktop.css?v=5af5323f81">
   <script src="/interaction-feedback.js?v=d80307ad7a" defer></script>
   <script src="/attendance-math.js?v=a23aa2a7e5" defer></script>
@@ -49,7 +49,7 @@
   <script src="/academic-calendar.js?v=37102b4930" defer></script>
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
   <script src="/course-details.js?v=c862a2bd04" defer></script>
-  <script src="/greeting.js?v=f5ef206ccf" defer></script>
+  <script src="/greeting.js?v=68e7af92e7" defer></script>
   <script src="/home.js?v=bbd5b61762" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=fd8c3b7f24" defer></script>
@@ -60,9 +60,9 @@
   <script src="/client-ocr.js?v=7a543e9229" defer></script>
   <script src="/auth-client.js?v=685da8fb73" defer></script>
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
-  <script src="/sync-control.js?v=9b80137deb" defer></script>
-  <script src="/settings.js?v=628f38c1dd" defer></script>
-  <script src="/app.js?v=c5e4468ea1" defer></script>
+  <script src="/sync-control.js?v=f47be6847f" defer></script>
+  <script src="/settings.js?v=8833d1edfa" defer></script>
+  <script src="/app.js?v=4dd4115b61" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
 </head>
@@ -245,6 +245,10 @@
     <p class="quiet">Unselected teaching days from today through your last leave date count as attended. Past dates allow OD corrections only, capped at recorded absences. These are projections; your records stay unchanged.</p>
     <div id="projection-result" aria-live="polite" aria-atomic="true"></div>
   </dialog>
+  <div id="sync-notice" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <img class="sync-notice-flower" src="/loading-flower.svg" width="24" height="24" alt="" aria-hidden="true" decoding="async">
+    <span id="sync-notice-label"></span>
+  </div>
   <div id="action-feedback" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

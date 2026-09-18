@@ -315,3 +315,22 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   full suite passed 87 tests; release validation reruns it with the sixth case.
 - Next: top sync popdown with truthful queued/completed/error states, then
   public-readiness verification and Ratio-D feature refinements.
+
+## 2026-09-18: returning-app sync feedback
+
+- Backend release a11a9dc passed 41 frontend/88 backend checks and deployed
+  successfully through GitHub run 35290783122.
+- Added a small top “Dilly-dallying…” notice for scheduled/manual updates,
+  reusing the selected block-print flower. It stays active while Azure queues
+  refresh work and shows “Synced” only when the server sync timestamp advances.
+  Unchanged data says “Up to date”; offline, partial and failed syncs retain
+  cached reports and use distinct, honest feedback.
+- No extra polling: the existing jittered sync schedule drives queue checks.
+  Flower motion stops when finished/hidden, pauses in background and respects
+  reduced motion. The SVG is 966 bytes (415 gzip); sync controller ~1.2 KB gzip.
+- Returning-app, queue, offline recovery, partial failure and unchanged-cache
+  browser checks pass. Mobile 390px and desktop 1280px DOM geometry checks show
+  no overflow and correct placement. Physical-phone frame rate remains untested.
+- Removed “Leaving already?” from the entire greeting pool as requested.
+- Next: validated release and live asset verification, then reconcile the
+  readiness checklist and implement the next useful Ratio-D feature.

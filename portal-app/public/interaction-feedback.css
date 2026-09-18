@@ -16,7 +16,19 @@
 #login-fallback-dialog button:focus-visible { outline: 2px solid #293b20; outline-offset: 4px; }
 @media (max-width: 360px) { #login-fallback-dialog { padding: 26px 23px 16px; } }
 #action-feedback { position: fixed; left: 50%; bottom: max(104px, calc(env(safe-area-inset-bottom) + 88px)); transform: translateX(-50%); max-width: calc(100% - 40px); width: max-content; padding: 12px 19px; background: #d4dec1; color: #283520; border-radius: 6px; font-size: 13px; font-weight: 500; z-index: 30; pointer-events: none; }
+#sync-notice { position: fixed; top: max(12px, calc(env(safe-area-inset-top) + 8px)); left: 50%; transform: translate(-50%, 0); z-index: 30; display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100% - 32px); min-height: 44px; padding: 9px 16px 9px 11px; border: 1px solid #697454; border-radius: 12px; background: #252e21; color: #e4e8d5; box-shadow: 0 6px 22px #0b100d40; font-size: 12px; font-weight: 500; line-height: 1.5; pointer-events: none; }
+#sync-notice[hidden] { display: none; }
+.sync-notice-flower { flex: none; width: 24px; height: 24px; object-fit: contain; }
+#sync-notice[data-state="success"] { border-color: #849266; }
+#sync-notice[data-state="error"], #sync-notice[data-state="offline"] { border-color: #897450; color: #e6d7b5; }
+#sync-notice.leaving { opacity: 0; }
+@media (min-width: 1000px) { body.planner #sync-notice { left: calc(50% + var(--sidebar-width, 220px) / 2); } }
 @media (prefers-reduced-motion: no-preference) {
+  #sync-notice { transition: opacity 180ms cubic-bezier(.23, 1, .32, 1), transform 180ms cubic-bezier(.23, 1, .32, 1); }
+  @starting-style { #sync-notice:not([hidden]) { opacity: 0; transform: translate(-50%, -8px); } }
+  #sync-notice.leaving { transform: translate(-50%, -8px); }
+  #sync-notice:not([hidden])[data-state="running"] .sync-notice-flower { animation: startup-turn 2.8s cubic-bezier(.45, 0, .2, 1) infinite; }
+  #sync-notice[data-paused] .sync-notice-flower { animation-play-state: paused !important; }
   #login-fallback-dialog[open] { animation: fallback-enter 180ms ease-out; }
   #planner-nav button:active, #use-student-portal:active, #calculate-attendance:active { transform: scale(.97); }
   @keyframes fallback-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

@@ -102,6 +102,7 @@ function showLogin(text = '', error = false) {
   providerConnections.clear();
   anonSettings.clear();
   anonFeedback.clear();
+  anonSyncControl.reset();
   reportFingerprint = {};
   nextAutoSync = 0;
   authenticated = false;
@@ -268,7 +269,7 @@ function loadReports(options = {}) {
 
 async function fetchReports({ cacheOnly = false, force = false, silent = false } = {}) {
   if (designPreview) return;
-  anonSyncControl.begin();
+  anonSyncControl.begin({ notify: !cacheOnly });
   if (!silent) message('reports-message');
   if (!$('attendance-content').childElementCount) {
     for (const kind of ['attendance', 'marks']) {
@@ -296,8 +297,10 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', reports.sync?.pending ? 'Sync queued. Your last data stays available while we refresh.' : reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Sync.' : '');
     writeReportsCache(reports);
+    anonSyncControl.complete(reports);
     return reports;
   } catch (error) {
+    anonSyncControl.fail(error);
     for (const kind of ['attendance', 'marks']) {
       const container = $(`${kind}-content`);
       if (container.firstElementChild?.classList.contains('report-placeholder')) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Sync to try again.'));
@@ -406,8 +409,7 @@ document.addEventListener('visibilitychange', resumeSync);
 setInterval(resumeSync, 15000);
 
 $('refresh').addEventListener('click', () => run(async () => {
-  const data = await loadReports({ force: true });
-  if (data && !data.sync?.pending && !data.attendance?.error && !data.marks?.error && !data.warnings?.length) anonFeedback.success('All up to date.');
+  await loadReports({ force: true });
 }));
 $('logout').addEventListener('click', () => run(async () => {
   if (designPreview) { location.href = '/'; return; }
@@ -420,6 +422,7 @@ $('logout').addEventListener('click', () => run(async () => {
 function paintCachedReports() {
   const cached = readReportsCache();
   if (!cached) return false;
+  anonSyncControl.observe(cached);
   showReports();
   renderAttendance(cached.attendance, cached.schedule);
   renderMarks(cached.marks);
