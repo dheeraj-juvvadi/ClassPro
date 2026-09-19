@@ -35,11 +35,11 @@ and work-performed.md; remaining performance limits are listed explicitly.
 - [x] WOFF2 font compression released as 9037e75; Azure succeeded and live CSS verified.
 - [x] Date-based attendance projections reconcile refreshes, date rollover and sign-out; released as 73b66d2.
 - [x] Removed invisible background texture paths in 35a17e1; six raster comparisons have zero pixel differences. Azure succeeded.
-- [x] Calculator uses a lightweight calendar component, automatic date ranges and per-class/partial-hour controls; release validation pending.
+- [x] Calculator uses a lightweight calendar component, automatic date ranges and per-class/partial-hour controls; 7a3a6fa deployed.
 - [x] Calendar, Settings and Schedule have full-page navigation. Calendar illustration/subtitle removed as requested.
 - [x] Optional schedule periods feed next-class/today widgets, reminders and projections; browser persistence verified.
 - [x] Static dinosaur empty state replaces confetti.
-- [x] Sync avoids the 15–30-second completion delay at low load and retains bounded queue behavior; release validation pending.
+- [x] Sync avoids the 15–30-second completion delay at low load and retains bounded queue behavior; Azure run 35417582940 succeeded.
 - [ ] Verify motion, scrolling and battery behavior on a physical phone.
 - [ ] Measure real SRM login/sync bursts with controlled accounts; retain resource headroom.
 

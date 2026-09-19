@@ -466,3 +466,7 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   75 public assets / 1.62 MiB. Full staged validation/deployment is next.
 - No physical-phone smoothness/battery measurement or real-account two-second
   SRM refresh guarantee. No changes from the withdrawn pinned-app instruction.
+- Release 7a3a6fa passed all 54 frontend and 95 backend checks and was pushed
+  to revamp/main. GitHub run 35417582940 completed validation and Azure deploy
+  successfully. Live Vercel HTML, app.js and service-worker.js match the release;
+  Calendar has only its heading and body, with no banner/image/subtitle.
