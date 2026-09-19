@@ -47,8 +47,8 @@ and work-performed.md; remaining performance limits are listed explicitly.
 - [ ] Measure real SRM login/sync bursts with controlled accounts; retain resource headroom.
 
 ## Maintenance audit, September 19
-- [ ] Release tested Sharp/Python security updates and verify image/OCR compatibility in production.
-- [ ] Release path-aware Azure checks, Vercel ignored builds, current pinned GitHub actions and artifact ignores.
+- [x] Sharp/Python security updates released in 060877e; local image/OCR checks and production Docker tests pass.
+- [x] Path-aware Azure checks, Vercel ignored builds, current pinned GitHub actions and artifact ignores released.
 - [ ] Verify the first documentation-only push skips unnecessary production work.
 - [ ] Review production client-error summaries; daily collection exists, review is not automated diagnosis.
 - [ ] Decide whether to retain or retire the inactive Go/Appwrite adapters. Local Go tests pass; they are not the production backend.
