@@ -503,3 +503,25 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   read a queued refresh before completion and depended on the current day.
   The test now explicitly forces and awaits the refresh, then verifies each
   provider's cookies without relying on call order. Its 27 checks pass.
+
+## 2026-09-19: inline marks targets and browser storage review
+
+- Grade toggle release 86a7c3b passed 55 frontend/95 backend checks and Azure
+  workflow 35418829540 succeeded.
+- Removed the marks modal. Every course now has an inline grade slider/stops,
+  compact scheme/expected-internals controls and live exam target; assessments
+  expand underneath. Sol handled CSS, main implemented component state and tests.
+- Original Anon presentation uses native controls and no added runtime library.
+  Independent course inputs, focused controls and assessment expansion survive
+  report refreshes; removed courses/sign-out discard their scenarios.
+- Verified the complete timetable/calendar is already in the browser report
+  cache and optional periods are profile-scoped browser preferences. Extended
+  offline tests reopen Schedule, restore excluded periods and change them locally.
+- Reviewed Ratio-D 413b7f0's AES-GCM/IndexedDB/localStorage credential flow.
+  Academia retries with a password after expiry; Portal sends a password on
+  every refresh. Server receives credentials to relogin. Findings and migration
+  considerations are in docs/ratio-browser-credentials.md. No credential storage
+  migration was made as part of this inspection.
+- Seven marks/offline checks and four app navigation/cache checks pass. Layout
+  and native controls checked at 320–1280px; no popup or new network calls.
+  Next: full staged validation, push and live verification.

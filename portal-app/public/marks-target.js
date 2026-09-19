@@ -1,136 +1,114 @@
 'use strict';
 
 globalThis.anonMarksTarget = (() => {
-  const get = id => document.getElementById(id);
-  const dialog = get('marks-target-dialog');
-  const form = get('marks-target-form');
   const presets = { theory: [60, 75], practical: [60, 40], internal: [100, 0] };
-  const fields = { internalMax: 'target-internal-max', examMax: 'target-exam-max', expected: 'target-expected', target: 'target-total' };
-  const grades = marksTargetMath.grades;
-  const gradeButtons = new Map();
+  const grades = [...marksTargetMath.grades].reverse();
+  const views = new Map();
   const fmt = number => Number(number.toFixed(2));
-  const plans = new Map();
-  let course = null, trigger = null;
-  function showGrade(grade, editing = false) {
-    const selected = grade?.label ?? 'Custom';
-    for (const [label, button] of gradeButtons) {
-      button.setAttribute('aria-pressed', String(label === selected));
+  const key = course => String(course.code || course.title);
+  let sequence = 0;
+  function create(course) {
+    const id = key(course);
+    if (views.has(id)) return views.get(id).root;
+    const root = document.getElementById('marks-target-template').content.firstElementChild.cloneNode(true);
+    const fields = Object.fromEntries([...root.querySelectorAll('[data-field]')].map(el => [el.dataset.field, el]));
+    const state = { course, target: '81', custom: false };
+    const get = selector => root.querySelector(selector);
+    const error = get('.mark-plan-error'); error.id = `mark-plan-error-${++sequence}`;
+    root.dataset.course = id;
+    root.setAttribute('aria-label', `Grade target for ${course.title || course.code}`);
+    for (const [name, input] of Object.entries(fields)) {
+      input.id = `mark-plan-${sequence}-${name}`;
+      input.setAttribute('aria-describedby', error.id);
     }
-    get('target-total-field').hidden = Boolean(grade) && !editing;
-    get('target-grade-help').textContent = grade
-      ? `${grade.label} starts at ${fmt(grade.min)} / 100.`
-      : 'Enter a target total from 0 to 100.';
-  }
-  function syncGrade(editing = false) {
-    const value = get(fields.target).value;
-    const grade = value.trim() === '' ? null : grades.find(item => item.min === Number(value));
-    showGrade(grade, editing);
-  }
-  for (const grade of [...grades, null]) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'target-grade-option';
-    button.textContent = grade?.label ?? 'Custom';
-    button.dataset.grade = grade?.label ?? 'custom';
-    button.setAttribute('aria-pressed', 'false');
-    button.setAttribute('aria-describedby', 'target-grade-help');
-    button.addEventListener('click', () => {
-      if (grade) get(fields.target).value = grade.min;
-      showGrade(grade);
+    const stops = get('.mark-grade-stops');
+    for (const [index, grade] of grades.entries()) {
+      const button = document.createElement('button'); button.type = 'button';
+      button.textContent = grade.label; button.dataset.grade = grade.label;
+      button.title = `${grade.label}: ${grade.min} / 100 target`;
+      button.addEventListener('click', () => chooseGrade(index));
+      stops.append(button);
+    }
+    function chooseGrade(index) {
+      const grade = grades[index];
+      state.target = String(grade.min); state.custom = false;
+      fields.grade.value = index; fields.target.value = state.target;
       render();
-      if (!grade) get(fields.target).focus();
-    });
-    gradeButtons.set(button.textContent, button);
-    get('target-grade-options').append(button);
-  }
-  syncGrade();
-  function schemeChanged() {
-    const kind = get('target-scheme').value;
-    get('target-custom').hidden = kind !== 'custom';
-    if (presets[kind]) {
-      get(fields.internalMax).value = presets[kind][0];
-      get(fields.examMax).value = presets[kind][1];
     }
-    get(fields.expected).disabled = !kind;
-    render();
-  }
-  function render() {
-    if (!course) return;
-    const output = get('marks-target-result');
-    const error = get('marks-target-error');
-    for (const id of Object.values(fields)) get(id).removeAttribute('aria-invalid');
-    error.textContent = ''; error.hidden = true;
-    if (!get('target-scheme').value) {
-      output.textContent = 'Choose your marking scheme to see what you need.';
+    function render() {
+      const targetNumber = state.target.trim() === '' ? NaN : Number(state.target);
+      const chosen = state.custom ? null : grades.find(grade => grade.min === targetNumber);
+      get('.mark-target-grade').textContent = chosen?.label || 'Custom';
+      get('.mark-custom-toggle').setAttribute('aria-pressed', String(state.custom));
+      get('.mark-custom-field').hidden = !state.custom;
+      root.dataset.custom = String(state.custom);
+      fields.grade.setAttribute('aria-valuetext', chosen ? `${chosen.label}, ${chosen.min} out of 100` : `Custom target ${state.target || 'not entered'} out of 100`);
+      for (const button of stops.children) button.setAttribute('aria-pressed', String(button.dataset.grade === chosen?.label));
+      const scheme = fields.scheme.value;
+      get('.mark-custom-scheme').hidden = scheme !== 'custom';
+      fields.expected.disabled = !scheme;
+      for (const input of Object.values(fields)) input.removeAttribute('aria-invalid');
+      error.textContent = ''; error.hidden = true;
+      const remaining = Number(fields.internalMax.value) - Number(state.course.total);
+      fields.expected.max = Math.max(0, remaining);
+      get('.mark-expected small').textContent = !scheme ? 'Choose a scheme first.'
+        : Number.isFinite(remaining) && remaining >= 0 ? `of ${fmt(remaining)} available` : 'Check this course’s marking scheme.';
+      const output = get('.mark-result');
+      const caption = get('.mark-result-caption'), number = get('.mark-result-number'), max = get('.mark-result-max');
+      const detail = get('.mark-result-detail'), best = get('.mark-result-best');
+      caption.textContent = 'Required in final'; number.textContent = '—'; max.textContent = ''; best.textContent = '';
       output.dataset.tone = 'neutral';
-      get('target-remaining').textContent = 'Your remaining internal marks appear here.';
-      return;
-    }
-    const inputs = Object.fromEntries(Object.entries(fields).map(([key, id]) => [key, get(id).value]));
-    const result = marksTargetMath.calculate({ scored: course.scored, recorded: course.total, ...inputs });
-    const remaining = Number(inputs.internalMax) - Number(course.total);
-    get(fields.expected).max = Math.max(0, remaining);
-    get('target-remaining').textContent = Number.isFinite(remaining) && remaining >= 0 ? `${fmt(remaining)} internal marks are still available in this scheme.` : 'The reported marks do not fit this scheme.';
-    if (!result.valid) {
-      error.textContent = result.error; error.hidden = false;
-      if (fields[result.field]) get(fields[result.field]).setAttribute('aria-invalid', 'true');
-      output.textContent = 'Check the values above.'; output.dataset.tone = 'neutral';
-      return;
-    }
-    plans.set(course.code, { scheme: get('target-scheme').value, ...inputs });
-    output.replaceChildren();
-    const heading = document.createElement('strong');
-    const detail = document.createElement('p');
-    if (result.internalOnly) {
-      heading.textContent = `${fmt(result.projected)} / 100 projected`;
-      detail.textContent = result.needed > 0 ? `That is ${fmt(result.needed)} below your target. Adjust your expected remaining marks to explore another outcome.` : 'Your expected internal marks meet this target.';
-    } else if (!result.possible) {
-      heading.textContent = 'Beyond this scenario';
-      detail.textContent = `Even full marks in the final would reach ${fmt(result.ceiling)} / 100 with these expected internals.`;
-    } else {
-      heading.textContent = `${fmt(result.required)} / ${inputs.examMax} in the final`;
-      detail.textContent = `To reach ${inputs.target} / 100 with ${fmt(result.projected)} internal marks. The final contributes ${fmt(result.weight)} points.`;
-    }
-    output.dataset.tone = result.possible ? 'possible' : 'limited';
-    const best = document.createElement('small');
-    best.textContent = `Best possible from the reported marks: ${fmt(result.best)} / 100.`;
-    output.append(heading, detail, best);
-  }
-  get('target-scheme').addEventListener('change', schemeChanged);
-  form.addEventListener('input', event => {
-    if (event.target.id === fields.target) syncGrade(true);
-    if (event.target.id !== 'target-scheme') render();
-  });
-  form.addEventListener('submit', event => { event.preventDefault(); render(); });
-  get('close-marks-target').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => {
-    if (trigger?.isConnected) trigger.focus();
-    else if (document.body.dataset.page === 'marks') get('reports-title').focus();
-  });
-  return {
-    open(value, button) {
-      course = value; trigger = button;
-      form.reset();
-      const saved = plans.get(course.code);
-      if (saved) {
-        get('target-scheme').value = saved.scheme;
-        for (const [key, id] of Object.entries(fields)) get(id).value = saved[key];
+      if (!scheme) { detail.textContent = 'Choose your marking scheme to calculate the exam target.'; return; }
+      const input = { scored: state.course.scored, recorded: state.course.total,
+        internalMax: fields.internalMax.value, examMax: fields.examMax.value, expected: fields.expected.value, target: state.target };
+      const result = marksTargetMath.calculate(input);
+      if (!result.valid) {
+        error.textContent = result.error; error.hidden = false;
+        fields[result.field]?.setAttribute('aria-invalid', 'true');
+        detail.textContent = 'Check the highlighted values.'; return;
       }
-      syncGrade();
-      get('marks-target-course').textContent = course.title || course.code;
-      get('marks-target-recorded').textContent = `Reported so far: ${course.scored ?? '—'} / ${course.total ?? '—'}.`;
-      schemeChanged();
-      dialog.showModal();
-      get('target-scheme').focus();
-    },
-    update(courses) {
-      if (!dialog.open || !course) return;
-      const updated = courses.find(item => item.code === course.code);
-      if (!updated) { dialog.close(); course = null; return; }
-      course = updated;
-      get('marks-target-recorded').textContent = `Reported so far: ${course.scored ?? '—'} / ${course.total ?? '—'}.`;
+      const target = chosen ? `${chosen.label} · ${chosen.min}/100` : `${fmt(targetNumber)}/100`;
+      if (result.internalOnly) {
+        caption.textContent = 'Projected total'; number.textContent = fmt(result.projected); max.textContent = '/ 100';
+        detail.textContent = result.needed ? `${fmt(result.needed)} more internal marks needed for ${target}.` : `${target} reached in this scenario.`;
+      } else if (!result.possible) {
+        number.textContent = 'Out of reach';
+        detail.textContent = `${target} needs more internals. This scenario can reach ${fmt(result.ceiling)}/100.`;
+      } else {
+        number.textContent = fmt(result.required); max.textContent = `/ ${fields.examMax.value}`;
+        detail.textContent = `For ${target}, with ${fmt(result.projected)} internal marks.`;
+      }
+      output.dataset.tone = result.possible ? 'possible' : 'limited';
+      best.textContent = `Best possible: ${fmt(result.best)}/100`;
+    }
+    fields.grade.addEventListener('input', () => chooseGrade(Number(fields.grade.value)));
+    fields.scheme.addEventListener('change', () => {
+      const preset = presets[fields.scheme.value];
+      if (preset) { fields.internalMax.value = preset[0]; fields.examMax.value = preset[1]; }
       render();
+    });
+    get('.mark-custom-toggle').addEventListener('click', () => {
+      state.custom = !state.custom;
+      if (!state.custom) chooseGrade(Number(fields.grade.value)); else render();
+      if (state.custom) fields.target.focus();
+    });
+    for (const name of ['target', 'expected', 'internalMax', 'examMax']) fields[name].addEventListener('input', () => {
+      if (name === 'target') state.target = fields.target.value;
+      render();
+    });
+    views.set(id, { root, state, render });
+    render();
+    return root;
+  }
+  return {
+    create,
+    update(courses) {
+      const latest = new Map(courses.map(course => [key(course), course]));
+      for (const [id, view] of views) {
+        if (!latest.has(id)) { view.root.remove(); views.delete(id); continue; }
+        view.state.course = latest.get(id); view.render();
+      }
     },
-    clear() { plans.clear(); course = null; trigger = null; dialog.close(); form.reset(); syncGrade(); },
+    clear() { for (const view of views.values()) view.root.remove(); views.clear(); },
   };
 })();

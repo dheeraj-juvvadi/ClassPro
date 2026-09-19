@@ -11,6 +11,11 @@ query-string pages are excluded. No credentials or academic reports enter Cache
 Storage. Existing report localStorage remains the source for offline records.
 Without previously saved reports, sign-in requires a connection.
 
+The report cache includes the full timetable and academic calendar. Optional
+period selections are stored separately under profile-scoped schedule keys.
+Offline browser tests load Schedule, verify its saved periods, change a local
+selection and reopen the attendance planner without contacting SRM.
+
 Navigation prefers the network with a three-second fallback to the installed
 shell when offline or the host fails. Known static assets use the versioned
 cache. Invalid public routes retain the server's 404 behavior. A new worker

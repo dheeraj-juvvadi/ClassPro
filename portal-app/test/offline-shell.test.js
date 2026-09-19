@@ -57,8 +57,11 @@ test('failed installation drains work before cleanup and activation prunes only 
 });
 
 test('installed shell reopens saved reports offline and never caches private API data', { timeout: 30000 }, async context => {
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   const report = { attendance: { data: [{ code: 'CS101', title: 'Offline course', present: 9, conducted: 10 }] },
-    marks: { data: [] }, schedule: { entries: [] }, profile: { name: 'Synthetic Student' },
+    marks: { data: [] }, schedule: { timezone: 'Asia/Kolkata',
+      entries: [{ code: 'CS101', title: 'Offline course', room: 'Lab 1', dayOrder: '1', start: '10:00', end: '11:00', hours: 1 }],
+      calendar: [{ date: day, kind: 'teaching', dayOrder: '1' }] }, profile: { name: 'Synthetic Student', regNo: 'OFFLINE-TEST' },
     connections: { portal: { connected: true } }, updatedAt: new Date().toISOString(),
     sync: { due: false, nextAt: Date.now() + 3600000, syncedAt: Date.now() } };
   const app = express();
@@ -88,6 +91,11 @@ test('installed shell reopens saved reports offline and never caches private API
   assert.equal(cached.names.filter(n => n.startsWith('anon-shell-')).length, 1);
   assert.ok(cached.keys.includes('/index.html') || cached.keys.includes('/'));
   assert.ok(cached.keys.every(path => !/^\/(api|_vercel|ocr)\//.test(path)));
+  const cachedReport = await page.evaluate(() => JSON.parse(localStorage.getItem('classpro-reports-cache')));
+  assert.deepEqual(cachedReport.schedule, report.schedule, 'timetable itself is stored in this browser');
+  await page.locator('[data-sidebar-action="open-schedule"]').click();
+  assert.equal(await page.locator('#schedule-choices input').count(), 1);
+  await page.locator('#schedule-choices input').uncheck();
   await page.locator('button[data-page="attendance"]').click();
   await session.setOffline(true);
   await page.reload();
@@ -95,10 +103,15 @@ test('installed shell reopens saved reports offline and never caches private API
   assert.match(await page.locator('#attendance-content').innerText(), /Offline course/);
   assert.equal(await page.locator('#sync-notice-label').innerText(), 'Offline · showing saved data');
   assert.equal(await page.locator('#startup').isHidden(), true);
+  await page.locator('[data-sidebar-action="open-schedule"]').click();
+  assert.equal(await page.locator('#schedule-choices input').count(), 1, 'cached timetable opens offline');
+  assert.equal(await page.locator('#schedule-choices input').isChecked(), false, 'optional-period choices persist offline');
+  await page.locator('#schedule-include-all').click();
+  await page.locator('button[data-page="attendance"]').click();
   await page.locator('#calculate-attendance').click();
   await page.locator('#projection-calendar').waitFor({ state: 'visible' });
   assert.equal(await page.locator('calendar-month button').count() > 27, true, 'calendar component opens offline');
-  assert.match(await page.locator('#projection-period').innerText(), /Timetable unavailable/);
+  assert.equal(await page.locator('calendar-month button[aria-current="date"]').isDisabled(), false);
   await page.locator('#projection-done').click();
   assert.equal(await page.evaluate(async () => { try { await fetch('/api/reports'); return false; } catch { return true; } }), true);
   await page.evaluate(() => { clearReportsCache(); showLogin('Signed out locally.'); });

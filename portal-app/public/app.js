@@ -233,21 +233,29 @@ function renderAttendance(report, schedule) {
 }
 
 function renderMarks(report) {
+  const active = document.activeElement;
+  const focusedPlan = active?.closest('.mark-plan');
+  const focusedCourse = focusedPlan?.dataset.course;
+  const expanded = new Set([...$('marks-content').querySelectorAll('.mark-course')]
+    .filter(row => row.querySelector('.course-details')?.open).map(row => row.dataset.course));
   const { container, data } = reportState('marks', report);
   anonMarksTarget.update(data);
   const list = node('div', 'marks-list');
   for (const course of data) {
+    const id = String(course.code || course.title);
+    const card = node('article', 'mark-course'); card.dataset.course = id;
+    const header = node('header', 'mark-course-header');
     const details = node('details', 'course-details');
-    const summary = node('summary');
+    details.open = expanded.has(id);
+    const summary = node('summary', '', 'Assessments');
     const scoreBlock = node('span', 'marks-score-block');
-    scoreBlock.append(node('span', 'course-score', score(course)), node('span', 'marks-score-caption', 'Total score'));
-    summary.append(courseHeading(course), scoreBlock);
+    scoreBlock.append(node('span', 'course-score', score(course)), node('span', 'marks-score-caption', 'Recorded'));
+    header.append(courseHeading(course), scoreBlock);
     const content = node('div', 'assessments');
-    content.append(node('h3', 'assessment-heading', 'Assessments'));
     if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
     const components = Array.isArray(course.components) ? course.components : [];
     const metadata = node('span', 'course-result-count', `${components.length} ${components.length === 1 ? 'assessment' : 'assessments'}`);
-    summary.querySelector('.course-heading').append(metadata);
+    summary.append(metadata);
     if (!components.length && !course.detailsError) content.append(node('p', 'quiet', 'No assessment details are available yet.'));
     for (const component of components) {
       const row = node('div', 'assessment-row');
@@ -257,16 +265,12 @@ function renderMarks(report) {
       row.append(info, node('span', 'assessment-score', score(component)));
       content.append(row);
     }
-    const target = node('button', 'marks-target-button', 'Plan a grade');
-    target.type = 'button';
-    target.setAttribute('aria-haspopup', 'dialog');
-    target.setAttribute('aria-label', `Plan a grade for ${course.title || course.code}`);
-    target.addEventListener('click', () => anonMarksTarget.open(course, target));
-    content.append(target);
     details.append(summary, content);
-    list.append(details);
+    card.append(header, anonMarksTarget.create(course), details);
+    list.append(card);
   }
   if (data.length) container.append(list);
+  if (focusedCourse && active.isConnected) active.focus({ preventScroll: true });
 }
 
 function loadReports(options = {}) {
