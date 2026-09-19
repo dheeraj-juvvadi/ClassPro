@@ -8,9 +8,16 @@ globalThis.dateAttendance = (() => {
   let removedCount = 0, editedDay = '', changedClasses = 0, rangeAnchor = '', rangeStart = '', rangeEnd = '';
   const planAction = value => typeof value === 'object' && value ? value.action : value;
   const node = (tag, text) => { const item = document.createElement(tag); item.textContent = text; return item; };
+  function removeDate(key) {
+    delete selected[key]; removedCount = 0; rangeAnchor = '';
+    const dates = Object.keys(selected).sort();
+    rangeStart = dates[0] || ''; rangeEnd = dates.at(-1) || '';
+  }
   const calendar = createDatePlannerCalendar({
     onToggle(key) {
-      if (!rangeAnchor) {
+      if (selected[key]) {
+        removeDate(key);
+      } else if (!rangeAnchor) {
         rangeAnchor = key; rangeStart = key; rangeEnd = '';
         if (!selected[key] || planAction(selected[key]) !== action) selected[key] = action;
       } else {
@@ -96,7 +103,7 @@ globalThis.dateAttendance = (() => {
     get('projection-range-end').textContent = rangeAnchor ? 'Choose end date' : shortDate(rangeEnd || rangeStart);
     get('projection-range').dataset.selecting = rangeAnchor ? 'end' : 'start';
     get('projection-action-hint').textContent = rangeAnchor ? 'Select the end date. Teaching days in between are included.'
-      : selectedCount ? 'Edit classes below, or select another date range.' : 'Select a start date, then an end date. One day works too.';
+      : selectedCount ? 'Tap a selected date to remove it. Edit its classes below.' : 'Select a start date, then an end date. One day works too.';
     get('projection-count').textContent = selectedCount;
     get('projection-clear').disabled = !selectedCount;
     const selections = get('projection-selections');
@@ -117,7 +124,7 @@ globalThis.dateAttendance = (() => {
       edit.addEventListener('click', () => editDay(key));
       const remove = node('button', '×'); remove.type = 'button'; remove.dataset.date = key;
       remove.setAttribute('aria-label', `Remove ${label}`);
-      remove.addEventListener('click', () => { delete selected[key]; removedCount = 0; rangeAnchor = ''; render(); });
+      remove.addEventListener('click', () => { removeDate(key); render(); });
       group.append(edit, remove); selections.append(group);
     }
     if (focusKey) (selections.querySelector(`[data-date="${focusKey}"]`) || selections.querySelector('button') || get('projection-today')).focus();

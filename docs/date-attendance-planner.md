@@ -10,6 +10,11 @@ dates are excluded. A single first date is immediately usable. Additional ranges
 are additive, and already customized classes are retained when the day action
 matches. Each day in the list opens its class editor.
 
+Clicking a selected date removes only that day, including its class overrides.
+For example, selecting 15–18 and then clicking 16 keeps 15, 17 and 18 selected.
+Clicking 16 again restores that date with the current action. Removing a date
+cancels any unfinished range; existing selections and other class edits remain.
+
 All classes start selected for the chosen action. Students can unselect a class,
 choose Attend/Miss/OD, or enter counted attended hours within a class block.
 There is no time-of-day cutoff preset. Past dates permit OD corrections only;

@@ -470,3 +470,15 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   to revamp/main. GitHub run 35417582940 completed validation and Azure deploy
   successfully. Live Vercel HTML, app.js and service-worker.js match the release;
   Calendar has only its heading and body, with no banner/image/subtitle.
+
+## 2026-09-19: toggle individual dates within a range
+
+- Clicking an already selected calendar date now removes just that day and its
+  overrides. Selecting 15–18 then clicking 16 keeps 15, 17 and 18 selected;
+  clicking 16 again restores it with the current action.
+- Removal cancels an unfinished range and updates date counts, range bounds,
+  calendar highlighting and attendance calculations. Other class edits remain.
+- Extended the existing browser check for click/keyboard removal, restoring a
+  date, refresh persistence, single-date clearing and reversed ranges. All five
+  targeted projection checks pass. Regenerated the 1.62 MiB offline shell.
+- Next: staged release validation and production deployment verification.
