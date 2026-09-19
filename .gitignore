@@ -68,6 +68,7 @@ backend/bin/
 *.dylib
 *.test
 *.out
+/portal-go/portal-go
 
 # Go workspace files
 go.work

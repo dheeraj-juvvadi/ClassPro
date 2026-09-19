@@ -1,4 +1,19 @@
-# Student Portal base
+# Anon frontend
+
+The current app is served from `portal-app/public` on Vercel and uses the
+FastAPI service in `ratio-diagnostic` on Azure. See [releasing](../docs/releasing.md),
+[backend runtime](../ratio-diagnostic/README.md), and [offline cache](../docs/offline-app.md).
+Current remembered sessions and credential storage follow that backend's
+documentation and the deployed Privacy page.
+
+For a UI-only preview with sample data, serve `public` locally and open
+`/?preview=home`. `npm run build:offline` updates asset hashes and the service
+worker; `npm run build` validates them. The release command runs the current
+`test:release` suite. `npm start` still launches the historical Node backend.
+
+## Historical Node/browser adapter
+
+The notes below describe the earlier local adapter, not Azure production.
 
 Original Node app, separate from the retired ClassPro frontend/backend. One service serves a two-field NetID/password form and attendance/internal marks. No Academia, Supabase, or deployment integration is required.
 

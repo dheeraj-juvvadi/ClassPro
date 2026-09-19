@@ -1,6 +1,6 @@
 # Anon implementation backlog
 
-Updated September 18, 2026. Shipped items below are supported by release checks
+Updated September 19, 2026. Shipped items below are supported by release checks
 and work-performed.md; remaining performance limits are listed explicitly.
 
 ## Current work
@@ -40,7 +40,19 @@ and work-performed.md; remaining performance limits are listed explicitly.
 - [x] Optional schedule periods feed next-class/today widgets, reminders and projections; browser persistence verified.
 - [x] Static dinosaur empty state replaces confetti.
 - [x] Sync avoids the 15–30-second completion delay at low load and retains bounded queue behavior; Azure run 35417582940 succeeded.
+- [x] Range dates toggle individually; bc78097 deployed.
+- [x] Inline marks slider/grade targets replace the popup; bc5ce9d deployed.
+- [x] Full timetable and optional-period choices reopen from browser cache offline.
 - [ ] Verify motion, scrolling and battery behavior on a physical phone.
 - [ ] Measure real SRM login/sync bursts with controlled accounts; retain resource headroom.
+
+## Maintenance audit, September 19
+- [ ] Release tested Sharp/Python security updates and verify image/OCR compatibility in production.
+- [ ] Release path-aware Azure checks, Vercel ignored builds, current pinned GitHub actions and artifact ignores.
+- [ ] Verify the first documentation-only push skips unnecessary production work.
+- [ ] Review production client-error summaries; daily collection exists, review is not automated diagnosis.
+- [ ] Decide whether to retain or retire the inactive Go/Appwrite adapters. Local Go tests pass; they are not the production backend.
+- [ ] Remove unused public concept/legacy assets from deployment after checking references and rollout needs.
+- [ ] Credential architecture follow-up only if requested: Ratio-D inspection is complete in docs/ratio-browser-credentials.md; Anon still uses server-side remembered sessions.
 
 Do not present unchecked items as shipped. Public/legal copy must describe the actual service without inventing operator details or promises. Analytics, credentials and reports must not enter public metadata or the sitemap.

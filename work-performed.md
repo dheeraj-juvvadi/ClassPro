@@ -525,3 +525,29 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
 - Seven marks/offline checks and four app navigation/cache checks pass. Layout
   and native controls checked at 320–1280px; no popup or new network calls.
   Next: full staged validation, push and live verification.
+
+## 2026-09-19: repository maintenance audit
+
+- Inline marks release bc5ce9d passed 55 frontend/95 backend checks; Azure run
+  35419412486 succeeded and Vercel served the inline template and script.
+- npm audit flagged Sharp's native image libraries. Updated to sharp 0.35.4;
+  npm production audit now reports zero known vulnerabilities. SVG-to-PNG smoke
+  check and five existing CAPTCHA checks pass.
+- pip-audit flagged lxml, python-dotenv, Pillow, cryptography and Starlette.
+  Updated them and FastAPI to compatible pinned releases in an isolated Python
+  3.11 environment. All 95 backend tests, two OCR preprocessing tests and native
+  ONNX inference on a synthetic image pass; repeat audit has no known findings.
+  Live-account login performance is not established by these checks.
+- Added tested service-input detection for GitHub: frontend checks and Azure
+  image/deploy work run only for relevant changes. Missing history/manual runs
+  run everything. Updated checkout/setup-node to pinned Node 24 action releases.
+- Added a Vercel ignored-build command comparing app inputs with the last
+  successful deployment. Its configured root is portal-app/public; docs-only
+  skip behavior will be verified after release.
+- Ignored the 10 MB local Go binary, clarified the historical Node README, and
+  completed the static-art generator change. Regeneration in a temporary tree
+  reproduces both deployed SVGs byte-for-byte without animations.
+- The remaining Go/Appwrite edits are inactive experiments. Go tests pass but
+  those edits are excluded from this production release. Remaining chores are
+  recorded in implementation-backlog.md: runtime observation, physical-device
+  checks, production error review and deciding how to retire old adapters/assets.

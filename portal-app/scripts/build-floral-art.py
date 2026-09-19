@@ -1,4 +1,4 @@
-"""Original screen-print artwork with gentle CSS wind and reduced-motion support."""
+"""Original static screen-print artwork; optimize-floral-art.py trims hidden marks."""
 from pathlib import Path
 from botanical_vines import botanical_vines
 import random, math
@@ -63,15 +63,6 @@ def generate(mobile=False):
  counter=0
  w,h=(480,960) if mobile else (1440,1000)
  parts=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" fill="none"><rect width="100%" height="100%" fill="#191b19"/>']
- parts.append('''<style>
- .breeze{transform-box:fill-box;transform-origin:50% 100%}
- @media(prefers-reduced-motion:no-preference){
- .breeze{animation:sway 11s ease-in-out infinite alternate}
- .breeze:nth-of-type(3n){animation-duration:14s;animation-delay:-5s}
- .breeze:nth-of-type(3n + 1){animation-duration:12s;animation-delay:-8s}
- @keyframes sway{0%{transform:rotate(-.6deg) translateX(-1px)}100%{transform:rotate(.8deg) translateX(2px)}}
- }
- </style>''')
  if mobile:
   leaves=[(6,192,-28,.64,1),(76,62,-103,.52,0),(486,233,28,.65,1),(8,1035,-12,.74,2),(483,1030,28,.76,1)]
   flowers=[(362,74,1.04,24,5),(10,270,.56,5,6),(459,776,.84,30,5),(116,926,1.04,-18,7),(470,420,.42,18,6)]

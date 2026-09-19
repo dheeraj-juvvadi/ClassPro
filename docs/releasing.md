@@ -19,9 +19,14 @@ Without `PLAYWRIGHT_CHANNEL`, install Chromium with `npx playwright install chro
 from portal-app. Local tests must pass before any commit or push occurs.
 
 Vercel's GitHub integration deploys the frontend from `portal-app/public`.
-The GitHub workflow independently runs static checks, browser tests, a Docker
-build, and backend tests. Successful main-branch runs deploy Azure; pull requests
-only validate. Vercel and Azure are separate deployments, not an atomic release.
+Its ignore command compares app inputs against `VERCEL_GIT_PREVIOUS_SHA`, the
+last successful deployment on that branch. Missing history runs a build.
+The GitHub workflow uses scripts/ci-scope.mjs to select checks: frontend changes
+run static/browser checks; backend/OCR changes build/test the production image
+and deploy Azure on main. Documentation-only changes skip both expensive paths.
+Deployment scripts/workflow changes and manual dispatch run all checks. Tests
+cover deleted/renamed inputs and missing history. Pull requests only validate.
+Vercel and Azure are separate deployments, not an atomic release.
 Keep API changes backward compatible across the two deployment windows.
 
 Azure uses repository secrets `AZURE_DEPLOY_KEY`, `AZURE_KNOWN_HOSTS` and variable

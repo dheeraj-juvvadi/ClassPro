@@ -28,6 +28,7 @@ try {
   const archive = join(directory, 'source.tar');
   run('git', ['archive', '--format=tar', '-o', archive, tree]);
   run('tar', ['-xf', archive, '-C', directory]);
+  run('node', ['--test', 'scripts/ci-scope.test.mjs'], { cwd: directory });
   const frontend = join(directory, 'portal-app');
   run('npm', ['ci', '--ignore-scripts'], { cwd: frontend });
   run('npm', ['run', 'build'], { cwd: frontend });
