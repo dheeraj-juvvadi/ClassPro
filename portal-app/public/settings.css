@@ -1,5 +1,5 @@
 /* Simple typography and restrained green accents for Settings. */
-#accounts-dialog { width: min(660px, calc(100% - 24px)); padding: 30px; background: #1c201a; color: #f1eee3; border: 1px solid #444b3c; border-radius: 24px; }
+#settings-view { width: min(660px, calc(100% - 24px)); padding: 30px; background: #1c201a; color: #f1eee3; border: 1px solid #444b3c; border-radius: 24px; }
 .settings-cover { padding: 0 0 22px; background: none; }
 .settings-cover .planner-eyebrow { color: #c4b59c; font-size: 10px; }
 #accounts-title { font-size: 40px; font-weight: 500; margin-top: 9px; }
@@ -11,25 +11,25 @@
 .settings-name-form label { font-size: 11px; color: #c8baa7; }
 .settings-name-form > div { display: flex; align-items: center; gap: 12px; }
 .settings-name-form input { flex: 1; min-width: 0; }
-#accounts-dialog input:not([type="checkbox"]) { background: transparent; border: 0; border-bottom: 1px solid #6a5e4d; border-radius: 0; color: #f1eee3; padding-left: 0; }
-#accounts-dialog input::placeholder { color: #aa9e8b; }
-#accounts-dialog button { font-weight: 500; }
-#accounts-dialog .settings-name-form button { background: #c4cfac; color: #2e3925; border-radius: 20px; padding-inline: 19px; }
+#settings-view input:not([type="checkbox"]) { background: transparent; border: 0; border-bottom: 1px solid #6a5e4d; border-radius: 0; color: #f1eee3; padding-left: 0; }
+#settings-view input::placeholder { color: #aa9e8b; }
+#settings-view button { font-weight: 500; }
+#settings-view .settings-name-form button { background: #c4cfac; color: #2e3925; border-radius: 20px; padding-inline: 19px; }
 .settings-section-title { color: #c9b59a; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; margin: 30px 0 14px; }
-#accounts-dialog .provider-connections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
+#settings-view .provider-connections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
 .connection-row { padding: 18px 16px; border-radius: 15px; background: #293024; min-width: 0; }
 .connection-row:nth-child(2) { background: #252b21; }
 .connection-row strong { display: block; font-size: 14px; font-weight: 500; }
 .connection-state { display: block; font-size: 11px; margin-top: 8px; color: #d7bba0; }
 .connection-state[data-connected="true"] { color: #c6d5aa; }
 .connection-state[data-connected="true"]::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 6px; border-radius: 50%; background: #bacb94; }
-#accounts-dialog .connection-row button { background: transparent; color: #ead7b8; border-radius: 0; padding: 12px 0 0; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
-#accounts-dialog .provider-connections > p { grid-column: 1 / -1; }
+#settings-view .connection-row button { background: transparent; color: #ead7b8; border-radius: 0; padding: 12px 0 0; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+#settings-view .provider-connections > p { grid-column: 1 / -1; }
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 0; margin: 0; border-bottom: 1px solid #65594255; font-size: 14px; font-weight: 500; }
 .settings-row > span { min-width: 0; }
 .settings-row small { display: block; font-size: 11px; line-height: 1.6; color: #bfb3a0; margin-top: 5px; max-width: 34ch; font-weight: 400; }
-#accounts-dialog select { background: transparent; color: #d1d9bd; border: 1px solid #667151; border-radius: 20px; width: auto; min-width: 90px; font-size: 13px; padding: 9px; }
-#accounts-dialog select option { background: #191b19; }
+#settings-view select { background: transparent; color: #d1d9bd; border: 1px solid #667151; border-radius: 20px; width: auto; min-width: 90px; font-size: 13px; padding: 9px; }
+#settings-view select option { background: #191b19; }
 .settings-row input[type="checkbox"] { width: 32px; height: 22px; flex-shrink: 0; accent-color: #b7c79b; cursor: pointer; }
 #settings-sync { white-space: nowrap; background: transparent; color: #cad7b5; padding-right: 0; }
 #settings-sync.syncing .sync-icon { animation: sync-turn 1s linear infinite; }
@@ -39,14 +39,14 @@
 .settings-detail > summary::after { color: #d2b68c; }
 .settings-detail > summary span { color: #bfb3a0; font-size: 11px; }
 .settings-detail > p, .settings-detail > div > p { font-size: 12px; line-height: 1.7; color: #c9bfaf; margin-bottom: 16px; }
-#accounts-dialog .settings-detail button { font-size: 12px; margin: 0 0 16px; background: transparent; color: #e4c6a4; padding-left: 0; text-decoration: underline; text-underline-offset: 4px; }
+#settings-view .settings-detail button { font-size: 12px; margin: 0 0 16px; background: transparent; color: #e4c6a4; padding-left: 0; text-decoration: underline; text-underline-offset: 4px; }
 .settings-feedback { display: block; color: #d9c7a7; font-size: 13px; padding: 23px 0; }
-#accounts-dialog .settings-signout { width: auto; background: transparent; color: #e3ad94; padding-left: 0; border-radius: 0; }
+#settings-view .settings-signout { width: auto; background: transparent; color: #e3ad94; padding-left: 0; border-radius: 0; }
 #settings-message { margin-top: 12px; font-size: 12px; line-height: 1.6; color: #d7c7ae; }
-#accounts-dialog :focus-visible { outline: 2px solid #dfc89e; outline-offset: 3px; }
+#settings-view :focus-visible { outline: 2px solid #dfc89e; outline-offset: 3px; }
 .planner[data-accent="sand"] { --planner-green: #d8c49f; }
 .planner[data-accent="clay"] { --planner-green: #d4ac91; }
 .planner[data-accent="sand"] #planner-nav button[aria-current], .planner[data-accent="clay"] #planner-nav button[aria-current] { background: var(--planner-green); }
-@media (max-width: 400px) { #accounts-dialog { padding: 22px; } .settings-row { gap: 10px; } .settings-intro strong { font-size: 18px; } }
+@media (max-width: 400px) { #settings-view { padding: 22px; } .settings-row { gap: 10px; } .settings-intro strong { font-size: 18px; } }
 @media (prefers-reduced-motion: reduce) { #settings-sync.syncing .sync-icon { animation: none; } }
 .settings-issue-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; font-size: 12px; color: #d5dda9; text-underline-offset: 4px; }

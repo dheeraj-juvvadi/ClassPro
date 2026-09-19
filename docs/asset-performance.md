@@ -12,7 +12,7 @@ offline shell. Font tooling is not a runtime/build dependency. The TTF remains
 the editable source; only WOFF2 is referenced by the app and offline shell.
 
 The shared flower loader is a 966-byte SVG. It rotates with a CSS transform
-and rests between turns; the sync controller adds no polling. Motion pauses
+and rests between turns. Motion pauses
 when hidden and respects reduced motion.
 
 The selected botanical backgrounds remain SVG. The optional standard-library
@@ -30,7 +30,10 @@ desktop widths 1440/1920/2880 and mobile widths 480/960/1440. The visible paths,
 colors and clipping boundaries are unchanged. This reduces parsing and drawing
 work without adding bitmap memory or a rendering dependency.
 
-The calendar SVG is 126,966 bytes and loads when opened.
+The calendar banner was removed at the user's request; its 126,966-byte SVG
+is no longer referenced or downloaded by the app/offline shell. The new Cally
+calendar component adds 38,355 bytes (about 12 KB gzip) on demand. The complete
+public offline shell is now about 1.62 MiB, including the component.
 `painted-flowers.webp` is 144,860 bytes; PNG install icons are generated at the
 required sizes. HTML images have explicit alt text, including empty alt for
 decoration; build validation checks this.

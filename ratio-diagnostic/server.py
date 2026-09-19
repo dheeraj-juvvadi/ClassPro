@@ -62,6 +62,8 @@ REFRESH_CONCURRENCY = _positive("REFRESH_CONCURRENCY", 4)
 MEMORY_RESERVE_MB = _positive("MEMORY_RESERVE_MB", 160)
 REFRESH_COOLDOWN = _positive("REFRESH_COOLDOWN", 60)
 REFRESH_QUEUE_WAIT = _positive("REFRESH_QUEUE_WAIT", 600)
+REFRESH_RESPONSE_WAIT = 1.5
+refresh_response_waiters = 0
 
 RATE_PER_MINUTE = _positive("RATE_PER_MINUTE", 30)           # per issued session
 BOOTSTRAP_PER_MINUTE = _positive("BOOTSTRAP_PER_MINUTE", 1200)
@@ -663,6 +665,7 @@ async def refresh_job(token, entry, request):
 
 @app.get("/api/reports")
 async def reports(request: Request):
+    global refresh_response_waiters
     token = request.cookies.get(cookie_name)
     entry = sessions.get(token)
     if not entry or not providers(entry):
@@ -672,6 +675,11 @@ async def reports(request: Request):
     cache_only = request.query_params.get("cache") == "only"
     queue = getattr(app.state, "refresh_queue", None)
     pending = queue and token in queue.jobs
+    # Only a few requests may briefly await work. Large bursts still return
+    # cached reports immediately and never occupy the login worker pool.
+    wait_fast = (queue and request.query_params.get("wait") == "1"
+                 and len(queue.jobs) < REFRESH_CONCURRENCY
+                 and refresh_response_waiters < REFRESH_CONCURRENCY)
     recent = now - entry.get("sync_attempted_at", 0) < REFRESH_COOLDOWN
     wanted = force or sync_schedule.due(entry, now)
     if not cache_only and wanted and not pending and not recent:
@@ -682,12 +690,25 @@ async def reports(request: Request):
             pending = queue.submit(token, entry, context) is not None
         else:
             await refresh_job(token, entry, request)
+    if wait_fast and pending:
+        job = queue.jobs.get(token)
+        if job is not None:
+            refresh_response_waiters += 1
+            try:
+                # asyncio.wait never cancels the shared job on timeout or when
+                # this browser disconnects. Other callers reuse the same work.
+                await asyncio.wait({job}, timeout=REFRESH_RESPONSE_WAIT)
+            finally:
+                refresh_response_waiters -= 1
+        pending = token in queue.jobs
     result = sync_schedule.response(entry, time.time())
     if entry.get("sync_failed"):
         result["warnings"] = [*result.get("warnings", []), "Sync could not finish. Your last data is still available; try again shortly."]
+    recent = time.time() - entry.get("sync_attempted_at", 0) < REFRESH_COOLDOWN
     if queue and (pending or (wanted and not recent and not cache_only)):
+        light = len(queue.jobs) <= REFRESH_CONCURRENCY
         result["sync"].update({"pending": True, "state": "queued" if pending else "busy",
-                               "nextAt": (now + 15 + secrets.randbelow(16)) * 1000})
+                               "nextAt": (time.time() + (2 + secrets.randbelow(2) if light else 15 + secrets.randbelow(16))) * 1000})
     return result
 
 

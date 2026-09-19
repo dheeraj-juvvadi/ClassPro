@@ -5,6 +5,7 @@ let authenticated = false;
 let busy = false;
 let reportLoad = null;
 let nextAutoSync = 0;
+let pendingSyncTimer = null, pendingSyncChecks = 0;
 let reportFingerprint = {};
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
@@ -106,6 +107,7 @@ function showLogin(text = '', error = false) {
   anonSyncControl.reset();
   reportFingerprint = {};
   nextAutoSync = 0;
+  clearTimeout(pendingSyncTimer); pendingSyncChecks = 0;
   authenticated = false;
   dismissStartup();
   $('login-view').hidden = false;
@@ -130,8 +132,6 @@ function showLogin(text = '', error = false) {
 }
 
 function showReports() {
-  const calendarArt = $('calendar-art');
-  if (!calendarArt.hasAttribute('src')) calendarArt.src = calendarArt.dataset.src;
   document.body.classList.remove('garden-login');
   document.body.classList.add('planner');
   manualChallengeAt = 0;
@@ -275,8 +275,10 @@ function loadReports(options = {}) {
   return reportLoad;
 }
 
-async function fetchReports({ cacheOnly = false, force = false, silent = false } = {}) {
+async function fetchReports({ cacheOnly = false, force = false, silent = false, followup = false } = {}) {
   if (designPreview) return;
+  clearTimeout(pendingSyncTimer);
+  if (!followup) pendingSyncChecks = 0;
   anonSyncControl.begin({ notify: !cacheOnly });
   if (!silent) message('reports-message');
   if (!$('attendance-content').childElementCount) {
@@ -289,7 +291,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
     }
   }
   try {
-    const reports = await api(`/api/reports${force ? '?force=1' : cacheOnly ? '?cache=only' : ''}`);
+    const reports = await api(`/api/reports${force ? '?force=1&wait=1' : cacheOnly ? '?cache=only' : '?wait=1'}`);
     const changed = (key, data, update) => {
       const fingerprint = JSON.stringify(data);
       if (reportFingerprint[key] !== fingerprint) { update(); reportFingerprint[key] = fingerprint; }
@@ -306,6 +308,17 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false }
     message('reports-message', reports.sync?.pending ? 'Sync queued. Your last data stays available while we refresh.' : reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Sync.' : '');
     writeReportsCache(reports);
     anonSyncControl.complete(reports);
+    if (reports.sync?.pending) {
+      // Follow the server's hint directly; the old 15-second clock timer added
+      // another full tick even when work finished just after the first reply.
+      pendingSyncChecks++;
+      const delay = Math.max(pendingSyncChecks > 5 ? 5000 : 1800, Math.min(30000, Number(reports.sync.nextAt) - Date.now() || 3000));
+      pendingSyncTimer = setTimeout(() => {
+        if (!authenticated || busy || document.hidden || !navigator.onLine || $('connect-dialog').open) return;
+        const retryAdmission = reports.sync.state === 'busy';
+        loadReports({ cacheOnly: !retryAdmission, force: retryAdmission, silent: true, followup: true }).catch(() => {});
+      }, delay);
+    } else pendingSyncChecks = 0;
     return reports;
   } catch (error) {
     anonSyncControl.fail(error);

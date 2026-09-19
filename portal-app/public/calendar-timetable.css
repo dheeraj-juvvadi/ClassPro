@@ -8,19 +8,12 @@
 #retry-academia { background: transparent; color: #c5d4a7; }
 
 /* OpenSourceUI MonthPickerCalendar adapted to Anon's academic calendar. */
-#calendar-dialog { width: min(1000px, calc(100% - 24px)); padding: 0; background: #191b19; border-color: #444c3d; border-radius: 24px; }
-.calendar-cover { position: relative; min-height: 190px; padding: 48px 36px 30px; overflow: hidden; isolation: isolate; }
-.calendar-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
-.calendar-cover > div { max-width: 55%; }
-.calendar-cover .planner-eyebrow { color: #bcc8ab; font-size: 10px; }
-.calendar-cover h2 { font-size: clamp(30px, 4vw, 42px); font-weight: 550; line-height: 1.15; margin: 12px 0 9px; text-wrap: balance; }
-.calendar-cover p:last-child { font-size: 12px; color: #c1c7b8; line-height: 1.6; }
-#close-calendar { position: absolute; right: 16px; top: 14px; width: 44px; height: 44px; padding: 0; font-size: 25px; background: #191b19; color: #e9eedf; border: 1px solid #48513e; border-radius: 50%; }
+#calendar-view { width: min(1000px, calc(100% - 24px)); padding: 0; background: #191b19; border-color: #444c3d; border-radius: 24px; }
 .calendar-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); }
 .calendar-picker { padding: 26px 30px 30px; border-top: 1px solid #363e30; }
-#calendar-dialog .calendar-heading { gap: 8px; }
-#calendar-dialog .calendar-heading h3 { font-size: 16px; font-weight: 550; }
-#calendar-dialog .calendar-heading button { min-width: 36px; height: 44px; padding: 8px; color: #c5d4a7; font-size: 14px; border-radius: 8px; }
+#calendar-view .calendar-heading { gap: 8px; }
+#calendar-view .calendar-heading h3 { font-size: 16px; font-weight: 550; }
+#calendar-view .calendar-heading button { min-width: 36px; height: 44px; padding: 8px; color: #c5d4a7; font-size: 14px; border-radius: 8px; }
 .academic-month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 20px 0 22px; }
 .month-weekday { text-align: center; font-size: 10px; color: #aeb8a2; padding-bottom: 10px; }
 .academic-month button { min-width: 0; min-height: 64px; padding: 10px 2px; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 12px; background: #242a20; color: #edf0e7; font-variant-numeric: tabular-nums; }
@@ -48,10 +41,6 @@
 .calendar-detail h3 { font-size: 21px; font-weight: 500; margin-top: 30px; }
 .calendar-event { font-size: 13px; line-height: 1.7; margin-top: 12px; color: #cad2c0; overflow-wrap: anywhere; white-space: pre-line; }
 @media (max-width: 650px) {
-  .calendar-cover { min-height: 166px; padding: 32px 22px 24px; }
-  .calendar-cover img { object-position: 62% center; }
-  .calendar-cover > div { max-width: 65%; }
-  .calendar-cover h2 { font-size: 30px; }
   .calendar-layout { grid-template-columns: minmax(0, 1fr); }
   .calendar-picker { padding: 20px 16px; }
   .academic-month { gap: 4px; margin-top: 16px; }

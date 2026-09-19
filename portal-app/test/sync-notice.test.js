@@ -29,13 +29,15 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
     localStorage.setItem('anon.consent.v1', 'declined');
   }, report);
   let mode = 'queued', requests = 0, latest = report.sync.syncedAt;
+  const requestURLs = [];
   await page.route('**/api/session', route => route.fulfill({ json: { authenticated: true, authMode: 'http' } }));
   await page.route('**/api/reports*', route => {
     requests++;
+    requestURLs.push(route.request().url());
     if (mode === 'error') return route.fulfill({ status: 503, json: { error: { message: 'Synthetic unavailable' } } });
     return route.fulfill({ json: { ...report,
       warnings: mode === 'partial' ? ['One portal did not update.'] : [],
-      sync: { syncedAt: latest, nextAt: Date.now() + 3600000, due: false, pending: mode === 'queued' },
+      sync: { syncedAt: latest, nextAt: Date.now() + (mode === 'queued' ? 1800 : 3600000), due: false, pending: mode === 'queued' },
     } });
   });
   await page.goto(origin);
@@ -43,8 +45,12 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
   assert.equal(requests, 1, 'returning app should start one refresh');
   assert.equal(await page.locator('#refresh').isDisabled(), true);
   mode = 'completed'; latest = Date.now();
-  await page.evaluate(() => { nextAutoSync = 0; resumeSync(); });
+  const completionStarted = Date.now();
   await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Synced');
+  assert.ok(Date.now() - completionStarted < 4000, 'completion should not wait for the 15-second schedule tick');
+  assert.equal(requests, 2);
+  assert.match(requestURLs[0], /wait=1/);
+  assert.match(requestURLs[1], /cache=only/);
   assert.equal(await page.locator('.sync-notice-flower').evaluate(el => el.getAnimations().length), 0);
   await page.evaluate(() => loadReports({ force: true }));
   await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Up to date');

@@ -112,7 +112,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#provider-connections').isVisible(), false);
   await page.locator('#planner-menu summary').click();
   await page.locator('#open-accounts').click();
-  assert.equal(await page.locator('#accounts-title').innerText(), 'Settings.');
+  assert.equal(await page.locator('#accounts-title').innerText(), 'Settings');
   assert.equal(await page.locator('#settings-courses, #settings-history, .settings-footnote').count(), 0);
   await page.locator('#settings-display-name').fill('Dheeraj');
   await page.locator('#settings-profile-form button').click();
@@ -165,18 +165,19 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.match(await page.locator('.calendar-detail').innerText(), /Day order 1/);
   assert.equal(await page.locator('.calendar-period').count(), 0);
   assert.equal(await page.getByRole('button', { name: 'View selected day classes' }).count(), 0);
-  assert.equal(await page.locator('#calendar-art').evaluate(img => img.complete && img.naturalWidth > 0), true);
+  assert.equal(await page.locator('#calendar-view img, #calendar-view .calendar-cover').count(), 0);
   await page.getByRole('button', { name: 'Next month', exact: true }).click();
   assert.equal(await page.locator('.academic-month button').count(), 31);
   assert.match(await page.locator('#calendar-month-title').innerText(), /October 2026/);
   await page.getByRole('button', { name: 'Return to today', exact: true }).click();
   for (const width of [320, 390, 768, 1024, 1280]) {
     await page.setViewportSize({ width, height: 900 });
-    assert.equal(await page.locator('#calendar-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
+    assert.equal(await page.locator('#calendar-view').evaluate(view => view.scrollWidth <= view.clientWidth), true);
   }
 
-  await page.locator('#close-calendar').click();
-  assert.equal(await page.locator('#open-schedule').count(), 0);
+  assert.equal(await page.locator('#calendar-view').isVisible(), true);
+  assert.match(page.url(), /#calendar$/);
+  assert.equal(await page.locator('#open-schedule').count(), 1);
   await page.locator('button[data-page="home"]').click();
   assert.equal(await page.locator('#student-context').count(), 0);
   assert.equal(await page.locator('#open-subjects').count(), 0);
@@ -209,6 +210,34 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `no overflow at ${width}px`);
   }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${origin}/?preview=home#schedule`);
+  await page.reload();
+  assert.equal(await page.title(), 'Schedule · Anon');
+  assert.equal(await page.locator('dialog[open]').count(), 0);
+  assert.equal(await page.locator('#schedule-choices input:checked').count(), 4);
+  const optional = page.locator('#schedule-choices input').first();
+  await optional.uncheck();
+  assert.equal(await page.locator('#schedule-choices input:checked').count(), 3);
+  await page.locator('button[data-page="home"]').click();
+  assert.equal(await page.locator('#next-class-title').textContent(), 'Operating Systems');
+  assert.equal(await page.locator('#today-classes > li').count(), 3);
+  await page.reload();
+  assert.equal(await page.locator('#next-class-title').textContent(), 'Operating Systems');
+  await page.locator('[data-sidebar-action="open-schedule"]').click();
+  assert.equal(await page.locator('#schedule-choices input').first().isChecked(), false);
+  await page.locator('#schedule-include-all').click();
+  assert.equal(await page.locator('#schedule-choices input:checked').count(), 4);
+  await page.locator('[data-sidebar-action="open-calendar"]').click();
+  assert.equal(await page.title(), 'Academic calendar · Anon');
+  assert.equal(await page.locator('#calendar-title').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+  assert.equal(await page.getByText('Day orders, dates & days off.', { exact: true }).count(), 0);
+  await page.getByRole('button', { name: 'Plan attendance for this day', exact: true }).click();
+  assert.equal(await page.locator('.day-class-select input:checked').count(), 4);
+  await page.locator('#projection-done').click();
+  await page.locator('[data-sidebar-action="open-accounts"]').click();
+  assert.equal(await page.title(), 'Settings · Anon');
+  assert.equal(await page.locator('dialog[open]').count(), 0);
   await page.evaluate(() => {
     const report = { profile: { name: 'Test Person', regNo: 'SETTINGS-TEST' }, attendance: { data: [{ code: 'CS', title: 'Computing', present: 8, conducted: 10 }] }, marks: { data: [] } };
     anonSettings.update(report);
@@ -223,13 +252,13 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#settings-name').innerText(), 'Test nickname');
   for (const width of [320, 390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
-    assert.equal(await page.locator('#accounts-dialog').evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), true);
+    assert.equal(await page.locator('#settings-view').evaluate(view => view.scrollWidth <= view.clientWidth), true);
   }
   await page.locator('.settings-detail').filter({ hasText: 'Privacy & storage' }).locator('summary').click();
   await page.locator('#settings-reset').click();
   assert.equal(await page.locator('#settings-name').innerText(), 'Test Person');
   await page.evaluate(() => {
-    document.querySelector('#accounts-dialog').close();
+    document.querySelector('button[data-page="attendance"]').click();
     renderAttendance({ data: [{ code: 'CS', title: 'Computing', present: 9, conducted: 11, absent: 2, change24h: { points: 1.82 } }] });
   });
   assert.match(await page.locator('.attendance-change.positive').textContent(), /\+1.8%/);

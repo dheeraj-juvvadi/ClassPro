@@ -1,7 +1,7 @@
 'use strict';
 
 // Month-grid and selection pattern adapted from OpenSourceUI MonthPickerCalendar.
-globalThis.createAcademicCalendar = ({ container, source, now }) => {
+globalThis.createAcademicCalendar = ({ container, source, now, filters = {} }) => {
   const model = classproScheduleModel;
   let month, selected;
   const el = (tag, text, className) => {
@@ -61,6 +61,19 @@ globalThis.createAcademicCalendar = ({ container, source, now }) => {
     const label = courseDetails.clean(state.label);
     if (label && !/^(day order \w+|teaching day|holiday)$/i.test(label)) detail.append(el('p', label, 'calendar-event'));
     if (state.kind === 'unknown') detail.append(el('p', 'No academic calendar entry for this date.', 'calendar-event'));
+    const classes = model.classes(source(), selected, filters);
+    const agenda = el('div', undefined, 'calendar-day-classes');
+    agenda.append(el('h4', `${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`));
+    for (const entry of classes) {
+      const row = el('div', undefined, 'calendar-day-class');
+      row.append(el('strong', entry.title || entry.code), el('p', `${entry.start} – ${entry.end} · ${classproHomeModel.hours(entry)}h`));
+      if (entry.room) row.append(el('p', entry.room));
+      agenda.append(row);
+    }
+    if (state.kind === 'teaching' && classes.length) {
+      agenda.append(button('Plan attendance for this day →', 'Plan attendance for this day', () => dateAttendance.openDay(selected)));
+    } else if (state.kind === 'teaching') agenda.append(el('p', 'No classes reported for this day and batch.', 'calendar-event'));
+    detail.append(agenda);
     layout.append(panel, detail); container.append(layout);
     if (active) [...container.querySelectorAll('button')].find(node => node.getAttribute('aria-label') === active)?.focus();
   }

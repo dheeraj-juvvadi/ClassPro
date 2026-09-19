@@ -9,14 +9,16 @@ import time
 
 KINDS = {"runtime_error", "promise_error", "api_error", "asset_error", "page_view", "user_report"}
 REPORT_CODES = {"SIGN_IN_PROBLEM", "SYNC_PROBLEM", "SCHEDULE_PROBLEM", "MARKS_PROBLEM", "LAYOUT_PROBLEM"}
-PAGES = {"login", "home", "attendance", "marks", "settings", "privacy", "terms", "unknown"}
+PAGES = {"login", "home", "attendance", "marks", "settings", "calendar", "schedule", "privacy", "terms", "unknown"}
 CODES = {"TypeError", "ReferenceError", "SyntaxError", "RangeError", "Error", "UnknownError",
          "NETWORK_ERROR", "TIMEOUT", "INVALID_RESPONSE", "HTTP_ERROR", "ASSET_FAILED"} | REPORT_CODES
 ROUTES = {"/api/session", "/api/challenge", "/api/login/client", "/api/reports"}
 SOURCES = {"app.js", "home.js", "settings.js", "auth-client.js", "provider-connections.js",
            "academic-ui.js", "schedule-calendar.js", "class-reminders.js", "client-logs.js",
            "consent.js", "date-attendance.js", "date-projection.js", "sync-control.js",
-           "marks-target.js", "marks-target-math.js", "offline-shell.js", "report-issue.js", "unknown"}
+           "marks-target.js", "marks-target-math.js", "offline-shell.js", "report-issue.js",
+           "academic-calendar.js", "schedule-preferences.js", "date-planner-calendar.js",
+           "date-planner-day.js", "date-planner-results.js", "unknown"}
 
 
 def clean_event(value):

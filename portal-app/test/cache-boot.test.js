@@ -145,9 +145,9 @@ test('installed-app shortcuts reuse cached views, respect forms and support back
   await page.locator('#marks-panel').waitFor({ state: 'visible' });
   await page.evaluate(() => deliverLaunch({ targetURL: 'https://untrusted.invalid/#home' }));
   assert.equal(await page.locator('#marks-panel').isVisible(), true);
-  await page.evaluate(() => { document.getElementById('accounts-dialog').showModal(); deliverLaunch({ targetURL: `${location.origin}/#home` }); });
+  await page.evaluate(() => { document.getElementById('connect-dialog').showModal(); deliverLaunch({ targetURL: `${location.origin}/#home` }); });
   assert.equal(await page.locator('#marks-panel').isVisible(), true, 'launch must preserve an open form');
-  await page.evaluate(() => document.getElementById('accounts-dialog').close());
+  await page.evaluate(() => document.getElementById('connect-dialog').close());
   await page.locator('#home-view').waitFor({ state: 'visible' });
   assert.equal(reportRequests, 0, 'relaunch must reuse the document and report cache');
   valid = false;

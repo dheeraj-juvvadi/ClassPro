@@ -4,6 +4,27 @@ Production target: existing Standard_B2ats_v2 VM, 2 vCPUs, 893 MiB RAM.
 No VM resize or added paid service. These are synthetic measurements, not a
 promise of complete SRM login latency or a guarantee of maximum user capacity.
 
+## September 19: prompt sync completion feedback
+
+The old cached response deferred its next check by 15–30 seconds; the browser's
+15-second schedule tick could add another delay even after the upstream job
+finished. A `wait=1` report request can now await its shared job for at most 1.5
+seconds when there are fewer than four jobs/waiters. Finished results return in
+that same response. Timeout/disconnection does not cancel the shared refresh.
+
+Larger bursts retain immediate cached replies and the existing four-worker queue.
+Pending low-load work suggests a check in 2–3 seconds, while busy queues retain
+15–30-second jitter. The browser uses a single pending timer and cache-only
+follow-ups, with a five-second minimum after five checks. Hidden/offline pages
+defer checks. Queued follow-ups neither resubmit credentials nor start upstream
+work. A queue-full `busy` reply retries admission after its server delay.
+
+Tests verify prompt completed responses, continued work after the brief wait,
+deduplication, and UI completion without waiting for the schedule tick. The
+live public session endpoint responded in 0.93 seconds during investigation;
+that is not a measurement of SRM refresh latency. The upstream provider can
+still take longer than two seconds. Existing admission/memory limits remain.
+
 ## Production controls
 
 - Session ceiling: 2,000 (previously 200), subject to memory admission.

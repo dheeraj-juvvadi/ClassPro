@@ -95,6 +95,11 @@ test('installed shell reopens saved reports offline and never caches private API
   assert.match(await page.locator('#attendance-content').innerText(), /Offline course/);
   assert.equal(await page.locator('#sync-notice-label').innerText(), 'Offline · showing saved data');
   assert.equal(await page.locator('#startup').isHidden(), true);
+  await page.locator('#calculate-attendance').click();
+  await page.locator('#projection-calendar').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('calendar-month button').count() > 27, true, 'calendar component opens offline');
+  assert.match(await page.locator('#projection-period').innerText(), /Timetable unavailable/);
+  await page.locator('#projection-done').click();
   assert.equal(await page.evaluate(async () => { try { await fetch('/api/reports'); return false; } catch { return true; } }), true);
   await page.evaluate(() => { clearReportsCache(); showLogin('Signed out locally.'); });
   await page.reload();

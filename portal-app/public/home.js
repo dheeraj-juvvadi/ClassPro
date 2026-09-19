@@ -13,10 +13,10 @@ globalThis.classproHome = (() => {
   let scheduleInvalid = false;
   let selectedDate = null;
   const filters = { allocation: '', batch: '' };
-  const pages = new Set(['home', 'attendance', 'marks']);
+  const pages = new Set(['home', 'attendance', 'marks', 'calendar', 'settings', 'schedule']);
   const route = () => pages.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
   let launchDestination = null;
-  const source = () => reportedSchedule || schedule;
+  const source = () => reportedSchedule ? schedulePreferences.apply(reportedSchedule) : schedule;
   const get = identifier => document.getElementById(identifier);
   const element = (tag, className, text) => {
     const result = document.createElement(tag);
@@ -25,6 +25,12 @@ globalThis.classproHome = (() => {
     return result;
   };
   const now = () => preview ? new Date(2026, 8, 14, 9, 48) : planner.clock(reportedSchedule?.timezone || 'Asia/Kolkata');
+  const schedulePreferences = createSchedulePreferences({ onChange() {
+    dateAttendance.update(attendance, reportedSchedule ? source() : null, now(), filters);
+    refreshRecovery();
+    if (!get('calendar-view').hidden) monthCalendar.render();
+    render();
+  } });
   const reminders = createClassReminders({ notify(title, options) {
     if (preview || globalThis.Notification?.permission !== 'granted') return false;
     new Notification(title, options);
@@ -52,7 +58,17 @@ globalThis.classproHome = (() => {
       select.parentElement.hidden = !values.length;
     }
   }
-  for (const field of ['batch']) get(`${field}-filter`).addEventListener('change', event => { filters[field] = event.target.value; render(); });
+  function refreshRecovery() {
+    for (const row of get('attendance-content').querySelectorAll('[data-course]')) {
+      const course = attendance.find(item => item.code === row.dataset.course);
+      if (course) academicUI.renderRecovery(course, row, reportedSchedule ? source() : null, filters, now());
+    }
+  }
+  for (const field of ['batch']) get(`${field}-filter`).addEventListener('change', event => {
+    filters[field] = event.target.value;
+    dateAttendance.update(attendance, reportedSchedule ? source() : null, now(), filters);
+    refreshRecovery(); render();
+  });
   updateFilters();
 
   function page(destination, focus = true, recordHistory = true) {
@@ -61,11 +77,15 @@ globalThis.classproHome = (() => {
       try { history.pushState(null, '', `${location.pathname}${location.search}#${destination}`); } catch {}
     }
     globalThis.anonClientLogs?.capture({ kind: 'page_view', page: destination, consent: true });
-    document.title = `${{ home: 'Home', attendance: 'Attendance', marks: 'Marks' }[destination] || 'Student Portal'} · Anon`;
+    document.title = `${{ home: 'Home', attendance: 'Attendance', marks: 'Marks', calendar: 'Academic calendar', settings: 'Settings', schedule: 'Schedule' }[destination]} · Anon`;
     const previousPage = document.body.dataset.page;
     document.body.dataset.page = destination;
     get('home-view').hidden = destination !== 'home';
-    get('reports-view').hidden = destination === 'home';
+    get('reports-view').hidden = !['attendance', 'marks'].includes(destination);
+    get('calendar-view').hidden = destination !== 'calendar';
+    get('settings-view').hidden = destination !== 'settings';
+    get('schedule-view').hidden = destination !== 'schedule';
+    if (destination === 'calendar') monthCalendar.reset();
     get('attendance-panel').hidden = destination !== 'attendance';
     get('marks-panel').hidden = destination !== 'marks';
     get('calculate-attendance').hidden = destination !== 'attendance';
@@ -73,9 +93,15 @@ globalThis.classproHome = (() => {
       if (button.dataset.page === destination) button.setAttribute('aria-current', 'page');
       else button.removeAttribute('aria-current');
     }
+    for (const button of document.querySelectorAll('[data-sidebar-action]')) {
+      const route = { 'open-calendar': 'calendar', 'open-accounts': 'settings', 'open-schedule': 'schedule' }[button.dataset.sidebarAction];
+      if (route === destination) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+    }
     get('reports-title').textContent = destination === 'marks' ? 'Your marks.' : 'Your attendance.';
-    if (previousPage !== destination) anonFeedback.enter(get(destination === 'home' ? 'home-view' : 'reports-view'));
-    if (focus) get(destination === 'home' ? 'home-title' : 'reports-title').focus();
+    const view = { home: 'home-view', calendar: 'calendar-view', settings: 'settings-view', schedule: 'schedule-view' }[destination] || 'reports-view';
+    const heading = { home: 'home-title', calendar: 'calendar-title', settings: 'accounts-title', schedule: 'schedule-page-title' }[destination] || 'reports-title';
+    if (previousPage !== destination) anonFeedback.enter(get(view));
+    if (focus) get(heading).focus();
     get('planner-menu').open = false;
   }
 
@@ -119,9 +145,9 @@ globalThis.classproHome = (() => {
     } else {
       const confirmed = planner.dayState(source(), date).kind !== 'unknown' && !reportError;
       if (confirmed) {
-        title.textContent = 'A little room to breathe.';
+        title.textContent = 'Done for the day.';
         card.append(confetti());
-        card.append(element('p', 'class-room', 'No more classes on your confirmed schedule. Enjoy the pause.'));
+        card.append(element('p', 'class-room', 'No more classes on your selected schedule.'));
       } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
     }
     const bottom = element('div', 'next-class-bottom');
@@ -142,7 +168,7 @@ globalThis.classproHome = (() => {
   }
 
   function confetti() {
-    const art = element('pre', 'confetti-art', '  .    *       +      .\n     \\  |  /     *\n  +   \\ | /  .      +\n   --  \\|/  --\n  .    /\\     *   .\n      /::\\  +\n  *  /::::\\     .\n    /______\\');
+    const art = element('pre', 'confetti-art dino-art', "                 __\n                / o)\n        /\\_____/ /\n       /          /\n      /   /\\  __/        _\n     /___/  | |        _| |_\n            |_|         | |\n  _ . _ . _ . _ . _ . _ |_| _ . _");
     art.setAttribute('aria-hidden', 'true');
     return art;
   }
@@ -188,7 +214,7 @@ globalThis.classproHome = (() => {
     if (!classes.length) {
       const state = describe(selectedDate || now());
       const empty = element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No confirmed classes for this date.' : 'No classes for this date and filter selection.');
-      if (state.kind !== 'unknown') empty.prepend(confetti());
+      if (state.kind !== 'unknown') { empty.prepend(confetti()); empty.prepend(element('p', 'day-done-caption', 'Done for the day.')); }
       list.append(empty);
     }
   }
@@ -208,18 +234,12 @@ globalThis.classproHome = (() => {
     get('schedule-dialog').showModal();
   }
 
-  const monthCalendar = createAcademicCalendar({ container: get('academic-calendar'), source, now });
-  get('open-calendar').addEventListener('click', () => {
-    get('planner-menu').open = false; monthCalendar.reset(); get('calendar-dialog').showModal();
-  });
-  get('close-calendar').addEventListener('click', () => get('calendar-dialog').close());
+  const monthCalendar = createAcademicCalendar({ container: get('academic-calendar'), source, now, filters });
+  get('open-calendar').addEventListener('click', () => page('calendar'));
+  get('open-schedule').addEventListener('click', () => page('schedule'));
 
   get('close-schedule').addEventListener('click', () => get('schedule-dialog').close());
-  get('open-accounts').addEventListener('click', () => {
-    get('planner-menu').open = false;
-    get('accounts-dialog').showModal();
-  });
-  get('close-accounts').addEventListener('click', () => get('accounts-dialog').close());
+  get('open-accounts').addEventListener('click', () => page('settings'));
   for (const button of document.querySelectorAll('[data-page]')) button.addEventListener('click', () => page(button.dataset.page));
   for (const button of document.querySelectorAll('[data-sidebar-action]')) {
     button.addEventListener('click', () => get(button.dataset.sidebarAction).click());
@@ -270,6 +290,7 @@ globalThis.classproHome = (() => {
   }
 
   return {
+    scheduleIdentity(profile) { schedulePreferences.identity(profile); },
     reminders(enabled) { reminders.enable(enabled); },
     profile(profile) { studentName = profile?.name || ''; greetingExtras = anonGreetings.select(profile); render(); },
     enter() {
@@ -280,15 +301,18 @@ globalThis.classproHome = (() => {
       page(launchDestination || route(), true, false);
       launchDestination = null;
     },
-    clear() { reminders.clear(); studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-dialog').close(); get('academic-calendar').replaceChildren(); updateFilters(); },
+    clear() { reminders.clear(); schedulePreferences.clear(); studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-view').hidden = true; get('settings-view').hidden = true; get('schedule-view').hidden = true; get('academic-calendar').replaceChildren(); updateFilters(); },
     update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];
       reportError = report?.error?.message || '';
       reportedSchedule = planner.normalize(scheduleReport);
+      schedulePreferences.update(reportedSchedule);
       scheduleInvalid = scheduleReport != null && !reportedSchedule;
       selectedDate = null;
       updateFilters();
-      dateAttendance.update(attendance, reportedSchedule, now(), filters);
+      dateAttendance.update(attendance, reportedSchedule ? source() : null, now(), filters);
+      refreshRecovery();
+      if (!get('calendar-view').hidden) monthCalendar.render();
       calendar.reset(now());
       render();
     },

@@ -25,6 +25,7 @@ globalThis.academicUI = (() => {
     for (const course of data) {
       const status = margin(course.present, course.conducted);
       const card = create('article', `attendance-row ${status.tone}`);
+      card.dataset.course = course.code;
       const heading = create('div', 'attendance-row-heading');
       const name = create('div');
       name.append(create('h3', '', course.title || course.code), create('p', 'course-code', course.code));
@@ -56,18 +57,22 @@ globalThis.academicUI = (() => {
       card.append(heading, bottom);
       const details = [course.faculty, course.room, course.type, course.credits && `${course.credits} credits`].map(value => courseDetails.clean(value)).filter(Boolean);
       if (details.length) card.append(create('p', 'course-metadata', details.join(' · ')));
-      const recovery = courseDetails.recovery(course, classproScheduleModel.normalize(schedule), classproScheduleModel.clock('Asia/Kolkata'));
-      if (recovery?.date) {
-        const date = recovery.date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
-        card.append(create('p', 'recovery-date', `Can be recovered by ${date}`), create('p', 'recovery-assumption', 'If you attend every upcoming class.'));
-      } else if (recovery?.unavailable) card.append(create('p', 'recovery-assumption', 'Recovery date needs a confirmed timetable and calendar.'));
+      renderRecovery(course, card, classproScheduleModel.normalize(schedule));
       list.append(card);
     }
     container.append(list);
     get('calculate-attendance').disabled = !data.length;
   }
+  function renderRecovery(course, card, schedule, filters = {}, date = classproScheduleModel.clock('Asia/Kolkata')) {
+    for (const old of card.querySelectorAll('.recovery-date, .recovery-assumption')) old.remove();
+    const recovery = courseDetails.recovery(course, schedule, date, filters);
+    if (recovery?.date) {
+      const date = recovery.date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
+      card.append(create('p', 'recovery-date', `Can be recovered by ${date}`), create('p', 'recovery-assumption', 'If you attend every upcoming selected class.'));
+    } else if (recovery?.unavailable) card.append(create('p', 'recovery-assumption', 'Recovery date needs a confirmed timetable and calendar.'));
+  }
   get('calculate-attendance').addEventListener('click', () => dateAttendance.open());
   function open(course) { dateAttendance.open(course?.code); }
   function plan(code, hours, date) { dateAttendance.open(code, date); }
-  return { renderAttendance, margin, plan, clear() { courses = []; selected = null; get('projection-dialog').close(); } };
+  return { renderAttendance, renderRecovery, margin, plan, clear() { courses = []; selected = null; get('projection-dialog').close(); } };
 })();

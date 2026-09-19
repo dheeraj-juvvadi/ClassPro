@@ -24,6 +24,7 @@ globalThis.anonSettings = (() => {
   }
   function update(data) {
     report = data;
+    classproHome.scheduleIdentity(data.profile);
     const identity = String(data.profile?.regNo || data.profile?.name || 'session');
     let hash = 2166136261;
     for (const char of identity) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
@@ -50,7 +51,7 @@ globalThis.anonSettings = (() => {
     previous = snapshot; save(); apply();
     const time = new Date(data.updatedAt);
     get('settings-last-sync').textContent = Number.isNaN(time.getTime()) ? 'Your cached data stays available.' : `Updated ${time.toLocaleString('en', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} IST`;
-    if (get('accounts-dialog').open) {
+    if (!get('settings-view').hidden) {
       tell(data.sync?.pending ? 'Sync queued. Your last data stays available while we refresh.'
         : data.warnings?.length || data.attendance?.error || data.marks?.error
           ? 'Some data could not refresh. Your last data is still available.' : 'Your data is up to date.');
@@ -98,7 +99,7 @@ globalThis.anonSettings = (() => {
     try { if (storageKey) localStorage.removeItem(storageKey); } catch {}
     prefs = {}; apply(); tell('Local preferences reset.');
   });
-  get('settings-signout').addEventListener('click', () => { get('accounts-dialog').close(); get('logout').click(); });
+  get('settings-signout').addEventListener('click', () => get('logout').click());
   return { update, clear() {
     report = {}; storageKey = ''; prefs = {}; previous = null;
     document.body.dataset.accent = 'sage';

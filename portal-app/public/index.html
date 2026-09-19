@@ -33,13 +33,15 @@
   <link rel="stylesheet" href="/home.css?v=1e13fb0c57">
   <link rel="stylesheet" href="/academic.css?v=900a31841b">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
-  <link rel="stylesheet" href="/settings.css?v=6a18702f6a">
-  <link rel="stylesheet" href="/calendar-timetable.css?v=23c5ceb958">
+  <link rel="stylesheet" href="/settings.css?v=08f1866390">
+  <link rel="stylesheet" href="/calendar-timetable.css?v=5484eae33f">
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
   <link rel="stylesheet" href="/interaction-feedback.css?v=29b9cc8fad">
   <link rel="stylesheet" href="/desktop.css?v=5af5323f81">
   <link rel="stylesheet" href="/marks-target.css?v=d9baa76b5f">
+  <link rel="stylesheet" href="/date-planner.css?v=3d49147122">
+  <link rel="stylesheet" href="/workspace-pages.css?v=bbc05262ed">
   <script src="/marks-target-math.js?v=7e3f5a6115" defer></script>
   <script src="/marks-target.js?v=7612a406a0" defer></script>
   <script src="/interaction-feedback.js?v=d80307ad7a" defer></script>
@@ -49,23 +51,27 @@
   <script src="/schedule-model.js?v=59f9ae9285" defer></script>
   <script src="/class-reminders.js?v=c0a05bb8cc" defer></script>
   <script src="/schedule-calendar.js?v=87fe6fea1d" defer></script>
-  <script src="/academic-calendar.js?v=37102b4930" defer></script>
+  <script src="/academic-calendar.js?v=e340684631" defer></script>
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
-  <script src="/course-details.js?v=c862a2bd04" defer></script>
+  <script src="/course-details.js?v=437df924bc" defer></script>
   <script src="/greeting.js?v=68e7af92e7" defer></script>
-  <script src="/home.js?v=01f34f5771" defer></script>
+  <script src="/schedule-preferences.js?v=3db9f39d36" defer></script>
+  <script src="/home.js?v=69f3bffe7d" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
-  <script src="/date-projection.js?v=fd8c3b7f24" defer></script>
-  <script src="/date-attendance.js?v=cd7fb983d0" defer></script>
-  <script src="/academic-ui.js?v=76011be99e" defer></script>
+  <script src="/date-projection.js?v=70e4b75907" defer></script>
+  <script src="/date-planner-calendar.js?v=39a15c4f5c" defer></script>
+  <script src="/date-planner-results.js?v=e234c3068f" defer></script>
+  <script src="/date-planner-day.js?v=bb4fd4c72c" defer></script>
+  <script src="/date-attendance.js?v=137d2e52c2" defer></script>
+  <script src="/academic-ui.js?v=438e2da7e7" defer></script>
   <script src="/login-admission.js?v=c361138650" defer></script>
-  <script src="/provider-connections.js?v=fe9764efcc" defer></script>
+  <script src="/provider-connections.js?v=9cb027a575" defer></script>
   <script src="/client-ocr.js?v=7a543e9229" defer></script>
   <script src="/auth-client.js?v=685da8fb73" defer></script>
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=bd85e17ead" defer></script>
-  <script src="/settings.js?v=8833d1edfa" defer></script>
-  <script src="/app.js?v=eaa9e6f8a5" defer></script>
+  <script src="/settings.js?v=c6b7bbe9ab" defer></script>
+  <script src="/app.js?v=ba29b623c3" defer></script>
   <script src="/credential-integrity.js?v=9cd6afa8a6" defer></script>
   <script src="/offline-shell.js?v=183c619836" defer></script>
   <script src="/login-effects.js?v=f3310a4cbe" defer></script>
@@ -81,6 +87,7 @@
     <button type="button" data-page="marks"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 21V11m7 10V3m7 18V7"/></svg>Marks</button>
     <div class="sidebar-tools">
       <span class="sidebar-label">Your space</span>
+      <button type="button" data-sidebar-action="open-schedule"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M9 10v11M15 10v11"/></svg>Schedule</button>
       <button type="button" data-sidebar-action="open-calendar"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></svg>Academic calendar</button>
       <button type="button" data-sidebar-action="open-accounts"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>Settings</button>
       <button type="button" data-sidebar-action="logout"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 4H4v16h6m4-12 4 4-4 4m-6-4h10"/></svg>Sign out</button>
@@ -89,6 +96,7 @@
     <details id="planner-menu" hidden>
       <summary aria-label="More options"><span aria-hidden="true">+</span></summary>
       <div class="planner-menu-items">
+        <button id="open-schedule" type="button">Schedule</button>
         <button id="open-calendar" type="button">Academic calendar</button>
         <button id="open-accounts" type="button">Settings</button>
         <button id="logout" class="secondary" type="button" hidden>Sign out</button>
@@ -179,6 +187,36 @@
         </section>
       </div>
     </section>
+  <section id="calendar-view" class="workspace-page" hidden aria-labelledby="calendar-title">
+    <h1 id="calendar-title" tabindex="-1">Academic calendar</h1>
+    <div id="academic-calendar"></div>
+  </section>
+  <section id="settings-view" class="workspace-page" hidden aria-labelledby="accounts-title">
+    <div class="settings-cover"><div class="schedule-heading"><h1 id="accounts-title" tabindex="-1">Settings</h1></div></div>
+    <div class="settings-intro"><div><strong id="settings-name">Your space.</strong><p id="settings-program" class="quiet"></p></div></div>
+    <form id="settings-profile-form" class="settings-name-form"><label for="settings-display-name">Display name</label><div><input id="settings-display-name" maxlength="60" autocomplete="nickname" placeholder="Use your SRM name"><button type="submit">Save</button></div></form>
+    <h3 class="settings-section-title">Connections</h3>
+    <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
+    <h3 class="settings-section-title">Your preferences</h3>
+    <div class="settings-row"><span>Privacy &amp; analytics<small>Optional analytics are your choice.</small></span><a href="/privacy.html">Manage</a></div>
+    <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="clay">Clay</option></select></label>
+    <label class="settings-row" for="settings-haptics"><span>Touch feedback<small>Gentle taps on supported devices.</small></span><input id="settings-haptics" type="checkbox" role="switch" checked></label>
+    <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
+    <label class="settings-row" for="settings-reminders"><span>Class reminders<small>15 and 5 minutes before class while Anon is open. Uses your selected batch.</small></span><input id="settings-reminders" type="checkbox" role="switch"></label>
+    <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg> Sync</button></div>
+    <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 7 days of inactivity. Signing out deletes that session.</p><p>Your latest reports and display preferences stay in this browser. Signing out clears the report cache. Optional class reminders include course names and rooms.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
+    <details class="settings-detail"><summary>What’s new</summary><p>Academic calendar, date-based attendance projections, recovery dates and scheduled background sync.</p></details>
+    <a class="settings-feedback" href="https://github.com/dheeraj-juvvadi/ClassPro/issues/new" target="_blank" rel="noopener noreferrer">Feedback &amp; report a problem ↗</a>
+    <button id="settings-signout" class="settings-signout" type="button">Sign out</button>
+    <a class="settings-issue-link" href="/report-issue.html">Report a problem ↗</a>
+    <p id="settings-message" role="status" aria-live="polite" class="quiet"></p>
+  </section>
+    <section id="schedule-view" class="workspace-page" aria-labelledby="schedule-page-title" hidden>
+      <div class="schedule-page-heading"><div><h1 id="schedule-page-title" tabindex="-1">Schedule</h1><p>All periods are included by default. Uncheck optional hours you don’t take.</p></div><button id="schedule-include-all" type="button">Include all</button></div>
+      <p id="schedule-choice-status" role="status"></p>
+      <div id="schedule-choices"></div>
+      <p class="schedule-choice-note">These choices update your next class, daily schedule and attendance estimates. Your university’s recorded attendance stays unchanged.</p>
+    </section>
     <noscript><p class="message">JavaScript is required to sign in and load your student reports. Please enable it and reload this page.</p></noscript>
   </main>
   <dialog id="marks-target-dialog" aria-labelledby="marks-target-title" aria-describedby="marks-target-assumption">
@@ -207,14 +245,7 @@
     </form>
     <p id="marks-target-assumption" class="quiet">Use the scheme confirmed for your course. Enter internal points on that scale, not raw assessment percentages. This is an estimate; separate exam pass requirements still apply. Plans last for this visit.</p>
   </dialog>
-  <dialog id="calendar-dialog" aria-labelledby="calendar-title">
-    <div class="calendar-cover">
-      <img id="calendar-art" data-src="/calendar-garden.eefc609c1c.svg" alt="" width="1000" height="320" decoding="async">
-      <div><p class="planner-eyebrow">Your academic year</p><h2 id="calendar-title">The calendar.</h2><p>Day orders, dates &amp; days off.</p></div>
-      <button id="close-calendar" type="button" aria-label="Close calendar">×</button>
-    </div>
-    <div id="academic-calendar"></div>
-  </dialog>
+
   <dialog id="schedule-dialog" aria-labelledby="schedule-title">
     <div class="schedule-heading"><h2 id="schedule-title">SRM timetable</h2><button id="close-schedule" type="button" aria-label="Close schedule">×</button></div>
     <p class="quiet" id="schedule-help">Your timetable from SRM, organized by day order.</p>
@@ -229,26 +260,7 @@
     <p class="fallback-note">You’ll need your Student Portal password.</p>
     <button id="retry-academia" type="button">Try Academia again</button>
   </dialog>
-  <dialog id="accounts-dialog" aria-labelledby="accounts-title">
-    <div class="settings-cover"><p class="planner-eyebrow">Your Anon.</p><div class="schedule-heading"><h2 id="accounts-title">Settings.</h2><button id="close-accounts" type="button" aria-label="Close settings">×</button></div></div>
-    <div class="settings-intro"><div><strong id="settings-name">Your space.</strong><p id="settings-program" class="quiet"></p></div></div>
-    <form id="settings-profile-form" class="settings-name-form"><label for="settings-display-name">Display name</label><div><input id="settings-display-name" maxlength="60" autocomplete="nickname" placeholder="Use your SRM name"><button type="submit">Save</button></div></form>
-    <h3 class="settings-section-title">Connections</h3>
-    <section id="provider-connections" class="provider-connections" aria-label="Connected accounts"></section>
-    <h3 class="settings-section-title">Your preferences</h3>
-    <div class="settings-row"><span>Privacy &amp; analytics<small>Optional analytics are your choice.</small></span><a href="/privacy.html">Manage</a></div>
-    <label class="settings-row" for="settings-theme"><span>Appearance<small>Keep the dark, floral feel.</small></span><select id="settings-theme"><option value="sage">Sage</option><option value="sand">Sand</option><option value="clay">Clay</option></select></label>
-    <label class="settings-row" for="settings-haptics"><span>Touch feedback<small>Gentle taps on supported devices.</small></span><input id="settings-haptics" type="checkbox" role="switch" checked></label>
-    <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
-    <label class="settings-row" for="settings-reminders"><span>Class reminders<small>15 and 5 minutes before class while Anon is open. Uses your selected batch.</small></span><input id="settings-reminders" type="checkbox" role="switch"></label>
-    <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg> Sync</button></div>
-    <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 7 days of inactivity. Signing out deletes that session.</p><p>Your latest reports and display preferences stay in this browser. Signing out clears the report cache. Optional class reminders include course names and rooms.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
-    <details class="settings-detail"><summary>What’s new</summary><p>Academic calendar, date-based attendance projections, recovery dates and scheduled background sync.</p></details>
-    <a class="settings-feedback" href="https://github.com/dheeraj-juvvadi/ClassPro/issues/new" target="_blank" rel="noopener noreferrer">Feedback &amp; report a problem ↗</a>
-    <button id="settings-signout" class="settings-signout" type="button">Sign out</button>
-    <a class="settings-issue-link" href="/report-issue.html">Report a problem ↗</a>
-    <p id="settings-message" role="status" aria-live="polite" class="quiet"></p>
-  </dialog>
+
   <dialog id="connect-dialog" aria-labelledby="connect-title">
     <div class="schedule-heading"><h2 id="connect-title">Connect account</h2><button id="close-connect" type="button" aria-label="Close account connection">×</button></div>
     <p class="quiet" id="connect-help"></p>
@@ -262,20 +274,44 @@
     <p class="quiet">Remembered sessions are encrypted on the server for automatic reconnection for 7 days of inactivity. Signing out removes this session.</p>
   </dialog>
   <footer class="site-footer">Anon <span>Student Portal</span><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><button type="button" data-consent-open>Analytics preference</button></footer>
-  <dialog id="projection-dialog" aria-labelledby="projection-title">
-    <div class="schedule-heading"><h2 id="projection-title">Attendance by date</h2><button id="close-projection" type="button" aria-label="Close calculator">×</button></div>
-    <p class="quiet">Choose Leave, Attend or OD, then select dates. Hours come from your SRM timetable and day orders.</p>
-    <div id="date-actions" class="date-actions" role="group" aria-label="Attendance action">
-      <button type="button" data-action="leave" aria-pressed="true">Leave</button>
-      <button type="button" data-action="attend" aria-pressed="false">Attend</button>
-      <button type="button" data-action="od" aria-pressed="false">OD</button>
+  <dialog id="projection-dialog" aria-labelledby="projection-title" aria-describedby="projection-intro" data-mode="leave">
+    <header class="date-planner-header">
+      <div><h2 id="projection-title">Attendance planner</h2><p id="projection-intro">Choose your dates, then adjust individual classes.</p></div>
+      <button id="close-projection" type="button" aria-label="Close calculator">×</button>
+    </header>
+    <div class="date-planner-layout">
+      <section class="date-planner-input" aria-label="Plan your dates">
+        <div id="projection-date-picker">
+        <div class="date-planner-section"><h3>Plan attendance</h3></div>
+        <div id="date-actions" class="date-actions" role="group" aria-label="Attendance action">
+          <button type="button" data-action="leave" aria-pressed="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 15 15 5M5 5h10v10"/></svg>Leave</button>
+          <button type="button" data-action="attend" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>Attend</button>
+          <button type="button" data-action="od" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2 3 5v5c0 4 7 8 7 8s7-4 7-8V5Z"/><path d="m7 10 2 2 4-4"/></svg>OD</button>
+        </div>
+        <div id="projection-range" class="date-range-summary" data-selecting="start"><div><span>From</span><strong id="projection-range-start">Choose date</strong></div><span aria-hidden="true">→</span><div><span>To</span><strong id="projection-range-end">Choose date</strong></div></div>
+        <p id="projection-action-hint" class="date-planner-hint" role="status">Select a start date, then an end date. One day works too.</p>
+        <div id="projection-calendar-loading" role="status">Opening your calendar…</div>
+        <button id="projection-calendar-retry" type="button" hidden>Try loading dates again</button>
+        <calendar-multi id="projection-calendar" data-src="/cally.4dcba6a3b8.js?v=4dcba6a3b8" locale="en-GB" first-day-of-week="1" format-weekday="short" hidden>
+          <span slot="previous"><span aria-hidden="true">←</span><span class="date-planner-sr">Previous month</span></span>
+          <span slot="next"><span aria-hidden="true">→</span><span class="date-planner-sr">Next month</span></span>
+          <calendar-month></calendar-month>
+        </calendar-multi>
+        <div class="date-planner-calendar-foot"><p id="projection-date-detail">Only verified teaching days are selectable.</p><button id="projection-today" type="button">Today</button></div>
+        <div class="date-planner-dates-head"><span>Selected days <span id="projection-count">0</span></span><button id="projection-clear" type="button" disabled>Clear</button></div>
+        <div id="projection-selections" class="date-planner-selections" aria-label="Selected dates"></div>
+        <p id="projection-period" class="date-planner-status" role="status"></p>
+        </div>
+        <section id="projection-day-editor" aria-label="Edit classes for a day" hidden></section>
+      </section>
+      <section class="date-planner-outlook" aria-label="Projected attendance">
+        <div class="date-planner-section"><h3>Projection</h3><span class="date-planner-target">75% target</span></div>
+        <p id="projection-summary" class="date-planner-summary" role="status"></p>
+        <div id="projection-result"></div>
+        <details class="date-planner-assumptions"><summary>How this is calculated</summary><p>Hours follow your SRM timetable and day orders. Unselected teaching days through your last leave date count as attended. Past dates allow OD corrections only, capped at recorded absences.</p><p>These are estimates. Missing calendar dates are excluded, and your records stay unchanged.</p></details>
+      </section>
     </div>
-    <div class="calendar-heading"><button id="projection-prev" type="button" aria-label="Previous month">←</button><strong id="projection-month"></strong><button id="projection-next" type="button" aria-label="Next month">→</button></div>
-    <div id="projection-calendar" class="projection-calendar" role="group" aria-label="Select attendance dates"></div>
-    <p id="projection-period" class="quiet" role="status"></p>
-    <button id="projection-clear" type="button">Clear dates</button>
-    <p class="quiet">Unselected teaching days from today through your last leave date count as attended. Past dates allow OD corrections only, capped at recorded absences. These are projections; your records stay unchanged.</p>
-    <div id="projection-result" aria-live="polite" aria-atomic="true"></div>
+    <footer class="date-planner-footer"><span>Estimates only · Records unchanged</span><button id="projection-done" type="button">Done</button></footer>
   </dialog>
   <div id="sync-notice" role="status" aria-live="polite" aria-atomic="true" hidden>
     <img class="sync-notice-flower" src="/loading-flower.svg" width="24" height="24" alt="" aria-hidden="true" decoding="async">

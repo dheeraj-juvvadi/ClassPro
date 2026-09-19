@@ -437,3 +437,32 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   the browser. Physical-phone rendering performance remains unmeasured.
 - Next: release, then the requested calculator redesign with actual component
   usage and a responsive, visually clear projection workflow.
+
+## 2026-09-19: date planning, full pages and sync completion
+
+- Artwork release 35a17e1 deployed through successful GitHub run 35295543303.
+- Rebuilt the calculator around vendored Cally components, native day controls
+  and before/after attendance. Matched Anon's charcoal/sage UI and removed the
+  rejected slogans/colored cards. Component is about 12 KB gzip, loaded on demand.
+- Select 15 then 18 to include confirmed teaching dates 15–18. Reverse ranges
+  work, holidays/unknown dates remain excluded, and custom day edits survive.
+  Open a selected day to adjust individual classes; all classes begin selected.
+  Counted partial hours and past OD are supported. The example noon cutoff was
+  removed. Plans remain local to the visit and clear on sign-out.
+- Calendar, Settings and Schedule are full app pages with titles/history.
+  Calendar's banner, image, dark text block and subtitle were removed. Its day
+  details show classes and open the planner. Mockups are available locally at
+  http://localhost:3101/design-lab/ using synthetic data.
+- Optional period choices persist per reported profile in this browser and
+  update home widgets, reminders, calendar, planner and recovery-date estimates.
+  Changed periods are included by default. The done state uses static dino ASCII.
+- Found a fixed 15–30-second queued-sync hint plus 15-second browser tick.
+  Low-load requests now wait briefly for completed jobs; pending checks use the
+  server hint directly. Cache-only follow-ups do not create refresh jobs. Four
+  refresh workers and a four-response-waiter ceiling remain in place.
+- Targeted browser/math tests and 17 backend queue/sync checks pass. Added
+  range/custom-day coverage, optional-period persistence, full-page navigation,
+  offline component loading and prompt completion checks. Offline shell is
+  75 public assets / 1.62 MiB. Full staged validation/deployment is next.
+- No physical-phone smoothness/battery measurement or real-account two-second
+  SRM refresh guarantee. No changes from the withdrawn pinned-app instruction.
