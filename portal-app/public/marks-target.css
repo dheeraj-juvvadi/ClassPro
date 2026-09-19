@@ -11,6 +11,14 @@
 #marks-target-form input, #marks-target-form select { width: 100%; min-width: 0; min-height: 46px; background: #191d17; color: #f1eee3; border: 1px solid #49523e; border-radius: 7px; padding: 10px; }
 #marks-target-form input { font-size: 16px; font-variant-numeric: tabular-nums; }
 #marks-target-form input[aria-invalid="true"] { border-color: #da9979; }
+.target-grade-heading { margin-top: 22px; font-size: 12px; font-weight: 500; color: #cdd4c2; }
+#target-grade-options { display: grid; grid-template-columns: repeat(6, minmax(44px, 1fr)) minmax(70px, 1.3fr); gap: 8px; margin-top: 10px; }
+#target-grade-options .target-grade-option { min-width: 44px; min-height: 44px; padding: 10px 6px; border: 1px solid #59644d; border-radius: 7px; background: #191d17; color: #cdd4c2; font-size: 12px; font-weight: 500; line-height: 1.4; }
+#target-grade-options .target-grade-option[aria-pressed="true"] { border-color: #d5dda9; background: #d5dda9; color: #191d17; }
+#target-grade-options .target-grade-option:focus-visible { outline: 2px solid #d5dda9; outline-offset: 3px; }
+#target-grade-help { margin-top: 10px; color: #afb8a3; font-size: 12px; line-height: 1.6; }
+#target-total-field[hidden] { display: none; }
+#target-total-field[hidden] + div { grid-column: 1 / -1; }
 .target-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; align-items: end; }
 .target-field-grid[hidden] { display: none; }
 .target-field-grid > div { min-width: 0; }
@@ -23,6 +31,13 @@
 #marks-target-result small { display: block; margin-top: 14px; font-size: 11px; color: #afb8a3; line-height: 1.6; }
 #marks-target-assumption { margin-top: 18px; font-size: 11px; line-height: 1.7; color: #afb8a3; }
 @media (hover: hover) and (pointer: fine) { .marks-target-button:hover { background: #2c3526; } }
+@media (hover: hover) and (pointer: fine) {
+  #target-grade-options .target-grade-option[aria-pressed="false"]:hover { background: #2c3526; border-color: #a3af91; }
+}
+@media (max-width: 480px) {
+  #target-grade-options { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
+  #target-grade-options .target-grade-option:last-child { grid-column: span 2; }
+}
 @media (max-width: 440px) {
   #marks-target-dialog { padding: 20px; }
   #marks-target-title { font-size: 23px; }

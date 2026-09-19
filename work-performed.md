@@ -482,3 +482,24 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   date, refresh persistence, single-date clearing and reversed ranges. All five
   targeted projection checks pass. Regenerated the 1.62 MiB offline shell.
 - Next: staged release validation and production deployment verification.
+
+## 2026-09-19: ClassPro-style grade target buttons
+
+- Date toggle release bc78097 passed 54 frontend/95 backend checks; Azure
+  workflow 35418216855 succeeded and live frontend code was verified.
+- Used the requested Sol agent for the marks selector implementation; main
+  verified ClassPro's GradeX thresholds, integrated HTML/math and browser checks.
+- Marks now offers Plan a grade with O (91), A+ (81), A (71), B+ (61), B (56),
+  C (50) and Custom targets. Thresholds match ClassPro commit 1c4ee67; they are
+  presented as planning presets, not an official grading guarantee.
+- Selecting a grade recalculates required final-exam marks. Explicit marking
+  schemes, expected internals, impossible targets and custom numeric inputs
+  remain. A+ is the default; valid per-course choices persist for this visit.
+- Four targeted checks pass; coverage includes threshold math, grade/custom
+  controls, 44px targets, mobile overflow, unchanged server request count,
+  report updates and session clearing. Staged release will rerun keyboard and
+  saved-selection checks with the full suite.
+- Initial release passed all 55 frontend checks but exposed a backend test that
+  read a queued refresh before completion and depended on the current day.
+  The test now explicitly forces and awaits the refresh, then verifies each
+  provider's cookies without relying on call order. Its 27 checks pass.

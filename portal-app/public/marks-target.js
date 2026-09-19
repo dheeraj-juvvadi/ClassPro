@@ -6,9 +6,44 @@ globalThis.anonMarksTarget = (() => {
   const form = get('marks-target-form');
   const presets = { theory: [60, 75], practical: [60, 40], internal: [100, 0] };
   const fields = { internalMax: 'target-internal-max', examMax: 'target-exam-max', expected: 'target-expected', target: 'target-total' };
+  const grades = marksTargetMath.grades;
+  const gradeButtons = new Map();
   const fmt = number => Number(number.toFixed(2));
   const plans = new Map();
   let course = null, trigger = null;
+  function showGrade(grade, editing = false) {
+    const selected = grade?.label ?? 'Custom';
+    for (const [label, button] of gradeButtons) {
+      button.setAttribute('aria-pressed', String(label === selected));
+    }
+    get('target-total-field').hidden = Boolean(grade) && !editing;
+    get('target-grade-help').textContent = grade
+      ? `${grade.label} starts at ${fmt(grade.min)} / 100.`
+      : 'Enter a target total from 0 to 100.';
+  }
+  function syncGrade(editing = false) {
+    const value = get(fields.target).value;
+    const grade = value.trim() === '' ? null : grades.find(item => item.min === Number(value));
+    showGrade(grade, editing);
+  }
+  for (const grade of [...grades, null]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'target-grade-option';
+    button.textContent = grade?.label ?? 'Custom';
+    button.dataset.grade = grade?.label ?? 'custom';
+    button.setAttribute('aria-pressed', 'false');
+    button.setAttribute('aria-describedby', 'target-grade-help');
+    button.addEventListener('click', () => {
+      if (grade) get(fields.target).value = grade.min;
+      showGrade(grade);
+      render();
+      if (!grade) get(fields.target).focus();
+    });
+    gradeButtons.set(button.textContent, button);
+    get('target-grade-options').append(button);
+  }
+  syncGrade();
   function schemeChanged() {
     const kind = get('target-scheme').value;
     get('target-custom').hidden = kind !== 'custom';
@@ -62,7 +97,10 @@ globalThis.anonMarksTarget = (() => {
     output.append(heading, detail, best);
   }
   get('target-scheme').addEventListener('change', schemeChanged);
-  form.addEventListener('input', event => { if (event.target.id !== 'target-scheme') render(); });
+  form.addEventListener('input', event => {
+    if (event.target.id === fields.target) syncGrade(true);
+    if (event.target.id !== 'target-scheme') render();
+  });
   form.addEventListener('submit', event => { event.preventDefault(); render(); });
   get('close-marks-target').addEventListener('click', () => dialog.close());
   dialog.addEventListener('close', () => {
@@ -78,6 +116,7 @@ globalThis.anonMarksTarget = (() => {
         get('target-scheme').value = saved.scheme;
         for (const [key, id] of Object.entries(fields)) get(id).value = saved[key];
       }
+      syncGrade();
       get('marks-target-course').textContent = course.title || course.code;
       get('marks-target-recorded').textContent = `Reported so far: ${course.scored ?? '—'} / ${course.total ?? '—'}.`;
       schemeChanged();
@@ -92,6 +131,6 @@ globalThis.anonMarksTarget = (() => {
       get('marks-target-recorded').textContent = `Reported so far: ${course.scored ?? '—'} / ${course.total ?? '—'}.`;
       render();
     },
-    clear() { plans.clear(); course = null; trigger = null; dialog.close(); form.reset(); },
+    clear() { plans.clear(); course = null; trigger = null; dialog.close(); form.reset(); syncGrade(); },
   };
 })();

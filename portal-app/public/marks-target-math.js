@@ -1,6 +1,12 @@
 'use strict';
 
 globalThis.marksTargetMath = {
+  // ClassPro GradeX target thresholds. These are planning presets, not an
+  // assertion of an official grade or a course-specific grading policy.
+  grades: Object.freeze([
+    { label: 'O', min: 91 }, { label: 'A+', min: 81 }, { label: 'A', min: 71 },
+    { label: 'B+', min: 61 }, { label: 'B', min: 56 }, { label: 'C', min: 50 },
+  ].map(Object.freeze)),
   calculate({ scored, recorded, internalMax, examMax, expected, target }) {
     const values = { scored, recorded, internalMax, examMax, expected, target };
     for (const [key, value] of Object.entries(values)) {

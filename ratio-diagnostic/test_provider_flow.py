@@ -68,13 +68,17 @@ class ProviderFlowTests(DiagnosticTests):
             entry = next(iter(server.sessions.values()))
             entry["cached"] = 0
             entry["synced_at"] = 0
-            result = (await self.client.get("/api/reports")).json()
+            calls.clear()
+            await self.client.get("/api/reports?force=1")
+            await server.asyncio.wait_for(server.app.state.refresh_queue.queue.join(), 1)
+            result = (await self.client.get("/api/reports?cache=only")).json()
             self.assertEqual(result["scheduleProvider"], "academia")
             self.assertEqual(result["schedule"]["entries"][0]["title"], "Course")
             self.assertEqual(result["attendance"]["data"][0]["present"], 17)
-            self.assertEqual(calls[-2][0], "/portal/refresh")
-            self.assertEqual(calls[-1][0], "/refresh")
-            self.assertEqual(calls[-1][1]["cookies"], {"session": "academia"})
+            self.assertEqual(len(calls), 2)
+            refreshes = dict(calls)
+            self.assertEqual(refreshes["/portal/refresh"]["cookies"], {"session": "portal"})
+            self.assertEqual(refreshes["/refresh"]["cookies"], {"session": "academia"})
             self.assertNotIn("synthetic", str(result))
 
     def test_cross_student_connection_rejected(self):

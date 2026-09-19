@@ -257,10 +257,10 @@ function renderMarks(report) {
       row.append(info, node('span', 'assessment-score', score(component)));
       content.append(row);
     }
-    const target = node('button', 'marks-target-button', 'Plan a target');
+    const target = node('button', 'marks-target-button', 'Plan a grade');
     target.type = 'button';
     target.setAttribute('aria-haspopup', 'dialog');
-    target.setAttribute('aria-label', `Plan a marks target for ${course.title || course.code}`);
+    target.setAttribute('aria-label', `Plan a grade for ${course.title || course.code}`);
     target.addEventListener('click', () => anonMarksTarget.open(course, target));
     content.append(target);
     details.append(summary, content);
