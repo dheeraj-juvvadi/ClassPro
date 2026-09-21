@@ -11,6 +11,7 @@
 .next-class-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .planner-eyebrow { font-size: .6rem; font-weight: 650; text-transform: uppercase; letter-spacing: .085em; line-height: 1.5; }
 .class-countdown { font-size: .65rem; white-space: nowrap; }
+.next-class-top strong.class-countdown { font-weight: 700; }
 .next-class-card h2 { font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 550; letter-spacing: -.055em; line-height: 1.1; margin: 16px 0 10px; max-width: 24ch; }
 .class-time { font-size: 1.3rem; font-weight: 500; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .class-room { margin-top: 6px; font-size: .75rem; line-height: 1.6; }
@@ -43,6 +44,14 @@
 .insight-card.caution { background: #cfb77a; color: #302815; }
 .insight-card.neutral { background: #343a30; color: #e6eadc; }
 .insight-card:hover { outline: 1px solid #f1eee380; outline-offset: 2px; }
+.insight-class-time { display: block; margin-bottom: 8px; font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.planner .insight-card.insight-empty { justify-content: center; align-items: center; gap: 8px; padding: 12px; background: #252c22; border: 1px solid #3b4434; color: #bdcaa9; text-align: center; }
+.insight-card.insight-empty:hover { outline: none; }
+.insight-empty .planner-eyebrow { min-height: 0; font-size: 12px; line-height: 1.5; letter-spacing: 0; text-transform: none; }
+.insight-empty .ascii-art { width: 48px; margin: 0 auto; opacity: .85; }
+.insight-empty .insight-margin { font-size: 12px; line-height: 1.5; color: #adb7a3; }
+.insight-empty-wide { grid-column: 1 / -1; }
+.insight-art-mirrored { transform: scaleX(-1); }
 .day-timeline { margin-top: 30px; }
 .calendar-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; font-size: .8rem; }
 .calendar-controls { display: flex; gap: 4px; }

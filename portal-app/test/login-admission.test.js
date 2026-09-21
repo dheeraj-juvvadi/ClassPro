@@ -12,7 +12,7 @@ function harness(random = .5) {
     setTimeout(callback, delay) { waits.push(delay); now += delay; callback(); },
   });
   vm.runInContext(readFileSync(new URL('../public/login-admission.js', import.meta.url), 'utf8'), context);
-  return { ...context.classproAdmission, waits, advance: ms => { now += ms; } };
+  return { ...context.anonAdmission, waits, advance: ms => { now += ms; } };
 }
 const busy = extras => Object.assign(new Error('busy'), {
   code: 'SERVER_BUSY', status: 503, retryable: true, retryAfterMs: 2000, ...extras,

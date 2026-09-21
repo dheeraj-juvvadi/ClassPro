@@ -16,7 +16,7 @@ globalThis.createDatePlannerDay = ({ onBack, onChange, onBulk }) => {
     const oldScroll = scroller.scrollTop;
     root.replaceChildren();
     root.append(button('← Dates', onBack));
-    const title = make('h3', classproScheduleModel.parse(key).toLocaleDateString('en', { weekday: 'short', day: 'numeric', month: 'long' }));
+    const title = make('h3', anonScheduleModel.parse(key).toLocaleDateString('en', { weekday: 'short', day: 'numeric', month: 'long' }));
     title.id = 'projection-day-title'; title.tabIndex = -1;
     const actionLabel = { attend: 'Attend', leave: 'Miss', od: 'OD', none: 'No correction' }[plan.action];
     root.append(title, make('p', past ? 'Select classes for OD correction. Unselected classes stay unchanged.'
@@ -29,7 +29,7 @@ globalThis.createDatePlannerDay = ({ onBack, onChange, onBulk }) => {
     root.append(bulk);
     if (!entries.length) root.append(make('p', 'No confirmed classes for the selected batch on this day.', 'day-editor-help'));
     entries.forEach((entry, index) => {
-      const id = dateProjection.entryKey(entry), total = classproHomeModel.hours(entry);
+      const id = dateProjection.entryKey(entry), total = anonHomeModel.hours(entry);
       const value = plan.classes?.[id] || { mode: plan.action };
       const mode = value.mode || 'attend';
       const row = make('article', undefined, 'day-editor-class'); row.dataset.entry = id;

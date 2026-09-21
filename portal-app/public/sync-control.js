@@ -55,7 +55,7 @@ globalThis.anonSyncControl = (() => {
         hideTimer = setTimeout(dismiss, outcome[0] === 'success' ? 2600 : 5000);
       }
       notifying = false;
-    }, Math.max(0, 650 - (performance.now() - started)));
+    }, 0);
   }
   document.addEventListener('visibilitychange', () => {
     notice.toggleAttribute('data-paused', document.hidden);

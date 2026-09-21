@@ -1,7 +1,7 @@
 'use strict';
 
-globalThis.classproScheduleModel = (() => {
-  const home = globalThis.classproHomeModel;
+globalThis.anonScheduleModel = (() => {
+  const home = globalThis.anonHomeModel;
   const label = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 100;
   const key = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const parse = value => {

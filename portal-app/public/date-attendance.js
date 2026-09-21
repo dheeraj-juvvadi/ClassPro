@@ -1,7 +1,7 @@
 'use strict';
 
 globalThis.dateAttendance = (() => {
-  const model = classproScheduleModel;
+  const model = anonScheduleModel;
   const get = id => document.getElementById(id);
   let courses = [], source = null, selected = {}, action = 'leave', focusCode = '';
   let today = model.clock('Asia/Kolkata'), filters = {};
@@ -58,7 +58,7 @@ globalThis.dateAttendance = (() => {
     if (!date) return;
     const state = model.dayState(source, date);
     const label = date.toLocaleDateString('en', { month: 'short', day: 'numeric' });
-    const hours = model.classes(source, date, filters).reduce((sum, entry) => sum + classproHomeModel.hours(entry), 0);
+    const hours = model.classes(source, date, filters).reduce((sum, entry) => sum + anonHomeModel.hours(entry), 0);
     get('projection-date-detail').textContent = `${label} · ${state.kind === 'teaching' ? `${state.dayOrder ? 'Day order ' + state.dayOrder + ' · ' : ''}${hours} class hours` : state.kind === 'holiday' ? 'Holiday' : 'Calendar unverified'}`;
   }
   function reconcileDates() {

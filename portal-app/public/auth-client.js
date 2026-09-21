@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.classproAuth = (() => {
+globalThis.anonAuth = (() => {
   let enabled = true;
   let started = Date.now();
   let clicks = 0;
@@ -82,7 +82,7 @@ globalThis.classproAuth = (() => {
   }
   async function prepareChallenge(api, automatic) {
     clearChallenge();
-    const result = await classproAdmission.request(() => api('/api/challenge', {
+    const result = await anonAdmission.request(() => api('/api/challenge', {
       method: 'POST', body: JSON.stringify({ provider: provider() }),
     }, true), waiting);
     challengeAt = Date.now();
@@ -112,7 +112,7 @@ globalThis.classproAuth = (() => {
     const integrity = await createCredentialIntegrity(credentials.account, credentials.password, answer);
     try {
       const deadline = performance.now() + Math.max(0, Math.min(60000, 75000 - (Date.now() - challengeAt)));
-      const result = await classproAdmission.request(() => api('/api/login/client', { method: 'POST', body: JSON.stringify({
+      const result = await anonAdmission.request(() => api('/api/login/client', { method: 'POST', body: JSON.stringify({
         ...credentials, provider: provider(), answer, integrity,
         ...(provider() === 'portal' ? { telemetry: telemetry() } : {}),
       }) }, true), waiting, deadline);

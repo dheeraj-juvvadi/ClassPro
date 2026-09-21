@@ -67,7 +67,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
     globalThis.dateTestSchedule = { timezone: 'Asia/Kolkata',
       entries: [{ code: 'DS', title: 'Data Structures', room: 'Lab', dayOrder: '1', start: '10:30', end: '12:30', hours: 2 }],
       calendar: [13, 14, 15, 16].map(day => ({ date: `2026-09-${day}`, kind: 'teaching', dayOrder: '1' })) };
-    classproHome.update(dateTestReport, dateTestSchedule);
+    anonHome.update(dateTestReport, dateTestSchedule);
   });
   await page.locator('button[data-page="attendance"]').click();
   await page.locator('#calculate-attendance').click();
@@ -101,7 +101,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   assert.match(await page.locator('#projection-result').innerText(), /69.23%/);
   await page.evaluate(() => {
     dateTestReport.data[0] = { ...dateTestReport.data[0], present: 20, conducted: 24 };
-    classproHome.update(dateTestReport, dateTestSchedule);
+    anonHome.update(dateTestReport, dateTestSchedule);
   });
   assert.match(await focusDate(), /date-2026-09-15/);
   assert.equal(await day(14).getAttribute('aria-pressed'), 'true');
@@ -110,7 +110,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   await day(14).focus();
   await page.evaluate(() => {
     dateTestSchedule.calendar[1] = { date: '2026-09-14', kind: 'holiday' };
-    classproHome.update(dateTestReport, dateTestSchedule);
+    anonHome.update(dateTestReport, dateTestSchedule);
   });
   assert.equal(await day(14).isDisabled(), true);
   assert.equal(await day(14).getAttribute('aria-pressed'), 'false');
@@ -130,7 +130,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   await page.evaluate(() => dateAttendance.open('DS', new Date(2026, 8, 16)));
   assert.equal(await page.locator('#date-actions button[data-action="leave"]').getAttribute('aria-pressed'), 'true');
   assert.equal(await day(16).getAttribute('aria-pressed'), 'true');
-  await page.evaluate(() => classproHome.update(dateTestReport, null));
+  await page.evaluate(() => anonHome.update(dateTestReport, null));
   await page.waitForFunction(() => !document.querySelector('calendar-month').shadowRoot.querySelector('[aria-pressed="true"]'));
   assert.equal(await page.locator('#projection-calendar calendar-month [aria-pressed="true"]').count(), 0);
   assert.match(await page.locator('#projection-period').innerText(), /Timetable unavailable/);
@@ -141,7 +141,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   await page.evaluate(() => {
     dateTestSchedule.calendar = [14, 15, 16, 17, 18].map(day => ({ date: `2026-09-${day}`, kind: 'teaching', dayOrder: '1' }));
     dateTestSchedule.entries.push({ ...dateTestSchedule.entries[0], start: '13:30', end: '15:30' });
-    classproHome.update(dateTestReport, dateTestSchedule);
+    anonHome.update(dateTestReport, dateTestSchedule);
   });
   await page.locator('#calculate-attendance').click();
   await day(15).click();
@@ -155,7 +155,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   for (const n of [15, 17, 18]) assert.equal(await day(n).getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('#projection-selections button[data-date="2026-09-16"]').count(), 0);
   assert.match(await page.locator('#projection-result').innerText(), /8h attend · 12h leave/);
-  await page.evaluate(() => classproHome.update(dateTestReport, dateTestSchedule));
+  await page.evaluate(() => anonHome.update(dateTestReport, dateTestSchedule));
   assert.equal(await day(16).getAttribute('aria-pressed'), 'false', 'refresh must preserve the hole in the range');
   await day(16).click();
   assert.equal(await page.locator('#projection-count').textContent(), '4');
@@ -177,7 +177,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   assert.equal(await page.locator('#day-hours-1').inputValue(), '1');
   await page.evaluate(() => {
     dateTestSchedule.calendar[2] = { date: '2026-09-16', kind: 'holiday' };
-    classproHome.update(dateTestReport, dateTestSchedule);
+    anonHome.update(dateTestReport, dateTestSchedule);
   });
   await page.getByRole('button', { name: '← Dates', exact: true }).click();
   assert.equal(await page.locator('#projection-count').textContent(), '3');

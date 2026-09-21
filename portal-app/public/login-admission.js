@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.classproAdmission = (() => {
+globalThis.anonAdmission = (() => {
   function retryAfter(value) {
     if (!value?.trim()) return 0;
     const seconds = Number(value);

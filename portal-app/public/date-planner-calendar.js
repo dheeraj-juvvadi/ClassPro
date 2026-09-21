@@ -4,7 +4,7 @@ globalThis.createDatePlannerCalendar = ({ onToggle, onFocus }) => {
   const calendar = document.getElementById('projection-calendar');
   const loading = document.getElementById('projection-calendar-loading');
   const retry = document.getElementById('projection-calendar-retry');
-  const model = classproScheduleModel;
+  const model = anonScheduleModel;
   let ready = false, pending = null, snapshot = null;
   const key = date => date.toISOString().slice(0, 10);
   function apply() {

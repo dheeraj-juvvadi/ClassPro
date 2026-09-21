@@ -25,7 +25,7 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
     sync: { syncedAt: Date.now() - 86400000, nextAt: 1, due: true },
   };
   await page.addInitScript(payload => {
-    localStorage.setItem('classpro-reports-cache', JSON.stringify({ ...payload, syncedAt: Date.now() }));
+    localStorage.setItem('anon-reports-cache', JSON.stringify({ ...payload, syncedAt: Date.now() }));
     localStorage.setItem('anon.consent.v1', 'declined');
   }, report);
   let mode = 'queued', requests = 0, latest = report.sync.syncedAt;
@@ -37,19 +37,19 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
     if (mode === 'error') return route.fulfill({ status: 503, json: { error: { message: 'Synthetic unavailable' } } });
     return route.fulfill({ json: { ...report,
       warnings: mode === 'partial' ? ['One portal did not update.'] : [],
-      sync: { syncedAt: latest, nextAt: Date.now() + (mode === 'queued' ? 1800 : 3600000), due: false, pending: mode === 'queued' },
+      sync: { syncedAt: latest, nextAt: Date.now() + (mode === 'queued' ? 250 : 3600000), due: false, pending: mode === 'queued' },
     } });
   });
   await page.goto(origin);
   await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Dilly-dallying…');
-  assert.equal(requests, 1, 'returning app should start one refresh');
+  assert.equal(requests, 1, 'returning app checks the saved server report and observes queued work');
   assert.equal(await page.locator('#refresh').isDisabled(), true);
   mode = 'completed'; latest = Date.now();
   const completionStarted = Date.now();
   await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Synced');
-  assert.ok(Date.now() - completionStarted < 4000, 'completion should not wait for the 15-second schedule tick');
+  assert.ok(Date.now() - completionStarted < 1500, 'completion should honor the short server hint without an artificial two-second wait');
   assert.equal(requests, 2);
-  assert.match(requestURLs[0], /wait=1/);
+  assert.match(requestURLs[0], /cache=only/);
   assert.match(requestURLs[1], /cache=only/);
   assert.equal(await page.locator('.sync-notice-flower').evaluate(el => el.getAnimations().length), 0);
   await page.evaluate(() => loadReports({ force: true }));

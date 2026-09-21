@@ -7,7 +7,7 @@
   <meta name="description" content="How Anon handles portal credentials, academic reports, remembered sessions, browser storage and optional analytics.">
   <link rel="canonical" href="https://anon-tracker.vercel.app/privacy.html">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/public-pages.css?v=cb1b873866"><link rel="stylesheet" href="/consent.css?v=c8239834ce">
+  <link rel="stylesheet" href="/public-pages.css?v=1fb3c3f0e2"><link rel="stylesheet" href="/consent.css?v=c8239834ce">
   <script src="/consent.js?v=be694796ec" defer></script>
   <meta property="og:title" content="Privacy &amp; storage · Anon">
   <meta property="og:description" content="How Anon handles portal credentials, academic reports, remembered sessions, browser storage and optional analytics.">
@@ -30,15 +30,15 @@
     <p>A service worker also saves the app’s public pages, fonts, artwork and scripts so it can reopen offline after an online visit. This app-shell cache does not contain passwords, provider cookies or API responses. Your browser may clear it when storage is needed.</p>
     <h2>Optional analytics and notifications</h2>
     <p>To diagnose failures, Anon sends limited operational events to its server: error categories, affected app sections, fixed API route names, status codes, timing, script locations and release identifiers. These records exclude error-message text, stack traces, form values, cookies and academic reports. Files are kept for up to seven UTC calendar days and capped at 2 MB per day. They may be dropped when rate or storage limits are reached.</p>
-    <p>If you allow analytics, the same bounded log can also count app-section visits without an account identifier. Operational error reporting works independently of optional usage analytics.</p>
+    <p>If you allow analytics, the same bounded log can also count app-section visits and time spent actively viewing each section, without an account identifier. A short-lived activity count also measures signed-in sessions active within the last two minutes. It uses your existing session in server memory; only aggregate counts are saved. Operational error reporting works independently of optional usage analytics.</p>
     <p>You can also send an issue report using fixed categories. This saves the issue category, app section, screen-size category and app version in the same bounded log. The form does not collect free text or contact details. A successful confirmation means it was saved; it does not promise a response time.</p>
     <p>With your permission, Vercel Analytics and Speed Insights measure visits and page performance. Anon does not intentionally send passwords, provider cookies or report contents to analytics. Optional analytics scripts are not loaded until you allow them. Hosting and security request logs can still be generated when the service is used.</p>
     <p>Browser notifications require a separate permission. Class reminders may display course names and rooms on your device. They run while Anon is open; they are not background push notifications.</p>
     <button type="button" class="public-cta" data-consent-open>Manage analytics preference</button>
     <h2>Service providers and your choices</h2>
     <p>The frontend is hosted by Vercel; the portal service runs on Microsoft Azure. SRM processes the portal requests sent to its systems. You can sign out, clear this site’s browser data, disable notifications in browser settings, and decline optional analytics.</p>
-    <p>For a privacy question, contact the project maintainer through the project’s GitHub profile. Do not post passwords, cookies, academic records or other private information in a public issue.</p>
-    <p><a href="https://github.com/dheeraj-juvvadi" target="_blank" rel="noopener noreferrer">Project maintainer ↗</a> · <a href="/terms.html">Terms of use</a></p>
+    <p>Use the in-app problem report for service issues. Do not share passwords, cookies or private academic records.</p>
+    <p><a href="/report-issue.html">Report a problem</a> · <a href="/terms.html">Terms of use</a></p>
   </main>
   <footer class="public-footer"><a href="/">Back to Anon</a> · A little room to grow.</footer>
 </body>

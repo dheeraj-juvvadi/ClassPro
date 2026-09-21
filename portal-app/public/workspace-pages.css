@@ -56,7 +56,6 @@ body.planner #schedule-view { max-width: 1000px; margin: 0 auto; }
 .schedule-choice-time { font-size: 12px; color: #c7cfbc; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .schedule-choice-row[data-included="false"] strong { color: #939c88; }
 .schedule-choice-note, .schedule-choice-empty { color: #aeb7a2; font-size: 12px; line-height: 1.7; margin-top: 24px; }
-.dino-art { font-size: clamp(10px, 2.5vw, 14px); line-height: 1.25; margin: 24px auto; width: max-content; max-width: 100%; }
 .day-done-caption { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
 @media (max-width: 999px) {
   body.planner[data-page="schedule"] main { padding: 24px 24px 112px; margin: 0; }

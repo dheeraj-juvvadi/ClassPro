@@ -53,6 +53,8 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   await page.locator('#home-view').waitFor({ state: 'visible' });
   const visibleAfter = Date.now() - waitStart;
   assert.ok(visibleAfter < 1000, `cached view took ${visibleAfter}ms, not instant`);
+  assert.equal(await page.evaluate(() => localStorage.getItem('classpro-reports-cache')), null);
+  assert.ok(await page.evaluate(() => localStorage.getItem('anon-reports-cache')));
   assert.match(await page.locator('#updated-at').innerText(), /Last synced|Updated/);
   assert.ok(await page.locator('#attendance-content').innerText().then(text => text.includes('CS101')));
   assert.equal(await page.locator('#startup').isHidden(), true);
@@ -84,7 +86,7 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
   sessionValid = false;
   await page.reload();
   await page.locator('#login-view').waitFor({ state: 'visible' });
-  assert.equal(await page.evaluate(() => localStorage.getItem('classpro-reports-cache')), null, 'confirmed expired session must clear cached reports');
+  assert.equal(await page.evaluate(() => localStorage.getItem('anon-reports-cache')), null, 'confirmed expired session must clear cached reports');
 });
 
 test('installed app context exposes manifest wiring', { timeout: 20000 }, async context => {
@@ -121,11 +123,15 @@ test('installed-app shortcuts reuse cached views, respect forms and support back
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path === '/api/session') return route.fulfill({ json: { authenticated: valid, authMode: 'http' } });
-    if (path === '/api/reports') { reportRequests++; return route.fulfill({ json: reportsPayload }); }
+    if (path === '/api/reports') {
+      assert.equal(new URL(route.request().url()).searchParams.get('cache'), 'only');
+      reportRequests++;
+      return route.fulfill({ json: { ...reportsPayload, academicHistory: { status: 'ready', currentCgpa: 8.48, completedCredits: 130, semesters: [] } } });
+    }
     return route.fulfill({ json: { success: true } });
   });
   await page.addInitScript(payload => {
-    localStorage.setItem('classpro-reports-cache', JSON.stringify({ ...payload, syncedAt: Date.now() }));
+    localStorage.setItem('anon-reports-cache', JSON.stringify({ ...payload, syncedAt: Date.now() }));
     localStorage.setItem('anon.analytics-choice.v1', 'decline');
     Object.defineProperty(window, 'launchQueue', { configurable: true, value: {
       setConsumer(callback) { window.deliverLaunch = callback; },
@@ -136,7 +142,9 @@ test('installed-app shortcuts reuse cached views, respect forms and support back
   await page.locator('#attendance-panel').waitFor({ state: 'visible' });
   assert.equal(await page.title(), 'Attendance · Anon');
   await page.waitForFunction(() => document.querySelector('#login-form').getAttribute('aria-busy') === 'false');
-  assert.equal(reportRequests, 0, 'cached shortcut must not fetch reports');
+  assert.equal(reportRequests, 1, 'boot revalidates saved server data without an upstream sync');
+  assert.equal(await page.locator('#marks-current-cgpa').inputValue(), '8.48');
+  assert.equal(await page.locator('#marks-completed-credits').inputValue(), '130');
   await page.locator('[data-page="marks"]:visible').click();
   assert.match(page.url(), /#marks$/);
   await page.goBack();
@@ -149,7 +157,7 @@ test('installed-app shortcuts reuse cached views, respect forms and support back
   assert.equal(await page.locator('#marks-panel').isVisible(), true, 'launch must preserve an open form');
   await page.evaluate(() => document.getElementById('connect-dialog').close());
   await page.locator('#home-view').waitFor({ state: 'visible' });
-  assert.equal(reportRequests, 0, 'relaunch must reuse the document and report cache');
+  assert.equal(reportRequests, 1, 'relaunch must reuse the document and report cache');
   valid = false;
   await page.reload();
   await page.locator('#login-view').waitFor({ state: 'visible' });

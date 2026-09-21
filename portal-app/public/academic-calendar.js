@@ -2,7 +2,7 @@
 
 // Month-grid and selection pattern adapted from OpenSourceUI MonthPickerCalendar.
 globalThis.createAcademicCalendar = ({ container, source, now, filters = {} }) => {
-  const model = classproScheduleModel;
+  const model = anonScheduleModel;
   let month, selected;
   const el = (tag, text, className) => {
     const node = document.createElement(tag);
@@ -66,7 +66,7 @@ globalThis.createAcademicCalendar = ({ container, source, now, filters = {} }) =
     agenda.append(el('h4', `${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`));
     for (const entry of classes) {
       const row = el('div', undefined, 'calendar-day-class');
-      row.append(el('strong', entry.title || entry.code), el('p', `${entry.start} – ${entry.end} · ${classproHomeModel.hours(entry)}h`));
+      row.append(el('strong', entry.title || entry.code), el('p', `${entry.start} – ${entry.end} · ${anonHomeModel.hours(entry)}h`));
       if (entry.room) row.append(el('p', entry.room));
       agenda.append(row);
     }

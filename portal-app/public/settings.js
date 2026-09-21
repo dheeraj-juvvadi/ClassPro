@@ -15,16 +15,22 @@ globalThis.anonSettings = (() => {
     anonFeedback.setHaptics(prefs.haptics !== false);
     get('settings-notifications').checked = prefs.notifications === true && globalThis.Notification?.permission === 'granted';
     get('settings-reminders').checked = prefs.reminders === true && globalThis.Notification?.permission === 'granted';
-    classproHome.reminders(get('settings-reminders').checked);
+    anonHome.reminders(get('settings-reminders').checked);
     const name = prefs.name || report.profile?.name || '';
     get('settings-name').textContent = name || 'Your space.';
     get('settings-display-name').value = prefs.name || '';
     get('settings-program').textContent = courseDetails.clean(report.profile?.program);
-    classproHome.profile({ ...report.profile, name });
+    anonHome.profile({ ...report.profile, name });
   }
   function update(data) {
     report = data;
-    classproHome.scheduleIdentity(data.profile);
+    const academicProfile = { ...data.profile };
+    for (const field of ['currentCgpa', 'completedCredits']) {
+      if (typeof data.academicHistory?.[field] === 'number') academicProfile[field] = data.academicHistory[field];
+    }
+    globalThis.anonMarksTarget?.history(academicProfile);
+    globalThis.anonAcademicHistory?.render(data.academicHistory || {}, academicProfile, data);
+    anonHome.scheduleIdentity(data.profile);
     const identity = String(data.profile?.regNo || data.profile?.name || 'session');
     let hash = 2166136261;
     for (const char of identity) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;

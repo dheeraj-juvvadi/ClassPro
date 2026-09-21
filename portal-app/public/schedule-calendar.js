@@ -1,7 +1,7 @@
 'use strict';
 
 globalThis.createScheduleCalendar = ({ container, date, describe, onSelect }) => {
-  const model = globalThis.classproScheduleModel;
+  const model = globalThis.anonScheduleModel;
   let selected = new Date(date);
   let weekStart = startOfWeek(date);
   function startOfWeek(value) {

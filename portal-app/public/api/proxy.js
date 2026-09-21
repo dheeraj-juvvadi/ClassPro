@@ -45,7 +45,7 @@ async function handler(request, response) {
     if (REQUEST_SKIP.has(key.toLowerCase())) continue;
     headers[key] = Array.isArray(value) ? value.join(', ') : value;
   }
-  headers['x-classpro-key'] = token;
+  headers['x-anon-key'] = token;
   delete headers['x-anon-client-ip'];
   headers['x-anon-client-ip'] = request.headers['x-vercel-forwarded-for'] || request.socket?.remoteAddress || 'unknown';
   const incoming = new URL(request.url, 'http://internal');

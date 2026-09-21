@@ -9,7 +9,9 @@ let pendingSyncTimer = null, pendingSyncChecks = 0;
 let reportFingerprint = {};
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
-const REPORTS_CACHE = 'classpro-reports-cache';
+const REPORTS_CACHE = 'anon-reports-cache';
+// One-time upgrade: keep existing offline reports until the new key is written.
+const LEGACY_REPORTS_CACHE = 'classpro-reports-cache';
 const dismissStartup = (() => {
   const startup = $('startup');
   let onScreen = true;
@@ -30,7 +32,12 @@ const dismissStartup = (() => {
 
 function readReportsCache() {
   try {
-    const cached = JSON.parse(localStorage.getItem(REPORTS_CACHE));
+    const stored = localStorage.getItem(REPORTS_CACHE) || localStorage.getItem(LEGACY_REPORTS_CACHE);
+    const cached = JSON.parse(stored);
+    if (cached?.syncedAt && !localStorage.getItem(REPORTS_CACHE)) {
+      localStorage.setItem(REPORTS_CACHE, stored);
+      localStorage.removeItem(LEGACY_REPORTS_CACHE);
+    }
     return cached && cached.syncedAt ? cached : null;
   } catch { return null; }
 }
@@ -40,7 +47,7 @@ function writeReportsCache(reports) {
 }
 
 function clearReportsCache() {
-  try { localStorage.removeItem(REPORTS_CACHE); } catch {}
+  try { localStorage.removeItem(REPORTS_CACHE); localStorage.removeItem(LEGACY_REPORTS_CACHE); } catch {}
 }
 
 function node(tag, className, text) {
@@ -97,9 +104,10 @@ function showLogin(text = '', error = false) {
   $('home-view').hidden = true;
   $('planner-nav').hidden = true;
   $('planner-menu').hidden = true;
-  classproHome.clear();
+  anonHome.clear();
   academicUI.clear();
   anonMarksTarget.clear();
+  anonAcademicHistory.clear();
   dateAttendance.clear();
   providerConnections.clear();
   anonSettings.clear();
@@ -114,7 +122,7 @@ function showLogin(text = '', error = false) {
   $('reports-view').hidden = true;
   $('logout').hidden = true;
   $('login-form').reset();
-  classproAuth.reset();
+  anonAuth.reset();
   manualChallengeAt = 0;
   $('manual-captcha-image').hidden = true;
   $('manual-captcha-answer').value = '';
@@ -145,16 +153,16 @@ function showReports() {
   $('planner-nav').hidden = false;
   $('planner-menu').hidden = false;
   message('login-message');
-  classproHome.enter();
+  anonHome.enter();
 }
 
 async function api(path, options = {}, login = false) {
-  const clientTrace = classproRandomId();
+  const clientTrace = anonRandomId();
   const started = performance.now();
   const loginMode = 'manual';
   const record = (details) => {
     const entry = { time: new Date().toISOString(), path, method: options.method || 'GET', clientTrace, loginMode, durationMs: Math.round(performance.now() - started), ...details };
-    window.classproDiagnostics = [...(window.classproDiagnostics || []), entry].slice(-30);
+    window.anonDiagnostics = [...(window.anonDiagnostics || []), entry].slice(-30);
     if (details.failure || details.status >= 400) globalThis.anonClientLogs?.capture({
       kind: 'api_error', route: path.split('?')[0], status: details.status,
       code: details.failure === 'timeout' ? 'TIMEOUT' : details.failure ? 'NETWORK_ERROR' : 'HTTP_ERROR',
@@ -192,7 +200,7 @@ async function api(path, options = {}, login = false) {
     throw Object.assign(new Error(data.error?.message || (response.status === 401 ? 'Sign in failed. Check your credentials.' : 'The request failed. Please try again.')), {
       code: data.error?.code, image: data.image, status: response.status,
       retryable: data.error?.retryable === true,
-      retryAfterMs: classproAdmission.retryAfter(response.headers.get('Retry-After')),
+      retryAfterMs: anonAdmission.retryAfter(response.headers.get('Retry-After')),
     });
   }
   return data;
@@ -228,17 +236,28 @@ function reportState(kind, report) {
 }
 
 function renderAttendance(report, schedule) {
+  const previous = $('attendance-content');
+  const opened = new Set([...previous.querySelectorAll('.attendance-details[open]')].map(item => item.closest('[data-course]').dataset.course));
+  const focused = document.activeElement?.closest('.attendance-row');
+  const focus = focused ? { code: focused.dataset.course } : null;
   const { container, data } = reportState('attendance', report);
   academicUI.renderAttendance(data, container, schedule);
+  for (const card of container.querySelectorAll('.attendance-row')) {
+    if (opened.has(card.dataset.course)) card.querySelector('.attendance-details').open = true;
+    if (focus?.code === card.dataset.course) card.querySelector('.attendance-details > summary').focus({ preventScroll: true });
+  }
 }
 
-function renderMarks(report) {
+function renderMarks(report, courses = {}) {
   const active = document.activeElement;
   const focusedPlan = active?.closest('.mark-plan');
   const focusedCourse = focusedPlan?.dataset.course;
   const expanded = new Set([...$('marks-content').querySelectorAll('.mark-course')]
     .filter(row => row.querySelector('.course-details')?.open).map(row => row.dataset.course));
-  const { container, data } = reportState('marks', report);
+  const { container, data: rows } = reportState('marks', report);
+  const data = rows.map(course => ({ ...course,
+    credits: course.credits ?? courses[course.code]?.credits ?? courses[course.code]?.credit,
+  }));
   anonMarksTarget.update(data);
   const list = node('div', 'marks-list');
   for (const course of data) {
@@ -254,7 +273,7 @@ function renderMarks(report) {
     const content = node('div', 'assessments');
     if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
     const components = Array.isArray(course.components) ? course.components : [];
-    const metadata = node('span', 'course-result-count', `${components.length} ${components.length === 1 ? 'assessment' : 'assessments'}`);
+    const metadata = node('span', 'course-result-count', String(components.length));
     summary.append(metadata);
     if (!components.length && !course.detailsError) content.append(node('p', 'quiet', 'No assessment details are available yet.'));
     for (const component of components) {
@@ -266,7 +285,7 @@ function renderMarks(report) {
       content.append(row);
     }
     details.append(summary, content);
-    card.append(header, anonMarksTarget.create(course), details);
+    card.append(header, details, anonMarksTarget.create(course));
     list.append(card);
   }
   if (data.length) container.append(list);
@@ -301,8 +320,8 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
       if (reportFingerprint[key] !== fingerprint) { update(); reportFingerprint[key] = fingerprint; }
     };
     changed('attendance', [reports.attendance, reports.schedule], () => renderAttendance(reports.attendance, reports.schedule));
-    changed('marks', reports.marks, () => renderMarks(reports.marks));
-    changed('home', [reports.attendance, reports.schedule], () => classproHome.update(reports.attendance, reports.schedule));
+    changed('marks', [reports.marks, reports.courses], () => renderMarks(reports.marks, reports.courses));
+    changed('home', [reports.attendance, reports.schedule], () => anonHome.update(reports.attendance, reports.schedule));
     anonSettings.update(reports);
     changed('connections', [reports.connections, reports.warnings], () => providerConnections.update(reports));
     $('refresh').title = 'Sync attendance and marks';
@@ -316,7 +335,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
       // Follow the server's hint directly; the old 15-second clock timer added
       // another full tick even when work finished just after the first reply.
       pendingSyncChecks++;
-      const delay = Math.max(pendingSyncChecks > 5 ? 5000 : 1800, Math.min(30000, Number(reports.sync.nextAt) - Date.now() || 3000));
+      const delay = Math.max(pendingSyncChecks > 5 ? 5000 : 200, Math.min(30000, Number(reports.sync.nextAt) - Date.now() || 2000));
       pendingSyncTimer = setTimeout(() => {
         if (!authenticated || busy || document.hidden || !navigator.onLine || $('connect-dialog').open) return;
         const retryAdmission = reports.sync.state === 'busy';
@@ -362,7 +381,7 @@ async function loadManualChallenge() {
 
 $('use-student-portal').addEventListener('click', () => {
   $('login-fallback-dialog').close();
-  classproAuth.usePortal();
+  anonAuth.usePortal();
   message('login-message', 'Use your Student Portal password to continue.');
   anonFeedback.enter($('login-form'));
 });
@@ -371,7 +390,7 @@ $('retry-academia').addEventListener('click', () => {
   $('password').focus();
 });
 
-$('manual-captcha-refresh').addEventListener('click', () => run(() => classproAuth.enabled ? classproAuth.prepare(api, false) : loadManualChallenge()));
+$('manual-captcha-refresh').addEventListener('click', () => run(() => anonAuth.enabled ? anonAuth.prepare(api, false) : loadManualChallenge()));
 
 async function submitCredentials(credentials, answer) {
   const integrity = await createCredentialIntegrity(credentials.account, credentials.password, answer);
@@ -389,8 +408,8 @@ $('login-form').addEventListener('submit', (event) => {
     $('sign-in').setAttribute('data-loading', '');
     $('sign-in-status').textContent = 'Connecting to SRM…';
     let data;
-    if (classproAuth.enabled) {
-      data = await classproAuth.loginBoth(api, credentials);
+    if (anonAuth.enabled) {
+      data = await anonAuth.loginBoth(api, credentials);
       if (!data) return;
       if (data.authenticated !== true) throw new Error('Sign-in could not be confirmed.');
       showReports();
@@ -450,12 +469,12 @@ function paintCachedReports() {
   anonSyncControl.observe(cached);
   showReports();
   renderAttendance(cached.attendance, cached.schedule);
-  renderMarks(cached.marks);
-  classproHome.update(cached.attendance, cached.schedule);
+  renderMarks(cached.marks, cached.courses);
+  anonHome.update(cached.attendance, cached.schedule);
   anonSettings.update(cached);
   providerConnections.update(cached);
   reportFingerprint.attendance = JSON.stringify([cached.attendance, cached.schedule]);
-  reportFingerprint.marks = JSON.stringify(cached.marks);
+  reportFingerprint.marks = JSON.stringify([cached.marks, cached.courses]);
   reportFingerprint.home = JSON.stringify([cached.attendance, cached.schedule]);
   reportFingerprint.connections = JSON.stringify([cached.connections, cached.warnings]);
   const cachedNextAt = Number(cached.sync?.nextAt);
@@ -468,11 +487,11 @@ function paintCachedReports() {
 }
 
 if (designPreview) {
-  const reports = classproHome.preview();
+  const reports = anonHome.preview();
   showReports();
   renderAttendance(reports.attendance, reports.schedule);
-  renderMarks(reports.marks);
-  classproHome.update(reports.attendance, reports.schedule);
+  renderMarks(reports.marks, reports.courses);
+  anonHome.update(reports.attendance, reports.schedule);
   anonSettings.update(reports);
   $('updated-at').textContent = 'Design preview · sample data';
 } else {
@@ -484,14 +503,13 @@ if (designPreview) {
         return;
       }
       const session = await api('/api/session');
-      classproAuth.configure(session);
+      anonAuth.configure(session);
       if (session.authenticated) {
-        if (!reportFingerprint.home) {
-          showReports();
-          await loadReports({ cacheOnly: true });
-        } else {
-          setTimeout(resumeSync, 0);
-        }
+        if (!reportFingerprint.home) showReports();
+        // Revalidate the browser cache against saved server data even outside
+        // upstream sync hours. This GET does not contact Student Portal.
+        await loadReports({ cacheOnly: true });
+        setTimeout(resumeSync, 0);
       } else {
         clearReportsCache();
         showLogin();

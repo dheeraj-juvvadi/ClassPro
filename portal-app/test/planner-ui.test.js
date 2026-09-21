@@ -25,12 +25,12 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('script[src*="sign-in-particles"]').count(), 0);
   assert.equal(await page.locator('#manual-captcha-answer').isVisible(), true);
   assert.equal(await page.locator('#sign-in').evaluate(element => getComputedStyle(element).minHeight), '58px');
-  await page.evaluate(() => classproAuth.configure({ authMode: 'http', provider: 'academia' }));
+  await page.evaluate(() => anonAuth.configure({ authMode: 'http', provider: 'academia' }));
   assert.equal(await page.locator('#provider-choice').isVisible(), false);
   assert.equal(await page.locator('#login-provider').inputValue(), 'academia');
-  await page.evaluate(() => classproAuth.usePortal());
+  await page.evaluate(() => anonAuth.usePortal());
   assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
-  await page.evaluate(() => classproAuth.configure({ authMode: 'http', provider: 'portal' }));
+  await page.evaluate(() => anonAuth.configure({ authMode: 'http', provider: 'portal' }));
   assert.equal(await page.locator('#login-provider').inputValue(), 'academia');
   await page.route('**/api/challenge', route => route.fulfill({ json: { required: false } }));
   await page.route('**/api/login/client', route => route.fulfill({ status: 502, json: { error: { code: 'LOGIN_REJECTED', message: 'Academia could not respond.' } } }));
@@ -40,7 +40,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#login-message').waitFor({ state: 'visible' });
   assert.equal(await page.locator('dialog[open]').count(), 0);
   assert.equal(await page.locator('#account').inputValue(), 'synthetic');
-  await page.evaluate(() => classproAuth.configure({ authMode: 'http' }));
+  await page.evaluate(() => anonAuth.configure({ authMode: 'http' }));
   await page.route('**/api/login/client', route => route.fulfill({ status: 401, json: { error: { code: 'LOGIN_REJECTED', message: 'Sign-in rejected.' } } }));
   await page.locator('#password').fill('test-password');
   await page.locator('#sign-in').click();
@@ -114,9 +114,9 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#open-accounts').click();
   assert.equal(await page.locator('#accounts-title').innerText(), 'Settings');
   assert.equal(await page.locator('#settings-courses, #settings-history, .settings-footnote').count(), 0);
-  await page.locator('#settings-display-name').fill('Dheeraj');
+  await page.locator('#settings-display-name').fill('Alex');
   await page.locator('#settings-profile-form button').click();
-  assert.equal(await page.locator('#settings-name').innerText(), 'Dheeraj');
+  assert.equal(await page.locator('#settings-name').innerText(), 'Alex');
   await page.locator('#settings-theme').selectOption('sand');
   assert.equal(await page.locator('body').getAttribute('data-accent'), 'sand');
 
@@ -191,9 +191,10 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
       { date: '2026-09-14', kind: 'holiday', label: 'Synthetic holiday' },
       { date: '2026-09-15', kind: 'teaching', dayOrder: 'A' },
     ] };
-    classproHome.update(attendance, globalThis.testSchedule);
+    anonHome.update(attendance, globalThis.testSchedule);
   });
-  assert.match(await page.locator('#next-class-card').innerText(), /Tue, Sep 15/);
+  assert.match(await page.locator('#next-class-card').innerText(), /You are done for the day/);
+  assert.equal(await page.locator('#home-insights').isVisible(), false);
   assert.match(await page.locator('#today-classes').innerText(), /Synthetic holiday/);
   await page.locator('.calendar-week button[data-date="2026-09-15"]').click();
   await page.locator('#batch-filter').selectOption('B1');
@@ -203,7 +204,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.keyboard.press('Enter');
   assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Next week');
   await page.getByRole('button', { name: 'Today', exact: true }).click();
-  await page.evaluate(() => classproHome.update({ data: [] }, { ...globalThis.testSchedule, calendar: [] }));
+  await page.evaluate(() => anonHome.update({ data: [] }, { ...globalThis.testSchedule, calendar: [] }));
   assert.match(await page.locator('#schedule-source').innerText(), /unavailable/);
   assert.match(await page.locator('#next-class-card').innerText(), /No next class confirmed/);
   for (const width of [320, 390, 1280]) {
@@ -261,9 +262,9 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
     document.querySelector('button[data-page="attendance"]').click();
     renderAttendance({ data: [{ code: 'CS', title: 'Computing', present: 9, conducted: 11, absent: 2, change24h: { points: 1.82 } }] });
   });
-  assert.match(await page.locator('.attendance-change.positive').textContent(), /\+1.8%/);
+  assert.match(await page.locator('.attendance-change.positive').textContent(), /\+1.8 percentage points/);
   await page.evaluate(() => renderAttendance({ data: [{ code: 'CS', title: 'Computing', present: 7, conducted: 10, absent: 3, change24h: { points: -10 } }] }));
-  assert.match(await page.locator('.attendance-change.negative').textContent(), /-10%/);
+  assert.match(await page.locator('.attendance-change.negative').textContent(), /-10 percentage points/);
   await page.evaluate(() => {
     globalThis.hapticCalls = [];
     Object.defineProperty(navigator, 'vibrate', { configurable: true, value: pattern => { hapticCalls.push(pattern); return true; } });

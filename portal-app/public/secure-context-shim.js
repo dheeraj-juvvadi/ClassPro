@@ -3,7 +3,7 @@
 // WebCrypto (randomUUID, subtle) is only exposed in secure contexts. This shim keeps the
 // diagnostic host working on a plain-HTTP origin; HTTPS deployments use the native path.
 
-globalThis.classproRandomId = function () {
+globalThis.anonRandomId = function () {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
@@ -72,7 +72,7 @@ function sha256Fallback(message) {
 
 const toHex = (bytes) => [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
 
-globalThis.classproSha256Hex = async function (bytes) {
+globalThis.anonSha256Hex = async function (bytes) {
   if (crypto.subtle && typeof crypto.subtle.digest === 'function') {
     return toHex(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
   }

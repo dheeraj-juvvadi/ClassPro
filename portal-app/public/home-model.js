@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.classproHomeModel = {
+globalThis.anonHomeModel = {
   minutes(time) {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
@@ -34,5 +34,14 @@ globalThis.classproHomeModel = {
   },
   hours(entry) {
     return entry.hours ?? (this.minutes(entry.end) - this.minutes(entry.start)) / 60;
+  },
+  remainingClasses(classes, minute) {
+    return classes.filter(entry => this.minutes(entry.end) >= minute)
+      .sort((first, second) => first.start.localeCompare(second.start));
+  },
+  remainingCards(classes, featured, minute) {
+    return this.remainingClasses(classes, minute)
+      .filter(entry => !(featured && entry.code === featured.code && entry.start === featured.start && entry.end === featured.end))
+      .slice(0, 2);
   },
 };

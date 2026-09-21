@@ -1,0 +1,55 @@
+[
+  {
+    "date": "05 Feb 2026",
+    "day": "Thu",
+    "description": "FT-1: Digital Image Processing / FT-1: Internet of Things / FT-1: Bio Inspired Computing / FT-1: Computer Graphics and Animation / FT-1: VLSI Physical Design",
+    "order": "3",
+    "type": "exam"
+  },
+  {
+    "date": "06 Mar 2026",
+    "day": "Fri",
+    "description": "FT-2: Digital Image Processing / FT-2: Bio Inspired Computing / FT-3: Computer Graphics and Animation / FT-2: VLSI Physical Design",
+    "order": "3",
+    "type": "exam"
+  },
+  {
+    "date": "08 Apr 2026",
+    "day": "Wed",
+    "description": "FJ-2: Quantum Computation / FP-2: Cloud Computing / FT-3: Digital Image Processing / FT-4: Internet of Things / FT-3: Bio Inspired Computing / FT-4: Computer Graphics and Animation",
+    "order": "3",
+    "type": "exam"
+  },
+  {
+    "date": "04 May 2026",
+    "day": "Mon",
+    "description": "FJ-3: Quantum Computation / FT-4: Digital Image Processing / FT-4: Bio Inspired Computing / FT-4: VLSI Physical Design",
+    "order": "3",
+    "type": "exam"
+  },
+  {
+    "date": "06 May 2026",
+    "day": "Wed",
+    "description": "Last working Day - PD-Internal: Digital Image Processing / LLT-1: Computer Graphics and Animation / LLT-1: VLSI Physical Design",
+    "order": "5",
+    "type": "exam"
+  },
+  {
+    "date": "21 Jul 2026",
+    "day": "Tue",
+    "description": "Commencement of Classes for - B.Tech - II,III,IV / M.Tech (Int) - II,III,IV,V / M.Tech - I,II / B. Arch - II,III,IV,V / B. Des - III,IV / M. Arch & M. Des - I,II (Year)",
+    "order": "1"
+  },
+  {
+    "date": "20 Nov 2026",
+    "day": "Fri",
+    "description": "Last Working Day - B. Tech - II,III,IV / M. Tech (Int) - II,III,IV,V / M. Tech - I,II / B. Arch - II,III,IV,V / B. Des - III,IV / M. Arch & M. Des - I,II / Minor Degree (Year)",
+    "order": "2"
+  },
+  {
+    "date": "16 Sep 2026",
+    "day": "Wed",
+    "description": "Instructional Day",
+    "order": "3"
+  }
+]

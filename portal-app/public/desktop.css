@@ -2,7 +2,6 @@
 .login-help { font-size: .75rem; line-height: 1.6; margin-top: .65rem; }
 #home-message { grid-column: 1 / -1; }
 button, a, summary, [role="button"] { -webkit-tap-highlight-color: transparent; }
-.confetti-art { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 15px; line-height: 1.35; text-align: center; color: currentColor; margin: 24px auto; user-select: none; }
 body.planner #planner-nav {
   inset-inline: 0; bottom: 0; transform: none; width: 100%;
   grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0;

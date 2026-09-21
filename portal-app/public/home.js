@@ -1,8 +1,8 @@
 'use strict';
 
-globalThis.classproHome = (() => {
-  const model = globalThis.classproHomeModel;
-  const planner = globalThis.classproScheduleModel;
+globalThis.anonHome = (() => {
+  const model = globalThis.anonHomeModel;
+  const planner = globalThis.anonScheduleModel;
   let schedule = [];
   let studentName = '';
   let greetingExtras = [];
@@ -112,17 +112,19 @@ globalThis.classproHome = (() => {
     const day = selectedDate || date;
     const classes = planner.classes(source(), day, filters);
     const minute = date.getHours() * 60 + date.getMinutes();
-    const next = planner.next(source(), date, filters);
-    reminders.check(next, date);
-    const sameDay = next && planner.key(next.date) === planner.key(date);
-    const nextClasses = next ? planner.classes(source(), next.date, filters) : [];
-    const nextIndex = nextClasses.findIndex(entry => entry.start === next?.start && entry.code === next?.code);
+    const todayClasses = planner.classes(source(), date, filters);
+    const remaining = model.remainingClasses(todayClasses, minute);
+    const next = remaining[0] ? { ...remaining[0], date } : null;
+    reminders.check(planner.next(source(), date, filters), date);
+    const sameDay = Boolean(next);
+    const confirmed = planner.dayState(source(), date).kind !== 'unknown' && !reportError;
     const card = get('next-class-card');
     card.replaceChildren();
     const top = element('div', 'next-class-top');
     top.append(element('span', 'planner-eyebrow', next?.unknown ? 'Next known class' : 'Next class'));
     const ongoing = sameDay && model.minutes(next.start) <= minute;
-    top.append(element('span', 'class-countdown', next ? ongoing ? 'Ongoing' : sameDay ? `Starts in ${model.minutes(next.start) - minute} min` : next.date.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' }) : ''));
+    const laterToday = sameDay && model.minutes(next.start) - minute > 120;
+    top.append(element(laterToday ? 'strong' : 'span', 'class-countdown', next ? ongoing ? 'Ongoing' : sameDay ? laterToday ? 'Today' : `Starts in ${model.minutes(next.start) - minute} min` : next.date.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' }) : ''));
     card.append(top);
     const title = element('h2', '', next?.title || (reportedSchedule ? 'No next class confirmed.' : schedule.length ? 'No upcoming classes.' : 'Timetable unavailable.'));
     title.id = 'next-class-title';
@@ -143,15 +145,13 @@ globalThis.classproHome = (() => {
       card.append(stats);
 
     } else {
-      const confirmed = planner.dayState(source(), date).kind !== 'unknown' && !reportError;
       if (confirmed) {
-        title.textContent = 'Done for the day.';
-        card.append(confetti());
-        card.append(element('p', 'class-room', 'No more classes on your selected schedule.'));
+        title.textContent = 'You are done for the day';
+        card.append(sunflowerArt());
       } else card.append(element('p', 'class-room', reportedSchedule ? 'A verified teaching calendar is needed to place timetable periods on dates.' : 'Refresh reports or sign in again to load your SRM timetable.'));
     }
     const bottom = element('div', 'next-class-bottom');
-    const following = nextClasses[nextIndex + 1];
+    const following = remaining[1];
     bottom.append(element('p', '', next && following ? `Next · ${following.title} · ${following.start}` : next ? 'Last class of the day' : 'Your attendance'));
     const action = element('button', 'class-arrow', '↗');
     action.type = 'button';
@@ -159,37 +159,45 @@ globalThis.classproHome = (() => {
     action.addEventListener('click', () => page('attendance'));
     bottom.append(action);
     card.append(bottom);
-    renderInsights(classes, next?.code);
+    renderInsights(remaining, confirmed);
     const state = describe(day);
     get('today-title').textContent = planner.key(day) === planner.key(date) ? 'Today’s classes' : day.toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'short' });
     get('schedule-source').textContent = state.label;
-    renderTimeline(classes, planner.key(day) === planner.key(date) ? minute : -1);
+    const viewingToday = planner.key(day) === planner.key(date);
+    renderTimeline(viewingToday ? model.remainingClasses(classes, minute) : classes, viewingToday ? minute : -1);
     calendar.today(date);
   }
 
-  function confetti() {
-    const art = element('pre', 'confetti-art dino-art', "                 __\n                / o)\n        /\\_____/ /\n       /          /\n      /   /\\  __/        _\n     /___/  | |        _| |_\n            |_|         | |\n  _ . _ . _ . _ . _ . _ |_| _ . _");
+  function sunflowerArt() {
+    const art = element('span', 'ascii-art ascii-art--sunflower');
     art.setAttribute('aria-hidden', 'true');
     return art;
   }
 
-  function renderInsights(classes, featuredCode) {
+  function renderInsights(remaining, confirmed) {
     const container = get('home-insights');
     container.replaceChildren();
-    const todaysCodes = new Set(classes.map(entry => entry.code));
-    const ordered = attendance.filter(course => course.code !== featuredCode)
-      .sort((first, second) => Number(todaysCodes.has(second.code)) - Number(todaysCodes.has(first.code)));
-    for (const course of ordered.slice(0, 2)) {
-      const insight = model.insight(course);
-      const card = element('button', `insight-card ${insight.tone}`);
-      card.type = 'button';
-      card.setAttribute('aria-label', `${course.title}: ${insight.percentage}. ${insight.detail || insight.margin}`);
-      card.append(element('span', 'planner-eyebrow', course.title), element('span', 'insight-percentage', insight.percentage), element('span', 'insight-margin', insight.margin));
-      card.addEventListener('click', () => page('attendance'));
-      container.append(card);
+    if (!remaining.length) { container.hidden = true; return; }
+    const upcoming = remaining.slice(1, 3);
+    for (let index = 0; index < Math.max(1, Math.min(2, remaining.length)); index++) {
+      const entry = upcoming[index];
+      if (entry) {
+        const course = attendance.find(course => course.code === entry.code);
+        const insight = model.insight(course || {});
+        const card = element('button', `insight-card ${insight.tone}`);
+        card.type = 'button';
+        card.setAttribute('aria-label', `${entry.title}: Today ${entry.start} to ${entry.end}. ${insight.detail || insight.margin}`);
+        card.append(element('span', 'insight-class-time', `${entry.start} → ${entry.end}`), element('span', 'planner-eyebrow', entry.title), element('span', 'insight-percentage', insight.percentage), element('span', 'insight-margin', insight.margin));
+        card.addEventListener('click', () => page('attendance'));
+        container.append(card);
+      } else {
+        const card = element('div', `insight-card insight-empty${remaining.length === 1 ? ' insight-empty-wide' : ''}`);
+        const art = sunflowerArt();
+        card.append(art, element('span', 'insight-margin', !confirmed ? 'Schedule unavailable' : remaining.length === 1 ? 'You have only 1 class for the day' : 'You have only 2 classes left'));
+        container.append(card);
+      }
     }
-    container.hidden = !ordered.length && !!featuredCode;
-    if (!ordered.length && !featuredCode) container.append(element('p', 'home-empty', reportError || 'Your attendance insights will appear once reports are loaded.'));
+    container.hidden = false;
   }
 
   function renderTimeline(classes, minute) {
@@ -197,7 +205,7 @@ globalThis.classproHome = (() => {
     const list = get('today-classes');
     list.replaceChildren();
     for (const entry of classes) {
-      const ongoing = model.minutes(entry.start) <= minute && model.minutes(entry.end) > minute;
+      const ongoing = model.minutes(entry.start) <= minute && model.minutes(entry.end) >= minute;
       const row = element('li', ongoing ? 'timeline-row ongoing' : 'timeline-row');
       const times = element('div', 'timeline-times');
       times.append(element('time', '', entry.start), element('time', '', entry.end));
@@ -214,7 +222,7 @@ globalThis.classproHome = (() => {
     if (!classes.length) {
       const state = describe(selectedDate || now());
       const empty = element('li', 'home-empty', state.kind === 'holiday' ? `${state.label} · no classes.` : state.kind === 'unknown' ? 'No confirmed classes for this date.' : 'No classes for this date and filter selection.');
-      if (state.kind !== 'unknown') { empty.prepend(confetti()); empty.prepend(element('p', 'day-done-caption', 'Done for the day.')); }
+      if (state.kind !== 'unknown') { empty.prepend(sunflowerArt()); empty.prepend(element('p', 'day-done-caption', 'Done for the day.')); }
       list.append(empty);
     }
   }
@@ -222,7 +230,7 @@ globalThis.classproHome = (() => {
   function renderSchedule() {
     const list = get('schedule-entries');
     list.replaceChildren();
-    get('schedule-help').textContent = 'Your classes by day order. Scroll sideways to see every day order. Dates follow the Ratio-D academic calendar.';
+    get('schedule-help').textContent = 'Your classes by day order. Scroll sideways to see every day order. Dates follow the academic calendar.';
     const entries = [...(reportedSchedule?.entries || schedule)].sort((a, b) =>
       String(a.dayOrder || a.day).localeCompare(String(b.dayOrder || b.day)) || a.start.localeCompare(b.start));
     renderTimetableSvg(list, entries);
@@ -259,7 +267,8 @@ globalThis.classproHome = (() => {
     if (!get('home-view').hidden) render();
     else { const date = now(); reminders.check(planner.next(source(), date, filters), date); }
   };
-  setInterval(refreshClock, 60000);
+  const scheduleClock = () => setTimeout(() => { refreshClock(); scheduleClock(); }, 60000 - (Date.now() % 60000) + 20);
+  scheduleClock();
   document.addEventListener('visibilitychange', refreshClock);
   window.addEventListener('focus', refreshClock);
   window.addEventListener('popstate', () => {
@@ -329,6 +338,7 @@ globalThis.classproHome = (() => {
         entries: schedule.map(({ day, ...entry }) => ({ ...entry, dayOrder: '1', hours: model.hours(entry) })),
         calendar: [{ date: '2026-09-14', kind: 'teaching', dayOrder: '1' }] },
         profile: { name: 'Sample student', program: 'Computer Science', semester: '5' },
+        courses: { DS: { credits: 4 }, CN: { credits: 3 }, OS: { credits: 4 } },
         monthly: [{ month: 'Aug-2026', present: 49, absent: 11 }, { month: 'Sep-2026', present: 21, absent: 5 }],
         attendance: { data: [
         { code: 'DS', title: 'Data Structures', present: 18, conducted: 22, absent: 4, percentage: 82 },

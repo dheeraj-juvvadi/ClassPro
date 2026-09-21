@@ -2,10 +2,10 @@
 
 globalThis.dateProjection = {
   entryKey(entry) {
-    return JSON.stringify([entry.code, entry.start, entry.end, classproHomeModel.hours(entry), entry.batch || '', entry.allocation || '']);
+    return JSON.stringify([entry.code, entry.start, entry.end, anonHomeModel.hours(entry), entry.batch || '', entry.allocation || '']);
   },
   hours(plan, entry, past = false) {
-    const total = classproHomeModel.hours(entry);
+    const total = anonHomeModel.hours(entry);
     const value = typeof plan === 'object' && plan ? plan.classes?.[this.entryKey(entry)] || plan.action : plan;
     const mode = typeof value === 'object' && value ? value.mode : value;
     const count = typeof value === 'object' && Number.isInteger(value.hours) ? Math.max(0, Math.min(total, value.hours)) : total;
@@ -15,7 +15,7 @@ globalThis.dateProjection = {
     return { attend: total, miss: 0, od: 0 };
   },
   calculate(courses, source, selected, today, filters = {}) {
-    const model = classproScheduleModel;
+    const model = anonScheduleModel;
     const todayKey = model.key(today);
     const dates = new Set(Object.keys(selected));
     const lastLeave = Object.keys(selected).filter(date => date >= todayKey && model.parse(date)

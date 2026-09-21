@@ -1,0 +1,28 @@
+/* Fixed-grid drawings: keep every character's position and scale as one piece. */
+.ascii-art {
+  display: block;
+  flex: none;
+  max-width: 100%;
+  margin: 24px auto;
+  background-color: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  pointer-events: none;
+  user-select: none;
+}
+.ascii-art--sunflower {
+  width: 152px;
+  aspect-ratio: 266 / 394;
+  -webkit-mask-image: url('/ascii-sunflower-side.svg');
+  mask-image: url('/ascii-sunflower-side.svg');
+}
+.ascii-art--flower {
+  width: 128px;
+  aspect-ratio: 146 / 268;
+  -webkit-mask-image: url('/ascii-flower.svg');
+  mask-image: url('/ascii-flower.svg');
+}

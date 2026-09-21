@@ -42,12 +42,12 @@ globalThis.providerConnections = (() => {
     try {
       const waiting = delay => { get('connect-message').textContent = `Anon is busy. Retrying in ${Math.ceil(delay / 1000)}s…`; };
       if (!challengeReady || Date.now() - challengeAt >= 75000) {
-        await classproAdmission.request(() => api('/api/challenge', { method: 'POST', body: JSON.stringify({ provider: selected }) }, true), waiting);
+        await anonAdmission.request(() => api('/api/challenge', { method: 'POST', body: JSON.stringify({ provider: selected }) }, true), waiting);
         challengeReady = true;
         challengeAt = Date.now();
       }
       const deadline = performance.now() + Math.max(0, Math.min(60000, 75000 - (Date.now() - challengeAt)));
-      const result = await classproAdmission.request(() => api('/api/login/client', { method: 'POST', body: JSON.stringify({ provider: selected, account, password, answer: get('connect-answer').value }) }, true), waiting, deadline);
+      const result = await anonAdmission.request(() => api('/api/login/client', { method: 'POST', body: JSON.stringify({ provider: selected, account, password, answer: get('connect-answer').value }) }, true), waiting, deadline);
       if (result.authenticated !== true) throw new Error('The server did not confirm this connection. Please retry.');
       get('connect-password').value = '';
       get('connect-message').textContent = `${label(selected)} signed in. Loading reports…`;

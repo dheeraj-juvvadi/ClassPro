@@ -11,7 +11,7 @@ globalThis.courseDetails = {
   recovery(course, source, now, filters = {}) {
     const prediction = attendanceMath.predict(course);
     if (!prediction.valid || !prediction.neededToTarget) return null;
-    const model = classproScheduleModel;
+    const model = anonScheduleModel;
     if (!source?.calendar?.length || !source?.entries?.length) return { unavailable: true };
     const matching = source.entries.filter(entry => entry.code === course.code
       && (!filters.batch || !entry.batch || entry.batch === filters.batch));
@@ -21,8 +21,8 @@ globalThis.courseDetails = {
     for (let offset = 0; offset < 400; offset++, date.setDate(date.getDate() + 1)) {
       if (model.dayState(source, date).kind === 'unknown') return { unavailable: true };
       for (const entry of model.classes(source, date, filters).filter(entry => entry.code === course.code)) {
-        if (offset === 0 && classproHomeModel.minutes(entry.start) < now.getHours() * 60 + now.getMinutes()) continue;
-        hours += classproHomeModel.hours(entry);
+        if (offset === 0 && anonHomeModel.minutes(entry.start) < now.getHours() * 60 + now.getMinutes()) continue;
+        hours += anonHomeModel.hours(entry);
         if (hours >= prediction.neededToTarget) return { date: new Date(date), required: prediction.neededToTarget };
       }
     }

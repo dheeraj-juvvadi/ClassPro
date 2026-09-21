@@ -1,4 +1,4 @@
-/* ClassPro portal OCR controller (main thread).
+/* Anon portal OCR controller (main thread).
    Owned file: portal-app/public/client-ocr.js
    Exposes window.portalOcr = { preload(), solve(dataUrl), metrics }.
    The worker lives at /ocr-worker.js and reads only /ocr/ assets. No

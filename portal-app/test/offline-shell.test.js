@@ -91,7 +91,7 @@ test('installed shell reopens saved reports offline and never caches private API
   assert.equal(cached.names.filter(n => n.startsWith('anon-shell-')).length, 1);
   assert.ok(cached.keys.includes('/index.html') || cached.keys.includes('/'));
   assert.ok(cached.keys.every(path => !/^\/(api|_vercel|ocr)\//.test(path)));
-  const cachedReport = await page.evaluate(() => JSON.parse(localStorage.getItem('classpro-reports-cache')));
+  const cachedReport = await page.evaluate(() => JSON.parse(localStorage.getItem('anon-reports-cache')));
   assert.deepEqual(cachedReport.schedule, report.schedule, 'timetable itself is stored in this browser');
   await page.locator('[data-sidebar-action="open-schedule"]').click();
   assert.equal(await page.locator('#schedule-choices input').count(), 1);
@@ -118,7 +118,7 @@ test('installed shell reopens saved reports offline and never caches private API
   await page.reload();
   await page.locator('#login-view').waitFor({ state: 'visible' });
   assert.match(await page.locator('#login-message').innerText(), /offline/);
-  assert.equal(await page.evaluate(() => localStorage.getItem('classpro-reports-cache')), null);
+  assert.equal(await page.evaluate(() => localStorage.getItem('anon-reports-cache')), null);
   assert.equal(await page.locator('#attendance-content').innerText(), '');
   assert.deepEqual(errors, []);
 });

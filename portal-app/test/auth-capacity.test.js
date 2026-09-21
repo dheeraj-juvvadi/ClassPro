@@ -16,7 +16,7 @@ function harness() {
   });
   vm.runInContext(readFileSync(new URL('../public/login-admission.js', import.meta.url), 'utf8'), context);
   vm.runInContext(readFileSync(new URL('../public/auth-client.js', import.meta.url), 'utf8'), context);
-  return context.classproAuth;
+  return context.anonAuth;
 }
 
 test('challenge capacity retries are bounded and never submit credentials', async () => {

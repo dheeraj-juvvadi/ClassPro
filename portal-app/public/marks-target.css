@@ -1,98 +1,105 @@
-/* Inline marks planning; keep course rows on the shared report surface. */
-.mark-course { --mark-sage: var(--planner-green, #c5d4a7); --mark-muted: #adb4a4; --mark-line: #373d36; color: #f1eee3; padding: 12px var(--report-row-inset, 0) 0; }
-.mark-course + .mark-course { border-top: 1px solid var(--mark-line); }
-.mark-course-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; }
-.planner #marks-panel .mark-course .course-heading { gap: 2px; }
+/* Subject cards and a simple, credit-weighted grade projection. */
+.planner #marks-panel .marks-list { display: grid; gap: 12px; margin-top: 16px; }
+.mark-course { --mark-sage: var(--planner-green, #c5d4a7); --mark-muted: #adb4a4; --mark-line: #373d36; min-width: 0; color: #f1eee3; padding: 8px 24px; border: 1px solid #434b3d; border-radius: 16px; background: #1c1e1b; }
+.mark-course-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding-block: 12px; }
+.planner #marks-panel .mark-course .course-heading { gap: 4px; }
 .planner #marks-panel .mark-course .course-title { margin: 0; font-size: 18px; font-weight: 500; line-height: 1.3; letter-spacing: -.025em; }
-.planner #marks-panel .mark-course .course-result-count { font-size: 11px; }
-.mark-course .marks-score-block { flex: none; gap: 2px; }
-.planner #marks-panel .mark-course .course-score { max-width: 8rem; font-size: 22px; font-weight: 500; line-height: 1.2; }
-.mark-course .marks-score-caption { color: var(--mark-muted); font-size: 10px; }
-.mark-plan { margin-top: 6px; padding: 4px 0 6px; border-top: 1px solid var(--mark-line); }
+.mark-course .marks-score-block { flex: none; gap: 4px; }
+.planner #marks-panel .mark-course .course-score { max-width: 128px; font-size: 24px; font-weight: 500; line-height: 1.2; }
+.mark-course .marks-score-caption { color: var(--mark-muted); font-size: 12px; }
+.mark-plan { margin: 0; border: 0; border-top: 1px solid var(--mark-line); border-radius: 0; background: transparent; }
 .mark-plan [hidden] { display: none !important; }
-.mark-plan-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
-.mark-grade-heading { margin: 0; font-size: 12px; font-weight: 500; line-height: 1.4; }
-.mark-scheme-label { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--mark-muted); font-size: 11px; }
-.mark-scheme-label > span { white-space: nowrap; }
-.mark-scheme { width: 184px; max-width: 100%; min-height: 44px; padding: 8px 4px; border: 0; border-bottom: 1px solid #535d4b; border-radius: 0; background: transparent; color: var(--mark-sage); font: inherit; font-size: 12px; color-scheme: dark; }
-.mark-scheme option { background: #191b19; color: #f1eee3; }
-.mark-plan-body { display: grid; grid-template-columns: minmax(264px, 1fr) minmax(0, 1fr); column-gap: clamp(20px, 3vw, 40px); align-items: start; }
-.mark-goal, .mark-result { min-width: 0; }
-.mark-target-top { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 11px; color: var(--mark-muted); }
-.mark-target-grade { color: var(--mark-sage); font-size: 18px; font-weight: 500; letter-spacing: -.025em; }
-.mark-custom-toggle { margin-left: auto; min-width: 44px; min-height: 44px; padding: 8px 0 8px 8px; border: 0; border-radius: 0; background: transparent; color: var(--mark-muted); font-size: 11px; font-weight: 400; text-decoration: underline; text-underline-offset: 4px; }
-.mark-custom-toggle[aria-pressed="true"] { color: var(--mark-sage); text-decoration-thickness: 2px; }
-.mark-grade-range { display: block; appearance: none; -webkit-appearance: none; width: calc(83.333333% + 20px); height: 24px; min-height: 0; margin: 0 calc(8.333333% - 10px); padding: 0; border: 0; border-radius: 0; background: transparent; accent-color: var(--mark-sage); cursor: pointer; }
-.mark-grade-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: #535c4b; }
-.mark-grade-range::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border: 2px solid #191b19; border-radius: 50%; background: var(--mark-sage); }
-.mark-grade-range::-moz-range-track { height: 4px; border-radius: 2px; background: #535c4b; }
-.mark-grade-range::-moz-range-thumb { box-sizing: border-box; width: 20px; height: 20px; border: 2px solid #191b19; border-radius: 50%; background: var(--mark-sage); }
-.mark-grade-stops { display: grid; grid-template-columns: repeat(6, minmax(44px, 1fr)); }
-.mark-grade-stops button { min-width: 44px; min-height: 44px; padding: 4px 0; border: 0; border-radius: 0; background: transparent; color: var(--mark-muted); font-size: 12px; font-weight: 400; }
-.mark-grade-stops button[aria-pressed="true"] { color: var(--mark-sage); font-weight: 600; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
-.mark-plan :is(button, input, select):focus-visible { outline: 2px solid var(--mark-sage); outline-offset: 2px; }
-.mark-plan input[type="number"] { width: 76px; max-width: 100%; min-width: 0; min-height: 44px; padding: 6px 8px; border: 1px solid #535d4b; border-radius: 5px; background: #191b19; color: #f1eee3; font-size: 16px; font-variant-numeric: tabular-nums; color-scheme: dark; }
-.mark-plan input[aria-invalid="true"], .mark-plan select[aria-invalid="true"] { border-color: #da9979; }
-.mark-expected { display: grid; grid-template-columns: minmax(0, 1fr) 76px; column-gap: 12px; align-items: center; margin: 4px 0 0; font-size: 11px; line-height: 1.4; color: #cdd2c6; }
-.mark-expected > span { align-self: end; }
-.mark-expected input { grid-column: 2; grid-row: 1 / 3; }
-.mark-expected small { grid-column: 1; align-self: start; color: var(--mark-muted); font-size: 10px; line-height: 1.4; }
-.mark-custom-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 8px; color: #cdd2c6; font-size: 11px; }
-.mark-custom-scheme { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--mark-line); }
-.mark-custom-scheme label { display: grid; grid-template-columns: minmax(0, 1fr) 76px; align-items: center; gap: 8px; color: #cdd2c6; font-size: 11px; line-height: 1.4; }
-.mark-result { display: block; align-self: stretch; padding: 10px 0 0 clamp(20px, 3vw, 40px); border-left: 1px solid var(--mark-line); font-variant-numeric: tabular-nums; }
-.mark-result-caption { display: block; margin-bottom: 4px; color: var(--mark-muted); font-size: 11px; line-height: 1.4; }
-.mark-result-number { color: var(--mark-sage); font-size: clamp(30px, 3vw, 38px); font-weight: 500; letter-spacing: -.045em; line-height: 1.1; overflow-wrap: anywhere; }
-.mark-result-max { margin-left: 5px; color: var(--mark-muted); font-size: 13px; white-space: nowrap; }
-.mark-result-detail { margin: 6px 0 0; max-width: 48ch; color: #cdd2c6; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
-.mark-result-best { display: block; margin-top: 4px; color: var(--mark-muted); font-size: 10px; line-height: 1.4; }
-.mark-result[data-tone="neutral"] .mark-result-number { color: var(--mark-muted); }
-.mark-result[data-tone="limited"] .mark-result-number { color: #e7c6a1; font-size: 24px; letter-spacing: -.025em; }
-.mark-plan-error { margin: 8px 0 0; color: #f0b795; font-size: 11px; line-height: 1.5; }
-.mark-plan-note { display: block; margin-top: 8px; color: var(--mark-muted); font-size: 10px; line-height: 1.4; }
-.planner #marks-panel .mark-course .course-details > summary { display: flex; justify-content: space-between; min-height: 44px; gap: 12px; padding: 8px 0; border-radius: 0; border-top: 1px solid var(--mark-line); color: var(--mark-muted); font-size: 11px; font-weight: 400; }
-.planner #marks-panel .mark-course .course-details > summary::after { width: 20px; font-size: 18px; color: var(--mark-sage); }
-.planner #marks-panel .mark-course .assessments { padding: 2px 0 14px; }
-.planner #marks-panel .mark-course .assessment-row { padding-block: 10px; }
+.mark-plan-toggle { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 8px 0; color: var(--mark-muted); font-size: 12px; font-weight: 400; cursor: pointer; list-style: none; }
+.mark-plan-toggle::-webkit-details-marker { display: none; }
+.mark-plan-toggle::after { content: '+'; width: 20px; color: var(--mark-sage); font-size: 18px; text-align: center; }
+.mark-plan[open] > .mark-plan-toggle::after { content: '−'; }
+.mark-plan-selected { margin-left: auto; color: var(--mark-sage); font-weight: 600; }
+.mark-plan-content { padding: 8px 0 16px; }
+.mark-plan:not([open]) > .mark-plan-content { display: none; }
+.mark-target-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; }
+.mark-scheme-label { color: var(--mark-muted); font-size: 12px; }
+.mark-target-grade { color: var(--mark-sage); font-size: 24px; font-weight: 600; }
+.mark-grade-range, .mark-expected input { display: block; appearance: none; -webkit-appearance: none; width: 100%; min-height: 44px; height: 44px; margin: 0; padding: 0; border: 0; background: transparent; accent-color: var(--mark-sage); cursor: pointer; }
+.mark-grade-range { width: calc(85.714286% + 20px); margin-inline: calc(7.142857% - 10px); }
+.mark-plan input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: #535c4b; }
+.mark-plan input[type="range"]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border: 2px solid #191b19; border-radius: 50%; background: var(--mark-sage); }
+.mark-plan input[type="range"]::-moz-range-track { height: 4px; border-radius: 4px; background: #535c4b; }
+.mark-plan input[type="range"]::-moz-range-thumb { box-sizing: border-box; width: 20px; height: 20px; border: 2px solid #191b19; border-radius: 50%; background: var(--mark-sage); }
+.mark-grade-stops { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.mark-grade-stops button { min-width: 0; min-height: 44px; padding: 4px 0; border: 0; border-radius: 4px; background: transparent; color: var(--mark-muted); font-size: 14px; font-weight: 400; }
+.mark-grade-stops button[aria-pressed="true"] { color: var(--mark-sage); background: #2a3024; font-weight: 600; }
+.mark-plan :is(button, input, summary):focus-visible { outline: 2px solid var(--mark-sage); outline-offset: 2px; }
+.mark-result { display: block; margin-top: 16px; padding: 24px; border-radius: 8px; background: #252b21; font-variant-numeric: tabular-nums; }
+.mark-result-caption { display: block; margin-bottom: 8px; color: var(--mark-muted); font-size: 14px; }
+.mark-result-number { color: var(--mark-sage); font-size: 48px; font-weight: 500; letter-spacing: -.04em; line-height: 1.1; }
+.mark-result-max { color: var(--mark-muted); font-size: 18px; white-space: nowrap; }
+.mark-result-detail { margin: 12px 0 0; color: #cdd2c6; font-size: 12px; line-height: 1.5; }
+.mark-result[data-tone="limited"] .mark-result-number { font-size: 30px; color: #e7c6a1; }
+.mark-expected { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; margin-top: 24px; color: var(--mark-muted); font-size: 12px; }
+.mark-expected input { grid-column: 1 / -1; }
+.mark-expected-value { color: #f1eee3; font-variant-numeric: tabular-nums; }
+.mark-plan-error { margin: 12px 0 0; color: #f0b795; font-size: 12px; line-height: 1.5; }
+.mark-include { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 12px; color: var(--mark-muted); font-size: 12px; }
+.mark-include input { width: 16px; height: 16px; accent-color: var(--mark-sage); }
+.mark-plan[data-excluded="true"] .mark-plan-selected { color: var(--mark-muted); text-decoration: line-through; }
+.planner #marks-panel .mark-course .course-details > summary { display: flex; justify-content: flex-start; min-height: 44px; gap: 8px; padding: 8px 0; border-radius: 0; border-top: 1px solid var(--mark-line); color: var(--mark-muted); font-size: 12px; font-weight: 400; }
+.planner #marks-panel .mark-course .course-result-count { color: var(--mark-sage); font-size: 12px; }
+.planner #marks-panel .mark-course .course-details > summary::after { margin-left: auto; width: 20px; font-size: 18px; color: var(--mark-sage); text-align: center; }
+.planner #marks-panel .mark-course .assessments { padding: 4px 0 16px; }
+.planner #marks-panel .mark-course .assessment-row { padding-block: 12px; }
+.marks-projection { margin-top: 16px; padding: 0 24px; border: 1px solid #4f5b42; border-radius: 16px; background: #262e21; }
+.marks-projection-toggle { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 0; color: #f1eee3; font-size: 14px; cursor: pointer; list-style: none; }
+.marks-projection-toggle::-webkit-details-marker { display: none; }
+.marks-projection-toggle::after { content: '+'; color: var(--planner-green, #c5d4a7); font-size: 20px; }
+.marks-projection[open] > summary::after { content: '−'; }
+.marks-projection-toggle:focus-visible { outline: 2px solid var(--planner-green, #c5d4a7); outline-offset: 4px; }
+.marks-projection-preview { display: flex; align-items: baseline; gap: 4px; margin-left: auto; color: var(--planner-green, #c5d4a7); white-space: nowrap; }
+.marks-projection-preview strong { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.marks-projection-preview small { color: #adb4a4; font-size: 11px; }
+.marks-projection-content { padding: 16px 0 24px; border-top: 1px solid #434b3d; }
+.marks-projection:not([open]) > .marks-projection-content { display: none; }
+.marks-projection-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.marks-projection[hidden] { display: none; }
+.marks-overall-target { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #f1eee3; font-size: 14px; }
+.marks-overall-target output { color: var(--planner-green, #c5d4a7); font-size: 12px; }
+.marks-overall-range { display: block; appearance: none; -webkit-appearance: none; width: 100%; height: 44px; min-height: 44px; margin: 8px 0 0; padding: 0; border: 0; background: transparent; accent-color: var(--planner-green, #c5d4a7); cursor: pointer; }
+.marks-overall-range::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: #535c4b; }
+.marks-overall-range::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; margin-top: -10px; border: 2px solid #262e21; border-radius: 50%; background: var(--planner-green, #c5d4a7); }
+.marks-overall-range::-moz-range-track { height: 4px; border-radius: 4px; background: #535c4b; }
+.marks-overall-range::-moz-range-thumb { width: 20px; height: 20px; border: 2px solid #262e21; border-radius: 50%; background: var(--planner-green, #c5d4a7); }
+.marks-overall-range:focus-visible { outline: 2px solid var(--planner-green, #c5d4a7); outline-offset: 2px; }
+.marks-overall-stops { display: flex; justify-content: space-between; margin-bottom: 24px; color: #adb4a4; font-size: 12px; }
+.marks-projection h3 { margin: 0; color: #f1eee3; font-size: 16px; font-weight: 500; }
+.marks-projection p { margin: 8px 0 0; color: #adb4a4; font-size: 12px; line-height: 1.5; }
+.marks-projection-score { display: flex; align-items: baseline; gap: 8px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.marks-projection-score strong { color: var(--planner-green, #c5d4a7); font-size: 48px; font-weight: 500; letter-spacing: -.04em; }
+.marks-projection-score span { color: #adb4a4; font-size: 14px; }
+.marks-history { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.marks-history label { display: grid; gap: 8px; color: #cdd2c6; font-size: 12px; }
+.marks-history input { min-width: 0; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid #535d4b; border-radius: 8px; background: #1c1e1b; color: #f1eee3; font-size: 16px; }
+.marks-history input:focus-visible { outline: 2px solid var(--planner-green, #c5d4a7); outline-offset: 2px; }
+.marks-history input[aria-invalid="true"] { border-color: #e7c6a1; }
+.marks-semester { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #434b3d; }
+.marks-semester > div > span { color: #f1eee3; font-size: 14px; }
+.marks-semester p { margin-top: 4px; }
+.marks-semester output { color: var(--planner-green, #c5d4a7); font-size: 24px; font-variant-numeric: tabular-nums; }
 @media (hover: hover) and (pointer: fine) {
-  .mark-grade-stops button:hover, .mark-custom-toggle:hover { color: #f1eee3; }
-  .mark-scheme:hover { border-color: var(--mark-sage); }
+  .mark-grade-stops button:hover, .mark-plan-toggle:hover { color: #f1eee3; }
   .planner #marks-panel .mark-course .course-details > summary:hover { background: transparent; color: #f1eee3; }
 }
 @media (max-width: 640px) {
-  .mark-course { padding-top: 8px; }
+  .mark-course { padding: 8px 16px; }
   .mark-course-header { gap: 12px; }
-  .mark-plan { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; padding-top: 2px; }
-  .mark-plan-head, .mark-plan-body, .mark-goal { display: contents; }
-  .mark-grade-heading, .mark-scheme-label > span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-  .mark-scheme-label { grid-column: 2; grid-row: 1; }
-  .mark-scheme { width: 100%; font-size: 12px; }
-  .mark-target-top { grid-column: 1; grid-row: 1; gap: 6px; }
-  .mark-custom-toggle { font-size: 10px; padding-left: 4px; }
-  .mark-plan[data-custom="true"] .mark-target-grade { display: none; }
-  .mark-grade-range { grid-column: 1 / -1; height: 20px; }
-  .mark-grade-stops, .mark-custom-field, .mark-custom-scheme, .mark-plan-error, .mark-plan-note { grid-column: 1 / -1; }
-  .mark-expected { grid-column: 1; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 2px; margin: 0; padding-top: 4px; }
-  .mark-expected > span { align-self: auto; }
-  .mark-expected input { grid-column: 1; grid-row: 2; width: 76px; }
-  .mark-expected small { grid-row: 3; }
-  .mark-result { grid-column: 2; padding: 4px 0 0 12px; }
-  .mark-result-number { font-size: 30px; }
-  .mark-result[data-tone="limited"] .mark-result-number { font-size: 21px; }
-  .mark-result-detail { margin-top: 4px; font-size: 10px; line-height: 1.4; }
-  .mark-result-caption { font-size: 10px; margin-bottom: 2px; }
-  .mark-result-max { font-size: 11px; margin-left: 3px; }
-  .mark-result-best { margin-top: 3px; }
-  .mark-plan-note { margin-top: 6px; }
-  .mark-custom-scheme label { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .mark-result { padding: 24px 16px; }
+  .marks-projection { padding: 0 16px; }
+  .marks-projection-heading { gap: 16px; }
+  .marks-projection-score { display: block; text-align: right; }
+  .marks-projection-score strong { display: block; font-size: 36px; }
 }
 @media (max-width: 380px) {
-  .mark-course { padding-inline: 0; }
-  .mark-course-header { gap: 8px; }
-  .planner #marks-panel .mark-course .course-title { font-size: 17px; }
+  .mark-course { padding-inline: 12px; }
+  .planner #marks-panel .mark-course .course-title { font-size: 16px; }
   .planner #marks-panel .mark-course .course-score { max-width: 76px; font-size: 20px; }
-  .mark-target-top { gap: 4px; }
-  .mark-target-grade { font-size: 17px; }
-  .mark-scheme { font-size: 11px; }
-  .mark-result { padding-left: 10px; }
+  .mark-result-number { font-size: 36px; }
+  .mark-result-max { font-size: 14px; }
 }

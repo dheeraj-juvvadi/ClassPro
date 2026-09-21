@@ -1,0 +1,62 @@
+.academic-journey { margin-top: 16px; padding: 24px 24px 0; border: 1px solid #434b3d; border-radius: 16px; background: #1c1e1b; color: #f1eee3; }
+.academic-journey:empty { display: none; }
+.journey-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.planner #marks-panel .journey-heading h3 { margin: 0; font-size: 16px; font-weight: 500; letter-spacing: -.02em; }
+.journey-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding-block: 24px; }
+.journey-metric { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.journey-metric > span, .journey-metric small { color: #adb4a4; font-size: 12px; line-height: 1.5; }
+.journey-metric > strong { color: var(--planner-green, #c5d4a7); font-size: 36px; line-height: 1.2; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.journey-progress { display: grid; gap: 8px; padding-bottom: 24px; }
+.journey-progress progress { display: block; width: 100%; height: 4px; border: 0; border-radius: 4px; appearance: none; background: #373d36; color: var(--planner-green, #c5d4a7); }
+.journey-progress progress::-webkit-progress-bar { border-radius: 4px; background: #373d36; }
+.journey-progress progress::-webkit-progress-value { border-radius: 4px; background: var(--planner-green, #c5d4a7); }
+.journey-progress progress::-moz-progress-bar { border-radius: 4px; background: var(--planner-green, #c5d4a7); }
+.journey-progress > span { color: #adb4a4; font-size: 12px; }
+.journey-details { border-top: 1px solid #373d36; }
+.journey-details > summary, .journey-semester > summary { display: flex; align-items: center; gap: 12px; min-height: 56px; padding-block: 12px; cursor: pointer; list-style: none; font-size: 14px; }
+.journey-details > summary::-webkit-details-marker, .journey-semester > summary::-webkit-details-marker { display: none; }
+.journey-details > summary::after, .journey-semester > summary::after { content: '+'; flex: none; width: 16px; text-align: center; font-size: 20px; color: var(--planner-green, #c5d4a7); }
+.journey-details[open] > summary::after, .journey-semester[open] > summary::after { content: '−'; }
+.journey-details > summary:focus-visible, .journey-semester > summary:focus-visible { outline: 2px solid var(--planner-green, #c5d4a7); outline-offset: 4px; border-radius: 4px; }
+.journey-count { margin-left: auto; color: #adb4a4; font-size: 12px; }
+.journey-body { padding: 8px 0 24px; }
+.journey-details:not([open]) > .journey-body, .journey-semester:not([open]) > .journey-courses { display: none; }
+.journey-chart { margin: 0 0 24px; }
+.journey-chart figcaption { font-size: 14px; margin-bottom: 16px; }
+.journey-chart svg { display: block; width: 100%; overflow: visible; }
+.journey-grid { stroke: #373d36; stroke-width: 1; }
+.journey-axis { fill: #adb4a4; font-size: 12px; }
+.journey-line { fill: none; stroke: var(--planner-green, #c5d4a7); stroke-width: 2.5; stroke-linejoin: round; }
+.journey-dot { fill: var(--planner-green, #c5d4a7); stroke: #1c1e1b; stroke-width: 2; }
+.journey-point-label { fill: #f1eee3; font-size: 12px; font-variant-numeric: tabular-nums; }
+.journey-insights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px; border: 1px solid #373d36; border-radius: 12px; background: #23281f; }
+.journey-insights .journey-metric > strong { font-size: 24px; }
+.journey-distribution { margin-block: 24px; }
+.journey-distribution h4 { margin: 0 0 12px; font-size: 14px; font-weight: 400; }
+.journey-distribution ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.journey-distribution li { padding: 4px 12px; border: 1px solid #434b3d; border-radius: 8px; font-size: 12px; color: #cdd2c6; }
+.journey-semesters { display: grid; gap: 8px; }
+.journey-semester { min-width: 0; padding: 0 16px; border: 1px solid #434b3d; border-radius: 12px; }
+.journey-semester-title { min-width: 0; }
+.journey-semester-title strong { display: block; font-size: 14px; font-weight: 500; }
+.journey-semester-title small { display: block; margin-top: 4px; color: #adb4a4; font-size: 12px; }
+.journey-semester-score { margin-left: auto; white-space: nowrap; color: var(--planner-green, #c5d4a7); font-size: 20px; font-variant-numeric: tabular-nums; }
+.journey-semester-score small { margin-left: 4px; color: #adb4a4; font-size: 12px; }
+.journey-courses { padding: 0; margin: 0; list-style: none; }
+.journey-course { display: flex; align-items: center; gap: 16px; padding-block: 16px; border-top: 1px solid #373d36; }
+.journey-course > div { min-width: 0; flex: 1; }
+.journey-course > div > span { font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.journey-course small { display: block; margin-top: 4px; color: #adb4a4; font-size: 12px; overflow-wrap: anywhere; }
+.journey-grade { flex: none; min-width: 36px; text-align: center; color: var(--planner-green, #c5d4a7); font-size: 18px; font-weight: 500; }
+.journey-footnote, .journey-empty, .journey-notice { color: #adb4a4; font-size: 12px; line-height: 1.6; margin: 16px 0 0; }
+.journey-empty { margin: 16px 0 24px; }
+.journey-notice { margin: 0 0 16px; color: #e7c6a1; }
+@media (max-width: 640px) {
+  .academic-journey { padding: 16px 16px 0; }
+  .journey-metrics { gap: 16px; padding-block: 16px; }
+  .journey-progress { padding-bottom: 16px; }
+  .journey-semester { padding-inline: 12px; }
+  .journey-semester-score small { display: none; }
+  .journey-point-label { display: none; }
+  .journey-chart svg { min-height: 120px; }
+}

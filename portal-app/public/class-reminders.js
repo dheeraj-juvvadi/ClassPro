@@ -1,6 +1,6 @@
 'use strict';
 
-// Ratio-D's 15/5 minute reminders, scoped to a dated class and opt-in session.
+// 15/5 minute class reminders, scoped to a dated class and opt-in session.
 globalThis.createClassReminders = ({ notify }) => {
   let enabled = false;
   let day = '';
@@ -10,10 +10,10 @@ globalThis.createClassReminders = ({ notify }) => {
     clear() { enabled = false; day = ''; sent.clear(); },
     check(next, now) {
       if (!enabled || !next || next.unknown) return;
-      const date = classproScheduleModel.key(now);
+      const date = anonScheduleModel.key(now);
       if (day !== date) { day = date; sent.clear(); }
-      if (classproScheduleModel.key(next.date) !== date) return;
-      const minutes = classproHomeModel.minutes(next.start) - now.getHours() * 60 - now.getMinutes();
+      if (anonScheduleModel.key(next.date) !== date) return;
+      const minutes = anonHomeModel.minutes(next.start) - now.getHours() * 60 - now.getMinutes();
       if (minutes <= 0 || minutes > 15) return;
       const window = minutes <= 5 ? 5 : 15;
       const tag = `anon-class-${date}-${next.code || next.title}-${next.start}-${window}`;

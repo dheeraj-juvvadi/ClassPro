@@ -1,4 +1,4 @@
-/* ClassPro portal OCR web worker (classic worker).
+/* Anon portal OCR web worker (classic worker).
    Owned file: portal-app/public/ocr-worker.js
    Protocol:
      -> {id, type:'init'}

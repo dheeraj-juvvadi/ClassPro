@@ -5,13 +5,13 @@ import '../public/attendance-math.js';
 import '../public/home-model.js';
 import '../public/schedule-model.js';
 
-const model = globalThis.classproScheduleModel;
+const model = globalThis.anonScheduleModel;
 const slot = { code: 'SYN', title: 'Synthetic course', room: 'Test room', start: '10:30', end: '11:30', dayOrder: 'A' };
 const report = (entries = [slot], calendar = []) => ({ timezone: 'Asia/Kolkata', entries, calendar });
 const teaching = { date: '2026-09-15', kind: 'teaching', dayOrder: 'A' };
 
-test('Ratio-D calendar descriptions do not invalidate the entire schedule', () => {
-  const raw = JSON.parse(readFileSync(new URL('../../ratio-diagnostic/data/calendar_data.json', import.meta.url), 'utf8'));
+test('long portal calendar descriptions do not invalidate the entire schedule', () => {
+  const raw = JSON.parse(readFileSync(new URL('./fixtures/calendar-labels.json', import.meta.url), 'utf8'));
   const calendar = raw.filter(row => /^[1-5]$/.test(row.order)).map(row => {
     const date = new Date(row.date);
     return { date: model.key(date), kind: 'teaching', dayOrder: row.order, label: row.description };
@@ -61,7 +61,7 @@ test('continuous periods merge after allocation and batch filtering without chan
   assert.equal(result.length, 1);
   assert.equal(result[0].end, '12:30');
   assert.equal(entries[0].end, '11:30');
-  const hours = (classproHomeModel.minutes(result[0].end) - classproHomeModel.minutes(result[0].start)) / 60;
+  const hours = (anonHomeModel.minutes(result[0].end) - anonHomeModel.minutes(result[0].start)) / 60;
   assert.equal(hours, 2);
   assert.equal(attendanceMath.predict({ present: 18, conducted: 22, miss: hours }).percentage, 75);
 });
