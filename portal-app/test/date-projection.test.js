@@ -71,6 +71,17 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   });
   await page.locator('button[data-page="attendance"]').click();
   await page.locator('#calculate-attendance').click();
+  assert.equal(await page.locator('#projection-range-form').isVisible(), true);
+  assert.equal(await page.locator('#projection-outlook').isHidden(), true);
+  assert.equal(await page.locator('#projection-customize').evaluate(el => el.open), false);
+  assert.equal(await page.evaluate(() => performance.getEntriesByType('resource').some(r => r.name.includes('/cally.'))), false);
+  await page.locator('#projection-customize > summary').click();
+  const expectProjection = async percentage => {
+    await page.locator('#projection-review-custom').click();
+    assert.equal(await page.locator('#projection-outlook').isVisible(), true);
+    assert.equal(await page.locator('.date-result-percentage').textContent(), percentage);
+    await page.locator('#projection-change').click();
+  };
   const day = value => page.locator(`#projection-calendar calendar-month button[part~="date-2026-09-${value}"]`);
   const focusDate = () => page.locator('#projection-calendar calendar-month').evaluate(el => el.shadowRoot.activeElement?.getAttribute('part'));
   await day(14).waitFor({ state: 'visible' });
@@ -86,19 +97,22 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
     const geometry = await page.evaluate(() => {
       const dialog = document.querySelector('#projection-dialog');
       const rect = dialog.getBoundingClientRect();
-      const footer = document.querySelector('.date-planner-footer').getBoundingClientRect();
       const month = document.querySelector('calendar-month');
       return { left: rect.left, right: rect.right, bottom: rect.bottom, overflow: dialog.scrollWidth > dialog.clientWidth,
-        doneVisible: footer.bottom <= innerHeight && footer.top >= 0, monthOverflow: month.scrollWidth > month.clientWidth };
+        monthOverflow: month.scrollWidth > month.clientWidth };
     });
-    assert.ok(geometry.left >= 0 && geometry.right <= width && geometry.bottom <= 844 && geometry.doneVisible && !geometry.overflow && !geometry.monthOverflow, JSON.stringify({width, ...geometry}));
+    assert.ok(geometry.left >= 0 && geometry.right <= width && geometry.bottom <= 844 && !geometry.overflow && !geometry.monthOverflow, JSON.stringify({width, ...geometry}));
+    assert.equal(await page.locator('#projection-done').isHidden(), true, 'Done belongs to the results step');
+    await page.locator('#projection-review-custom').scrollIntoViewIfNeeded();
+    assert.equal(await page.locator('#projection-review-custom').isVisible(), true);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   assert.equal(await page.locator('#projection-dialog').evaluate(el => getComputedStyle(el).animationName), 'none');
   await day(14).click();
   await day(15).click();
-  assert.match(await page.locator('#projection-result').innerText(), /69.23%/);
+  await expectProjection('69.2%');
+  await day(15).focus();
   await page.evaluate(() => {
     dateTestReport.data[0] = { ...dateTestReport.data[0], present: 20, conducted: 24 };
     anonHome.update(dateTestReport, dateTestSchedule);
@@ -106,7 +120,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   assert.match(await focusDate(), /date-2026-09-15/);
   assert.equal(await day(14).getAttribute('aria-pressed'), 'true');
   assert.equal(await day(15).getAttribute('aria-pressed'), 'true');
-  assert.match(await page.locator('#projection-result').innerText(), /71.43%/);
+  await expectProjection('71.4%');
   await day(14).focus();
   await page.evaluate(() => {
     dateTestSchedule.calendar[1] = { date: '2026-09-14', kind: 'holiday' };
@@ -116,18 +130,20 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   assert.equal(await day(14).getAttribute('aria-pressed'), 'false');
   assert.equal(await day(15).getAttribute('aria-pressed'), 'true');
   assert.match(await focusDate(), /date-2026-09-14/);
-  assert.match(await page.locator('#projection-result').innerText(), /76.92%/);
+  await expectProjection('76.9%');
   assert.match(await page.locator('#projection-period').innerText(), /cleared 1 unavailable date/);
   await page.locator('#date-actions button[data-action="od"]').click();
   await day(13).click();
   await page.evaluate(() => dateAttendance.clock(new Date(2026, 8, 16)));
   assert.equal(await day(15).getAttribute('aria-pressed'), 'false');
   assert.equal(await day(13).getAttribute('aria-pressed'), 'true');
-  assert.match(await page.locator('#projection-result').innerText(), /91.67%/);
+  await expectProjection('91.7%');
+  await page.locator('#projection-review-custom').click();
   await page.locator('#projection-done').click();
   assert.equal(await page.locator('#projection-dialog').isHidden(), true);
   assert.equal(await page.locator('#calculate-attendance').evaluate(el => el === document.activeElement), true);
   await page.evaluate(() => dateAttendance.open('DS', new Date(2026, 8, 16)));
+  await page.locator('#projection-customize > summary').click();
   assert.equal(await page.locator('#date-actions button[data-action="leave"]').getAttribute('aria-pressed'), 'true');
   assert.equal(await day(16).getAttribute('aria-pressed'), 'true');
   await page.evaluate(() => anonHome.update(dateTestReport, null));
@@ -144,6 +160,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
     anonHome.update(dateTestReport, dateTestSchedule);
   });
   await page.locator('#calculate-attendance').click();
+  await page.locator('#projection-customize > summary').click();
   await day(15).click();
   assert.match(await page.locator('#projection-action-hint').innerText(), /end date/);
   await day(18).click();
@@ -154,7 +171,13 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   assert.equal(await day(16).getAttribute('aria-pressed'), 'false');
   for (const n of [15, 17, 18]) assert.equal(await day(n).getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('#projection-selections button[data-date="2026-09-16"]').count(), 0);
-  assert.match(await page.locator('#projection-result').innerText(), /8h attend · 12h leave/);
+  await page.locator('#projection-review-custom').click();
+  await page.locator('.date-projection-course > summary').click();
+  assert.equal(await page.locator('.date-result-percentage').textContent(), '63.6%');
+  assert.match(await page.locator('.date-result-impact').innerText(), /4 h attended before/);
+  assert.match(await page.locator('.date-result-impact').innerText(), /4 h attended during/);
+  assert.match(await page.locator('.date-result-impact').innerText(), /12 h missed/);
+  await page.locator('#projection-change').click();
   await page.evaluate(() => anonHome.update(dateTestReport, dateTestSchedule));
   assert.equal(await day(16).getAttribute('aria-pressed'), 'false', 'refresh must preserve the hole in the range');
   await day(16).click();
@@ -188,6 +211,7 @@ test('open date plans reconcile refreshed records, rollover and sign-out', { tim
   assert.equal(await page.locator('#projection-selections button').count(), 0);
   await day(18).click(); await day(15).click();
   assert.equal(await page.locator('#projection-count').textContent(), '3');
+  await page.locator('#projection-review-custom').click();
   await page.locator('#projection-done').click();
   assert.deepEqual(errors, []);
 });

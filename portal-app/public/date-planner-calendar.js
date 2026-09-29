@@ -15,7 +15,8 @@ globalThis.createDatePlannerCalendar = ({ onToggle, onFocus }) => {
     calendar.isDateDisallowed = date => {
       const value = key(date);
       return model.dayState(state.source, model.parse(value)).kind !== 'teaching'
-        || value < model.key(state.today) && state.action !== 'od';
+        || value < model.key(state.today) && state.action !== 'od'
+        || state.pastOnly && value >= model.key(state.today);
     };
     calendar.getDayParts = date => {
       const value = key(date), action = state.selected[value];

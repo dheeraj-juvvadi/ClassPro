@@ -43,7 +43,7 @@
   <link rel="stylesheet" href="/academic-history.css?v=cfdac8dfdb">
   <script src="/academic-history-model.js?v=44ffffaa3d" defer></script>
   <script src="/academic-history.js?v=d613d14fcb" defer></script>
-  <link rel="stylesheet" href="/date-planner.css?v=3d49147122">
+  <link rel="stylesheet" href="/date-planner.css?v=163785134b">
   <link rel="stylesheet" href="/workspace-pages.css?v=f0b3d4e8b2">
   <link rel="stylesheet" href="/ascii-art.css?v=9f381fa0d3">
   <link rel="stylesheet" href="/attendance-page.css?v=3d703f6240">
@@ -63,11 +63,11 @@
   <script src="/schedule-preferences.js?v=3db9f39d36" defer></script>
   <script src="/home.js?v=05ebcefe68" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
-  <script src="/date-projection.js?v=686ae2a75f" defer></script>
-  <script src="/date-planner-calendar.js?v=9e11ec8db0" defer></script>
-  <script src="/date-planner-results.js?v=e234c3068f" defer></script>
+  <script src="/date-projection.js?v=4d20a96ca1" defer></script>
+  <script src="/date-planner-calendar.js?v=46f0b7134a" defer></script>
+  <script src="/date-planner-results.js?v=8fb95a941c" defer></script>
   <script src="/date-planner-day.js?v=3630cdff9b" defer></script>
-  <script src="/date-attendance.js?v=3a29a9fc3e" defer></script>
+  <script src="/date-attendance.js?v=b680e9a323" defer></script>
   <script src="/academic-ui.js?v=36d3648c33" defer></script>
   <script src="/login-admission.js?v=b122a07aa7" defer></script>
   <script src="/provider-connections.js?v=7d4ac181f0" defer></script>
@@ -282,13 +282,20 @@
   <footer class="site-footer">Anon <span>Student Portal</span><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><button type="button" data-consent-open>Analytics preference</button></footer>
   <dialog id="projection-dialog" aria-labelledby="projection-title" aria-describedby="projection-intro" data-mode="leave">
     <header class="date-planner-header">
-      <div><h2 id="projection-title">Attendance planner</h2><p id="projection-intro">Choose your dates, then adjust individual classes.</p></div>
+      <div><button id="projection-change" type="button" hidden>‹ &nbsp; Change dates</button><h2 id="projection-title" tabindex="-1">Planning a break?</h2><p id="projection-intro">Pick the days you’ll be away.</p></div>
       <button id="close-projection" type="button" aria-label="Close calculator">×</button>
     </header>
     <div class="date-planner-layout">
       <section class="date-planner-input" aria-label="Plan your dates">
+        <form id="projection-range-form">
+          <div class="date-planner-mode"><label for="projection-mode">Plan</label><select id="projection-mode"><option value="leave">Leave</option><option value="attend">Attend</option><option value="od">OD correction</option></select></div>
+          <div class="date-planner-fields"><label for="projection-from">From<input id="projection-from" type="date" required></label><label for="projection-through">Through<input id="projection-through" type="date" required></label></div>
+          <p id="projection-assumption">Assuming you attend before your break.</p>
+          <p id="projection-range-error" role="alert" hidden></p>
+          <button id="projection-apply" type="submit">See my attendance<span aria-hidden="true">→</span></button>
+        </form>
+        <details id="projection-customize"><summary>Customize days</summary>
         <div id="projection-date-picker">
-        <div class="date-planner-section"><h3>Plan attendance</h3></div>
         <div id="date-actions" class="date-actions" role="group" aria-label="Attendance action">
           <button type="button" data-action="leave" aria-pressed="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 15 15 5M5 5h10v10"/></svg>Leave</button>
           <button type="button" data-action="attend" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>Attend</button>
@@ -309,15 +316,18 @@
         <p id="projection-period" class="date-planner-status" role="status"></p>
         </div>
         <section id="projection-day-editor" aria-label="Edit classes for a day" hidden></section>
+        <button id="projection-review-custom" type="button">Review changes<span aria-hidden="true">→</span></button>
+        </details>
       </section>
-      <section class="date-planner-outlook" aria-label="Projected attendance">
-        <div class="date-planner-section"><h3>Projection</h3><span class="date-planner-target">75% target</span></div>
+      <section id="projection-outlook" class="date-planner-outlook" aria-label="Projected attendance" hidden>
+        <div class="date-planner-section"><span>Subject</span><span id="projection-result-date">After changes</span></div>
         <p id="projection-summary" class="date-planner-summary" role="status"></p>
         <div id="projection-result"></div>
-        <details class="date-planner-assumptions"><summary>How this is calculated</summary><p>Hours follow your SRM timetable and day orders. Unselected teaching days through your last leave date count as attended. Past dates allow OD corrections only, capped at recorded absences.</p><p>These are estimates. Missing calendar dates are excluded, and your records stay unchanged.</p></details>
+        <p class="date-planner-target">Minimum attendance: 75%</p>
+        <details class="date-planner-assumptions"><summary>About this estimate</summary><p>Estimates use your recorded attendance and verified timetable. Future plans assume attendance on unedited days from today through the end date; your selected actions and class edits override that assumption.</p><p>OD corrections use past dates and are capped at recorded absences. Missing dates cannot be predicted. Your records stay unchanged.</p></details>
       </section>
     </div>
-    <footer class="date-planner-footer"><span>Estimates only · Records unchanged</span><button id="projection-done" type="button">Done</button></footer>
+    <footer class="date-planner-footer" hidden><button id="projection-done" type="button">Close<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg></button></footer>
   </dialog>
   <div id="sync-notice" role="status" aria-live="polite" aria-atomic="true" hidden>
     <img class="sync-notice-flower" src="/loading-flower.svg" width="24" height="24" alt="" aria-hidden="true" decoding="async">

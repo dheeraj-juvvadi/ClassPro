@@ -234,7 +234,15 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#calendar-title').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
   assert.equal(await page.getByText('Day orders, dates & days off.', { exact: true }).count(), 0);
   await page.getByRole('button', { name: 'Plan attendance for this day', exact: true }).click();
+  assert.equal(await page.locator('#projection-customize').evaluate(el => el.open), true, 'day entry opens customization automatically');
+  assert.equal(await page.locator('#projection-range-form').isVisible(), true);
+  assert.equal(await page.locator('#projection-day-editor').isVisible(), true);
   assert.equal(await page.locator('.day-class-select input:checked').count(), 4);
+  assert.equal(await page.locator('#projection-outlook').isHidden(), true);
+  await page.locator('#projection-review-custom').click();
+  assert.equal(await page.locator('#projection-day-editor').isVisible(), false);
+  assert.equal(await page.locator('#projection-outlook').isVisible(), true);
+  assert.equal(await page.locator('.date-projection-course > summary').count(), 4);
   await page.locator('#projection-done').click();
   await page.locator('[data-sidebar-action="open-accounts"]').click();
   assert.equal(await page.title(), 'Settings · Anon');

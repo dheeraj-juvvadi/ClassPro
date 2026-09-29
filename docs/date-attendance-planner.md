@@ -1,10 +1,22 @@
 # Attendance planner and schedule preferences
 
-The planner uses Cally 0.9.2 calendar components, vendored with MIT attribution
-in portal-app/licenses. The module is 38,355 bytes / about 12 KB gzip, loaded on
-first opening and available in the public offline shell. No runtime CDN is used.
+The main planner is a quiet two-step flow: choose Leave, Attend or OD correction
+and a From/Through range, then review one final percentage per subject. Expand a
+subject for recorded attendance, before/after checkpoints and counted hours.
+Historical OD shows Recorded/After OD correction instead of a future forecast.
+A compact text/icon Close action dismisses the estimate; it does not save records.
 
-Selecting a start and end date includes confirmed teaching dates in between.
+Customize days reveals Cally 0.9.2 calendar components, vendored with MIT
+attribution in portal-app/licenses. The module is 38,355 bytes / about 12 KB gzip,
+loaded only on customization and available offline. No runtime CDN is used.
+
+Native ranges replace an earlier plan when the dates or mode change. Reviewing
+an unchanged range preserves removed days and per-class edits. The requested
+endpoints remain fixed even if an endpoint is removed: unselected future classes
+inside the range count as attended. Newly verified teaching dates adopt the
+range action on refresh, but intentionally removed dates stay removed.
+
+In the advanced calendar, selecting start and end dates includes teaching dates.
 Reverse selections work. Holidays, missing calendar entries and past non-OD
 dates are excluded. A single first date is immediately usable. Additional ranges
 are additive, and already customized classes are retained when the day action
@@ -19,13 +31,27 @@ All classes start selected for the chosen action. Students can unselect a class,
 choose Attend/Miss/OD, or enter counted attended hours within a class block.
 There is no time-of-day cutoff preset. Past dates permit OD corrections only;
 corrections are capped at recorded absences and never add conducted hours.
-Intervening teaching dates before a future missed class count as attended, as
-stated in the calculator. No official report is modified by a scenario.
+For native future plans, verified teaching dates from today through the day
+before the range count as attended unless explicitly customized. Only selected
+Leave classes count as missed; Attend adds their present and conducted hours.
+For October 15–25 leave, October 1–14 attendance is included before subtracting
+selected leave hours. Each checkpoint is calculated from the recorded baseline,
+not from another prediction's returned present value. Today's existing scheduled
+hours are included because reports supply no attendance-as-of timestamp.
+
+Unknown calendar dates never manufacture hours. Any incomplete final forecast
+is shown as —; a verified before-range checkpoint can still be shown. Reversed
+ranges and traversals over 400 calendar days are rejected. Native OD accepts
+only dates before today, ignores selections outside its range, and never adds
+intervening or future attendance. No official report is modified by a scenario.
 
 Plans are kept for the current visit and cleared on sign-out. Report refreshes
 recalculate open plans, retain valid dates and discard changed class identifiers.
-Date rollover removes past non-OD selections. Removed dates/class overrides are
-described in the status text. Class identifiers include code, time, hours, batch
+Date rollover removes past non-OD selections. Ongoing native ranges remain
+reviewable, using the refreshed baseline with no invented historical before
+checkpoint. Expired future ranges return to date selection on either clock or
+report refresh; historical OD plans remain reviewable. Removed dates/class
+overrides are described in the status text. Class identifiers include code, time, hours, batch
 and allocation so a changed timetable does not silently reuse an old override.
 
 Schedule, Calendar and Settings have their own hash routes, page titles and
