@@ -30,6 +30,7 @@ test('one ID connects both providers and keeps failures inline', { timeout: 3000
   await page.goto(origin);
   await page.locator('#login-view').waitFor({ state: 'visible' });
   await page.locator('#account').fill('student@srmist.edu.in');
+  await page.locator('#sign-in').click();
   await page.locator('#password').fill('academia secret');
   await page.locator('#portal-password').fill('portal secret');
   // The real Portal challenge advertises serverAuto; use a synthetic image here.
@@ -49,8 +50,10 @@ test('one ID connects both providers and keeps failures inline', { timeout: 3000
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.locator('#login-view').waitFor({ state: 'visible' });
-  await page.locator('#account').fill('student');
+  await page.locator('#account').fill('student@srmist.edu.in');
+  await page.locator('#sign-in').click();
   await page.locator('#password').fill('wrong');
+  await page.locator('#portal-password').fill('wrong portal');
   await page.locator('#sign-in').click();
   await page.locator('#login-message').waitFor({ state: 'visible' });
   assert.match(await page.locator('#login-message').innerText(), /Academia.*Temporarily unavailable/);
@@ -70,13 +73,15 @@ test('one ID connects both providers and keeps failures inline', { timeout: 3000
     return route.fulfill({ json: { authenticated: true } });
   });
   await page.locator('#password').fill('synthetic secret');
+  await page.locator('#portal-password').fill('synthetic portal secret');
   await page.locator('#sign-in').click();
   await page.waitForFunction(() => document.querySelector('#sign-in-status').textContent.includes('Retrying'));
   assert.equal(await page.locator('#sign-in-status').evaluate(el => getComputedStyle(el).clipPath), 'none');
   assert.equal(await page.locator('#sign-in').isDisabled(), true);
   await page.locator('#home-view').waitFor({ state: 'visible' });
-  assert.equal(requests.length, 2);
+  assert.equal(requests.length, 3);
   assert.deepEqual(requests[0], requests[1], 'retry preserves the same provider, CAPTCHA and credentials');
+  assert.equal(requests[2].provider, 'portal');
   assert.ok(retriedAt - rejectedAt >= 2000, 'must honor the server Retry-After');
   assert.doesNotMatch(await page.evaluate(() => JSON.stringify(localStorage)), /synthetic secret/);
 });

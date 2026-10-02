@@ -13,7 +13,7 @@ globalThis.anonHome = (() => {
   let scheduleInvalid = false;
   let selectedDate = null;
   const filters = { allocation: '', batch: '' };
-  const pages = new Set(['home', 'attendance', 'marks', 'calendar', 'settings', 'schedule']);
+  const pages = new Set(['home', 'attendance', 'marks', 'grades', 'calendar', 'settings', 'schedule']);
   const route = () => pages.has(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
   let launchDestination = null;
   const source = () => reportedSchedule ? schedulePreferences.apply(reportedSchedule) : schedule;
@@ -77,11 +77,12 @@ globalThis.anonHome = (() => {
       try { history.pushState(null, '', `${location.pathname}${location.search}#${destination}`); } catch {}
     }
     globalThis.anonClientLogs?.capture({ kind: 'page_view', page: destination, consent: true });
-    document.title = `${{ home: 'Home', attendance: 'Attendance', marks: 'Marks', calendar: 'Academic calendar', settings: 'Settings', schedule: 'Schedule' }[destination]} · Anon`;
+    document.title = `${{ home: 'Home', attendance: 'Attendance', marks: 'Marks', grades: 'Grade planning', calendar: 'Academic calendar', settings: 'Settings', schedule: 'Schedule' }[destination]} · Anon`;
     const previousPage = document.body.dataset.page;
     document.body.dataset.page = destination;
     get('home-view').hidden = destination !== 'home';
     get('reports-view').hidden = !['attendance', 'marks'].includes(destination);
+    get('grades-view').hidden = destination !== 'grades';
     get('calendar-view').hidden = destination !== 'calendar';
     get('settings-view').hidden = destination !== 'settings';
     get('schedule-view').hidden = destination !== 'schedule';
@@ -94,12 +95,12 @@ globalThis.anonHome = (() => {
       else button.removeAttribute('aria-current');
     }
     for (const button of document.querySelectorAll('[data-sidebar-action]')) {
-      const route = { 'open-calendar': 'calendar', 'open-accounts': 'settings', 'open-schedule': 'schedule' }[button.dataset.sidebarAction];
+      const route = { 'open-grades': 'grades', 'open-calendar': 'calendar', 'open-accounts': 'settings', 'open-schedule': 'schedule' }[button.dataset.sidebarAction];
       if (route === destination) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
     }
     get('reports-title').textContent = destination === 'marks' ? 'Your marks.' : 'Your attendance.';
-    const view = { home: 'home-view', calendar: 'calendar-view', settings: 'settings-view', schedule: 'schedule-view' }[destination] || 'reports-view';
-    const heading = { home: 'home-title', calendar: 'calendar-title', settings: 'accounts-title', schedule: 'schedule-page-title' }[destination] || 'reports-title';
+    const view = { home: 'home-view', grades: 'grades-view', calendar: 'calendar-view', settings: 'settings-view', schedule: 'schedule-view' }[destination] || 'reports-view';
+    const heading = { home: 'home-title', grades: 'grades-title', calendar: 'calendar-title', settings: 'accounts-title', schedule: 'schedule-page-title' }[destination] || 'reports-title';
     if (previousPage !== destination) anonFeedback.enter(get(view));
     if (focus) get(heading).focus();
     get('planner-menu').open = false;
@@ -243,6 +244,7 @@ globalThis.anonHome = (() => {
   }
 
   const monthCalendar = createAcademicCalendar({ container: get('academic-calendar'), source, now, filters });
+  get('open-grades').addEventListener('click', () => page('grades'));
   get('open-calendar').addEventListener('click', () => page('calendar'));
   get('open-schedule').addEventListener('click', () => page('schedule'));
 
@@ -310,7 +312,7 @@ globalThis.anonHome = (() => {
       page(launchDestination || route(), true, false);
       launchDestination = null;
     },
-    clear() { reminders.clear(); schedulePreferences.clear(); studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('calendar-view').hidden = true; get('settings-view').hidden = true; get('schedule-view').hidden = true; get('academic-calendar').replaceChildren(); updateFilters(); },
+    clear() { reminders.clear(); schedulePreferences.clear(); studentName = ''; greetingExtras = []; attendance = []; reportError = ''; reportedSchedule = null; scheduleInvalid = false; selectedDate = null; filters.allocation = ''; filters.batch = ''; get('schedule-dialog').close(); get('grades-view').hidden = true; get('calendar-view').hidden = true; get('settings-view').hidden = true; get('schedule-view').hidden = true; get('academic-calendar').replaceChildren(); updateFilters(); },
     update(report, scheduleReport) {
       attendance = Array.isArray(report?.data) ? report.data : [];
       reportError = report?.error?.message || '';

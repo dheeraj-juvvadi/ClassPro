@@ -184,5 +184,8 @@ globalThis.anonAuth = (() => {
     reset();
     element('password').focus();
   }
-  return { configure, reset, login, loginBoth, prepare, usePortal, get enabled() { return enabled; } };
+  // The login UI must not require a password already accepted during a CAPTCHA retry.
+  const isConnected = (name, account) => enabled && connected.has(name)
+    && flowAccount === String(account || '').trim().toLowerCase();
+  return { configure, reset, login, loginBoth, prepare, usePortal, isConnected, get enabled() { return enabled; } };
 })();

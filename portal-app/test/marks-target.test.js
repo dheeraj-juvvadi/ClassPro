@@ -58,7 +58,7 @@ test('course suffix and credit-weighted projection never invent missing credits'
   assert.equal(math.cumulative(8, -1, 9, 20).value, null);
 });
 
-test('simple plans update projection and preserve inputs across report refresh', { timeout: 25000 }, async context => {
+test('grade route isolates plans and preserves projection inputs across report refresh', { timeout: 25000 }, async context => {
   const app = express();
   app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
   const server = app.listen(0, '127.0.0.1');
@@ -72,12 +72,37 @@ test('simple plans update projection and preserve inputs across report refresh',
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
   await page.route('**/api/**', route => { calls++; return route.fulfill({ json: {} }); });
-  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#marks`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#grades`);
+  assert.equal(await page.title(), 'Grade planning · Anon');
+  assert.equal(await page.locator('#grades-title').evaluate(el => el === document.activeElement), true);
+  assert.equal(await page.locator('#grades-view').isVisible(), true);
+  assert.equal(await page.locator('#planner-nav > [data-page="grades"]').count(), 0);
+  assert.equal(await page.locator('#grades-view #marks-projection').count(), 1);
+  assert.equal(await page.locator('#marks-content .mark-plan').count(), 0);
+  await page.locator('[data-page="marks"]').click();
+  assert.equal(await page.locator('#grades-view').isHidden(), true);
+  assert.equal(await page.locator('#marks-projection').isVisible(), false);
+  assert.equal(await page.locator('#academic-history').isVisible(), false);
+  const gradesButton = page.locator('[data-sidebar-action="open-grades"]');
+  await gradesButton.click();
+  assert.equal(new URL(page.url()).hash, '#grades');
+  assert.equal(await gradesButton.getAttribute('aria-current'), 'page');
+  await page.goBack();
+  await page.waitForFunction(() => document.body.dataset.page === 'marks');
+  assert.equal(await page.locator('#grades-view').isHidden(), true);
+  assert.equal(await gradesButton.getAttribute('aria-current'), null);
+  await page.goForward();
+  await page.waitForFunction(() => document.body.dataset.page === 'grades');
+  assert.equal(await page.locator('#grades-title').evaluate(el => el === document.activeElement), true);
   await page.evaluate(() => renderMarks({ data: [
     { code: 'DS', title: 'Data Structures', scored: 43, total: 50, components: [{ name: 'Test', scored: 43, total: 50 }] },
     { code: '21CSC314P', title: 'Lab', scored: 65, total: 80 },
   ] }, { DS: { credits: 4 }, '21CSC314P': { credits: 2 } }));
-  const plan = page.locator('.mark-plan[data-course="DS"]');
+  const plan = page.locator('#grades-content .mark-plan[data-course="DS"]');
+  const originalPlan = await plan.elementHandle();
+  assert.equal(await page.locator('#grades-content .mark-course').count(), 0);
+  assert.equal(await page.locator('#grades-content .grade-course[data-course="DS"] > .course-heading').count(), 1);
+  assert.equal(await page.locator('#grades-empty').isHidden(), true);
   const grade = name => plan.getByRole('button', { name, exact: true });
   const projection = page.locator('#marks-projection-value');
   assert.equal(await projection.textContent(), '9.67');
@@ -122,10 +147,10 @@ test('simple plans update projection and preserve inputs across report refresh',
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `overflow at ${width}`);
+    assert.ok(await page.locator('#grades-view').evaluate(el => el.getBoundingClientRect().width <= 900));
     assert.equal(await plan.evaluate(el => el.scrollWidth > el.clientWidth), false);
     assert.ok(await grade('O').evaluate(el => el.getBoundingClientRect().height >= 44));
   }
-  await page.locator('.mark-course[data-course="DS"] > .course-details > summary').click();
   await plan.locator('[data-field="expected"]').focus();
   await page.evaluate(() => renderMarks({ data: [
     { code: 'DS', title: 'Data Structures', scored: 52, total: 60, credits: 4 },
@@ -133,13 +158,21 @@ test('simple plans update projection and preserve inputs across report refresh',
   ] }));
   assert.equal(await plan.getAttribute('open'), '');
   assert.equal(await plan.locator('.mark-result-number').innerText(), '54.38');
-  assert.equal(await page.locator('.mark-course[data-course="DS"] > .course-details').getAttribute('open'), '');
+  assert.equal(await originalPlan.evaluate(el => el.isConnected && el === document.querySelector('#grades-content .mark-plan[data-course="DS"]')), true);
+  assert.equal(await plan.locator('[data-field="expected"]').isVisible(), false);
+  assert.equal(await plan.locator('[data-field="grade"]').evaluate(el => el === document.activeElement), true);
+  assert.equal(await page.locator('#marks-content .mark-plan').count(), 0);
   await page.evaluate(() => renderMarks({ data: [{ code: 'DS', title: 'Data Structures', scored: 52, total: 60 }] }));
   assert.equal(await projection.innerText(), '—');
   assert.match(await page.locator('#marks-projection-note').innerText(), /credits unavailable/);
+  await page.evaluate(() => renderMarks({ data: [] }));
+  assert.equal(await page.locator('#grades-empty').isVisible(), true);
+  assert.equal(await page.locator('#grades-content .mark-plan').count(), 0);
   await page.evaluate(() => anonMarksTarget.clear());
   assert.equal(await page.locator('#marks-projection').isHidden(), true);
   assert.equal(await page.locator('#marks-current-cgpa').inputValue(), '');
+  await page.evaluate(() => showLogin());
+  assert.equal(await page.locator('#grades-view').isHidden(), true);
   assert.deepEqual(errors, []);
   assert.equal(calls, 0, 'local planning must not request the server');
 });

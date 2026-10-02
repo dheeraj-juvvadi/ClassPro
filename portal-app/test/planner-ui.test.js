@@ -23,8 +23,9 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.getByRole('button', { name: 'Essential only', exact: true }).click();
   assert.equal(await page.locator('#sign-in canvas').count(), 0);
   assert.equal(await page.locator('script[src*="sign-in-particles"]').count(), 0);
-  assert.equal(await page.locator('#manual-captcha-answer').isVisible(), true);
-  assert.equal(await page.locator('#sign-in').evaluate(element => getComputedStyle(element).minHeight), '58px');
+  assert.equal(await page.locator('#manual-captcha-answer').isVisible(), false);
+  assert.equal(await page.locator('#sign-in-label').innerText(), 'Continue');
+  assert.ok(await page.locator('#sign-in').evaluate(element => parseFloat(getComputedStyle(element).minHeight) >= 44));
   await page.evaluate(() => anonAuth.configure({ authMode: 'http', provider: 'academia' }));
   assert.equal(await page.locator('#provider-choice').isVisible(), false);
   assert.equal(await page.locator('#login-provider').inputValue(), 'academia');
@@ -32,14 +33,17 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#login-provider').inputValue(), 'portal');
   await page.evaluate(() => anonAuth.configure({ authMode: 'http', provider: 'portal' }));
   assert.equal(await page.locator('#login-provider').inputValue(), 'academia');
-  await page.route('**/api/challenge', route => route.fulfill({ json: { required: false } }));
+  await page.route('**/api/challenge', route => route.fulfill({ json: route.request().postDataJSON().provider === 'portal'
+    ? { required: true, serverAuto: true, image: 'data:image/png;base64,dGVzdA==' } : { required: false } }));
   await page.route('**/api/login/client', route => route.fulfill({ status: 502, json: { error: { code: 'LOGIN_REJECTED', message: 'Academia could not respond.' } } }));
-  await page.locator('#account').fill('synthetic');
+  await page.locator('#account').fill('synthetic@srmist.edu.in');
+  await page.locator('#sign-in').click();
   await page.locator('#password').fill('test-password');
+  await page.locator('#portal-password').fill('test-portal-password');
   await page.locator('#sign-in').click();
   await page.locator('#login-message').waitFor({ state: 'visible' });
   assert.equal(await page.locator('dialog[open]').count(), 0);
-  assert.equal(await page.locator('#account').inputValue(), 'synthetic');
+  assert.equal(await page.locator('#account').inputValue(), 'synthetic@srmist.edu.in');
   await page.evaluate(() => anonAuth.configure({ authMode: 'http' }));
   await page.route('**/api/login/client', route => route.fulfill({ status: 401, json: { error: { code: 'LOGIN_REJECTED', message: 'Sign-in rejected.' } } }));
   await page.locator('#password').fill('test-password');

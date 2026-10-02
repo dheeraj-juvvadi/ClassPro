@@ -29,11 +29,11 @@
   <link rel="preload" href="/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/style.css?v=50386d73a1">
   <link rel="stylesheet" href="/garden.css?v=1c5b5ccb5f">
-  <link rel="stylesheet" href="/login.css?v=e6176ba25d">
+  <link rel="stylesheet" href="/login.css?v=4546f78f9a">
   <link rel="stylesheet" href="/home.css?v=87dc747f22">
   <link rel="stylesheet" href="/academic.css?v=900a31841b">
   <link rel="stylesheet" href="/report-layout.css?v=f774a913db">
-  <link rel="stylesheet" href="/settings.css?v=08f1866390">
+  <link rel="stylesheet" href="/settings.css?v=a92ac6e060">
   <link rel="stylesheet" href="/calendar-timetable.css?v=5484eae33f">
   <link rel="stylesheet" href="/app-surface.css?v=921358e40d">
   <link rel="stylesheet" href="/menu-control.css?v=2ff20a6ce7">
@@ -46,7 +46,9 @@
   <link rel="stylesheet" href="/date-planner.css?v=163785134b">
   <link rel="stylesheet" href="/workspace-pages.css?v=f0b3d4e8b2">
   <link rel="stylesheet" href="/ascii-art.css?v=9f381fa0d3">
-  <link rel="stylesheet" href="/attendance-page.css?v=3d703f6240">
+  <link rel="stylesheet" href="/attendance-page.css?v=ea8bb41ce3">
+  <link rel="stylesheet" href="/marks-page.css?v=1b3e74c323">
+  <link rel="stylesheet" href="/grades-page.css?v=37e32d8899">
   <script src="/marks-target-math.js?v=b401b85ba4" defer></script>
   <script src="/marks-target.js?v=1e5643126d" defer></script>
   <script src="/interaction-feedback.js?v=d80307ad7a" defer></script>
@@ -61,25 +63,26 @@
   <script src="/course-details.js?v=d68ba23df7" defer></script>
   <script src="/greeting.js?v=68e7af92e7" defer></script>
   <script src="/schedule-preferences.js?v=3db9f39d36" defer></script>
-  <script src="/home.js?v=05ebcefe68" defer></script>
+  <script src="/home.js?v=a3020499b1" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=4d20a96ca1" defer></script>
   <script src="/date-planner-calendar.js?v=46f0b7134a" defer></script>
   <script src="/date-planner-results.js?v=8fb95a941c" defer></script>
   <script src="/date-planner-day.js?v=3630cdff9b" defer></script>
   <script src="/date-attendance.js?v=b680e9a323" defer></script>
-  <script src="/academic-ui.js?v=36d3648c33" defer></script>
+  <script src="/academic-ui.js?v=9efe9377d8" defer></script>
   <script src="/login-admission.js?v=b122a07aa7" defer></script>
   <script src="/provider-connections.js?v=7d4ac181f0" defer></script>
   <script src="/client-ocr.js?v=21050a80f0" defer></script>
-  <script src="/auth-client.js?v=f77e97b24e" defer></script>
+  <script src="/auth-client.js?v=11b6bc9c7a" defer></script>
+  <script src="/login-flow.js?v=f2e201eeca" defer></script>
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=3582c4ea22" defer></script>
-  <script src="/settings.js?v=7b390d00e8" defer></script>
-  <script src="/app.js?v=7106baa968" defer></script>
+  <script src="/settings.js?v=6429bc5d86" defer></script>
+  <script src="/app.js?v=cac61c2494" defer></script>
   <script src="/credential-integrity.js?v=fbfd4079df" defer></script>
   <script src="/offline-shell.js?v=183c619836" defer></script>
-  <script src="/login-effects.js?v=f3310a4cbe" defer></script>
+  <script src="/login-effects.js?v=5518c810e3" defer></script>
 </head>
 <body class="garden-login">
   <div class="botanical-backdrop" aria-hidden="true"></div>
@@ -93,6 +96,7 @@
     <div class="sidebar-tools">
       <span class="sidebar-label">Your space</span>
       <button type="button" data-sidebar-action="open-schedule"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M9 10v11M15 10v11"/></svg>Schedule</button>
+      <button type="button" data-sidebar-action="open-grades"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM6 10v7c3 3 9 3 12 0v-7M21 8v8"/></svg>Grade planning</button>
       <button type="button" data-sidebar-action="open-calendar"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></svg>Academic calendar</button>
       <button type="button" data-sidebar-action="open-accounts"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>Settings</button>
       <button type="button" data-sidebar-action="logout"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 4H4v16h6m4-12 4 4-4 4m-6-4h10"/></svg>Sign out</button>
@@ -102,6 +106,7 @@
       <summary aria-label="More options"><span aria-hidden="true">+</span></summary>
       <div class="planner-menu-items">
         <button id="open-schedule" type="button">Schedule</button>
+        <button id="open-grades" type="button">Grade planning</button>
         <button id="open-calendar" type="button">Academic calendar</button>
         <button id="open-accounts" type="button">Settings</button>
         <button id="logout" class="secondary" type="button" hidden>Sign out</button>
@@ -115,27 +120,47 @@
     </div>
     <section id="login-view" class="login-layout" aria-labelledby="login-title" hidden>
       <div class="login-card">
-        <h1 id="login-title">Welcome <span>back.</span></h1>
-        <form id="login-form">
+        <h1 id="login-title">Sign in.</h1>
+        <p id="login-description">Start with your SRM email.</p>
+        <form id="login-form" data-step="email">
+          <div id="login-account-field" class="login-field">
+            <label for="account">Email address</label>
+            <input id="account" name="account" type="email" inputmode="email" enterkeyhint="next" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="you@srmist.edu.in" aria-describedby="account-error" required>
+            <span id="account-error" class="login-field-note" hidden></span>
+          </div>
+          <div id="login-account-row" class="login-account-row" hidden>
+            <span id="login-account-summary"></span>
+            <button id="login-change-account" type="button" aria-controls="login-account-field">Change</button>
+          </div>
+          <div id="login-password-stage" hidden>
           <div id="provider-choice" hidden>
             <label for="login-provider">Sign in with</label>
             <select id="login-provider" aria-describedby="provider-help"><option value="academia">Academia</option><option value="portal">Student Portal</option></select>
             <p id="provider-help" class="quiet">Use your Academia password.</p>
           </div>
-          <label for="account">Your SRM ID</label>
-          <input id="account" name="account" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="NetID or SRM email" required>
-          <label for="password">Academia password</label>
-          <div class="password-field">
-            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your Academia password">
-            <button id="password-toggle" type="button" aria-label="Show password" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button>
+          <div class="login-field login-secret">
+            <label for="password">Academia password</label>
+            <div class="password-field">
+            <input id="password" name="password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" placeholder="Enter password" aria-describedby="password-help password-caps password-error">
+              <button id="password-toggle" type="button" aria-label="Show password" aria-controls="password" aria-pressed="false">Show</button>
+            </div>
+            <span id="password-caps" class="login-field-note" role="status" hidden>Caps Lock is on</span>
+            <span id="password-error" class="login-field-note" hidden></span>
           </div>
           <div id="portal-password-group">
-            <label for="portal-password">Student Portal password</label>
-            <input id="portal-password" name="portal-password" type="password" autocomplete="current-password" placeholder="Your Student Portal password" aria-describedby="password-help">
-            <p id="password-help" class="quiet login-help">Connect both, or enter one password to start.</p>
+            <div class="login-field login-secret">
+              <label for="portal-password">Student Portal password</label>
+              <div class="password-field">
+                <input id="portal-password" name="portal-password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" placeholder="Enter password" aria-describedby="password-help portal-password-caps portal-password-error">
+                <button id="portal-password-toggle" type="button" aria-label="Show Student Portal password" aria-controls="portal-password" aria-pressed="false">Show</button>
+              </div>
+              <span id="portal-password-caps" class="login-field-note" role="status" hidden>Caps Lock is on</span>
+              <span id="portal-password-error" class="login-field-note" hidden></span>
+            </div>
           </div>
+          <p id="password-help" class="quiet login-help">Both passwords are needed to use the complete app.</p>
           <div class="login-options">
-            <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox" checked>Keep me signed in for 7 days</label>
+            <label class="remember-choice" for="remember"><input id="remember" name="remember" type="checkbox" checked>Remember for 7 days</label>
             <a href="https://ssp.srmist.edu.in/resetpassword/" target="_blank" rel="noopener noreferrer">Forgot password?</a>
           </div>
           <div id="manual-captcha" hidden>
@@ -144,7 +169,8 @@
             <input id="manual-captcha-answer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="8" pattern="[A-Za-z0-9]{4,8}" placeholder="Enter the code shown" required>
             <p id="manual-captcha-status" class="quiet" role="status" aria-live="polite"></p>
           </div>
-          <button id="sign-in" type="submit" class="primary"><span id="sign-in-label">Sign in</span><span class="sign-in-arrow" aria-hidden="true">→</span></button>
+          </div>
+          <button id="sign-in" type="submit" class="primary"><span id="sign-in-label">Continue</span><span class="sign-in-arrow" aria-hidden="true">→</span></button>
           <span id="sign-in-status" class="sign-in-status" role="status" aria-live="polite" aria-atomic="true"></span>
           <details class="test-diagnostics"><summary>Connection details</summary><p id="request-trace" class="quiet" role="status" aria-live="polite"></p><a class="quiet" href="/report-issue.html">Report a problem</a></details>
           <a class="login-issue-link" href="/report-issue.html">Report a problem</a>
@@ -187,24 +213,30 @@
         </section>
         <section id="marks-panel" class="report-section" aria-labelledby="marks-title">
           <div class="section-heading"><h2 id="marks-title">Marks</h2><span id="marks-count" class="quiet"></span></div>
-          <section id="academic-history" class="academic-journey" aria-label="So Far"></section>
-          <details id="marks-projection" class="marks-projection" hidden>
-            <summary class="marks-projection-toggle"><span>Overall grade target</span><span class="marks-projection-preview"><strong id="marks-summary-gpa">—</strong><small>GPA</small></span></summary>
-            <div class="marks-projection-content">
-            <div class="marks-overall-target"><label for="marks-overall-grade">Overall grade target</label><output id="marks-overall-label">Max possible</output></div>
-            <input id="marks-overall-grade" class="marks-overall-range" type="range" min="0" max="6" step="1" value="6" aria-valuetext="Highest possible grade in each subject">
-            <div class="marks-overall-stops" aria-hidden="true"><span>F</span><span>C</span><span>B</span><span>B+</span><span>A</span><span>A+</span><span>Max</span></div>
-            <div class="marks-projection-heading"><div><h3>Projected overall CGPA</h3><p>Adjust your subject grades below.</p></div><output class="marks-projection-score" aria-label="Projected overall CGPA" aria-live="polite"><strong id="marks-cgpa-value">—</strong><span>/ 10</span></output></div>
-            <div class="marks-history"><label for="marks-current-cgpa">Current CGPA<input id="marks-current-cgpa" type="number" min="0" max="10" step="0.01" inputmode="decimal" placeholder="e.g. 8.20" aria-describedby="marks-cgpa-error"></label><label for="marks-completed-credits">Completed credits<input id="marks-completed-credits" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 60" aria-describedby="marks-cgpa-error"></label></div>
-            <p id="marks-history-source" class="quiet">Enter your previous results if the portal has not supplied them.</p>
-            <p id="marks-cgpa-error" class="mark-plan-error" role="status" hidden></p>
-            <div class="marks-semester"><div><span>This semester</span><p id="marks-projection-note">Credit-weighted estimate</p></div><output id="marks-projection-value" aria-label="Projected semester GPA" aria-live="polite">—</output></div>
-            </div>
-          </details>
           <div id="marks-content"></div>
         </section>
       </div>
     </section>
+  <section id="grades-view" class="workspace-page" hidden aria-labelledby="grades-title">
+    <h1 id="grades-title" tabindex="-1">Grade planning</h1>
+    <p class="grades-intro quiet">Your grade targets and academic history.</p>
+    <section id="academic-history" class="academic-journey" aria-label="So Far"></section>
+    <details id="marks-projection" class="marks-projection" hidden>
+      <summary class="marks-projection-toggle"><span>Overall grade target</span><span class="marks-projection-preview"><strong id="marks-summary-gpa">—</strong><small>GPA</small></span></summary>
+      <div class="marks-projection-content">
+      <div class="marks-overall-target"><label for="marks-overall-grade">Overall grade target</label><output id="marks-overall-label">Max possible</output></div>
+      <input id="marks-overall-grade" class="marks-overall-range" type="range" min="0" max="6" step="1" value="6" aria-valuetext="Highest possible grade in each subject">
+      <div class="marks-overall-stops" aria-hidden="true"><span>F</span><span>C</span><span>B</span><span>B+</span><span>A</span><span>A+</span><span>Max</span></div>
+      <div class="marks-projection-heading"><div><h3>Projected overall CGPA</h3><p>Adjust your subject grades below.</p></div><output class="marks-projection-score" aria-label="Projected overall CGPA" aria-live="polite"><strong id="marks-cgpa-value">—</strong><span>/ 10</span></output></div>
+      <div class="marks-history"><label for="marks-current-cgpa">Current CGPA<input id="marks-current-cgpa" type="number" min="0" max="10" step="0.01" inputmode="decimal" placeholder="e.g. 8.20" aria-describedby="marks-cgpa-error"></label><label for="marks-completed-credits">Completed credits<input id="marks-completed-credits" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 60" aria-describedby="marks-cgpa-error"></label></div>
+      <p id="marks-history-source" class="quiet">Enter your previous results if the portal has not supplied them.</p>
+      <p id="marks-cgpa-error" class="mark-plan-error" role="status" hidden></p>
+      <div class="marks-semester"><div><span>This semester</span><p id="marks-projection-note">Credit-weighted estimate</p></div><output id="marks-projection-value" aria-label="Projected semester GPA" aria-live="polite">—</output></div>
+      </div>
+    </details>
+    <p id="grades-empty" class="quiet" role="status" hidden>No courses to plan yet. Your grade targets will appear when marks are available.</p>
+    <div id="grades-content"></div>
+  </section>
   <section id="calendar-view" class="workspace-page" hidden aria-labelledby="calendar-title">
     <h1 id="calendar-title" tabindex="-1">Academic calendar</h1>
     <div id="academic-calendar"></div>

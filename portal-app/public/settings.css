@@ -1,52 +1,90 @@
-/* Simple typography and restrained green accents for Settings. */
-#settings-view { width: min(660px, calc(100% - 24px)); padding: 30px; background: #1c201a; color: #f1eee3; border: 1px solid #444b3c; border-radius: 24px; }
-.settings-cover { padding: 0 0 22px; background: none; }
-.settings-cover .planner-eyebrow { color: #c4b59c; font-size: 10px; }
-#accounts-title { font-size: 40px; font-weight: 500; margin-top: 9px; }
-#close-accounts { background: transparent; color: #dfd6c5; width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid #5b5549; }
-.settings-intro { margin: 0 0 22px; padding: 0 0 22px; border-bottom: 1px solid #444b3c; }
-.settings-intro > div { min-width: 0; }
-.settings-intro strong { display: block; font-size: 20px; font-weight: 550; line-height: 1.35; overflow-wrap: anywhere; }
-.settings-intro p.quiet { color: #b7c1aa; font-size: 11px; margin-top: 7px; line-height: 1.6; }
-.settings-name-form label { font-size: 11px; color: #c8baa7; }
-.settings-name-form > div { display: flex; align-items: center; gap: 12px; }
-.settings-name-form input { flex: 1; min-width: 0; }
-#settings-view input:not([type="checkbox"]) { background: transparent; border: 0; border-bottom: 1px solid #6a5e4d; border-radius: 0; color: #f1eee3; padding-left: 0; }
-#settings-view input::placeholder { color: #aa9e8b; }
-#settings-view button { font-weight: 500; }
-#settings-view .settings-name-form button { background: #c4cfac; color: #2e3925; border-radius: 20px; padding-inline: 19px; }
-.settings-section-title { color: #c9b59a; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; margin: 30px 0 14px; }
-#settings-view .provider-connections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
-.connection-row { padding: 18px 16px; border-radius: 15px; background: #293024; min-width: 0; }
-.connection-row:nth-child(2) { background: #252b21; }
-.connection-row strong { display: block; font-size: 14px; font-weight: 500; }
-.connection-state { display: block; font-size: 11px; margin-top: 8px; color: #d7bba0; }
-.connection-state[data-connected="true"] { color: #c6d5aa; }
-.connection-state[data-connected="true"]::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 6px; border-radius: 50%; background: #bacb94; }
-#settings-view .connection-row button { background: transparent; color: #ead7b8; border-radius: 0; padding: 12px 0 0; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
-#settings-view .provider-connections > p { grid-column: 1 / -1; }
-.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 0; margin: 0; border-bottom: 1px solid #65594255; font-size: 14px; font-weight: 500; }
-.settings-row > span { min-width: 0; }
-.settings-row small { display: block; font-size: 11px; line-height: 1.6; color: #bfb3a0; margin-top: 5px; max-width: 34ch; font-weight: 400; }
-#settings-view select { background: transparent; color: #d1d9bd; border: 1px solid #667151; border-radius: 20px; width: auto; min-width: 90px; font-size: 13px; padding: 9px; }
-#settings-view select option { background: #191b19; }
-.settings-row input[type="checkbox"] { width: 32px; height: 22px; flex-shrink: 0; accent-color: #b7c79b; cursor: pointer; }
-#settings-sync { white-space: nowrap; background: transparent; color: #cad7b5; padding-right: 0; }
-#settings-sync.syncing .sync-icon { animation: sync-turn 1s linear infinite; }
-.settings-detail { border-bottom: 1px solid #65594255; }
-.settings-detail > summary { grid-template-columns: minmax(0, 1fr) auto auto; padding: 20px 0; font-size: 14px; gap: 10px; }
-.settings-detail > summary:hover { background: transparent; color: #e6c8a7; }
-.settings-detail > summary::after { color: #d2b68c; }
-.settings-detail > summary span { color: #bfb3a0; font-size: 11px; }
-.settings-detail > p, .settings-detail > div > p { font-size: 12px; line-height: 1.7; color: #c9bfaf; margin-bottom: 16px; }
-#settings-view .settings-detail button { font-size: 12px; margin: 0 0 16px; background: transparent; color: #e4c6a4; padding-left: 0; text-decoration: underline; text-underline-offset: 4px; }
-.settings-feedback { display: block; color: #d9c7a7; font-size: 13px; padding: 23px 0; }
-#settings-view .settings-signout { width: auto; background: transparent; color: #e3ad94; padding-left: 0; border-radius: 0; }
-#settings-message { margin-top: 12px; font-size: 12px; line-height: 1.6; color: #d7c7ae; }
-#settings-view :focus-visible { outline: 2px solid #dfc89e; outline-offset: 3px; }
+/* Approved Settings presentation, scoped above later workspace-page rules. */
+body.planner #settings-view.workspace-page {
+  width: 100%; max-width: 660px; margin: 0 auto; padding: 0;
+  background: transparent; border: 0; border-radius: 0; color: var(--ink);
+  --settings-accent: var(--planner-green, var(--accent));
+  --settings-muted: var(--planner-muted, var(--muted));
+}
+#settings-view.workspace-page :is(h1, h2, h3) { text-wrap: balance; }
+#settings-view.workspace-page p { text-wrap: pretty; }
+#settings-view.workspace-page .settings-cover { padding: 0 0 26px; }
+#settings-view.workspace-page #accounts-title { margin: 0; font-size: 32px; font-weight: 560; line-height: 1.2; }
+#settings-view.workspace-page .settings-lead { margin-top: 9px; color: var(--settings-muted); font-size: 13px; line-height: 1.6; }
+#settings-view.workspace-page .settings-profile-title { margin: 0 0 12px; font-size: 14px; font-weight: 570; }
+#settings-view.workspace-page .settings-intro { display: flex; align-items: center; gap: 12px; margin: 0; padding: 0 0 16px; border: 0; }
+#settings-view.workspace-page .settings-intro > div { min-width: 0; }
+#settings-view.workspace-page .settings-avatar { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--settings-accent); font-size: 14px; font-weight: 550; }
+#settings-view.workspace-page .settings-intro strong { display: block; font-size: 17px; font-weight: 550; line-height: 1.4; overflow-wrap: anywhere; }
+#settings-view.workspace-page .settings-intro p { margin-top: 3px; color: var(--settings-muted); font-size: 11px; line-height: 1.6; }
+#settings-view.workspace-page .settings-name-form { max-width: none; margin: 0; }
+#settings-view.workspace-page .settings-name-form label { display: block; margin-bottom: 7px; color: var(--settings-muted); font-size: 11px; }
+#settings-view.workspace-page .settings-name-form > div { display: flex; align-items: center; gap: 10px; }
+#settings-view.workspace-page .settings-name-form input { flex: 1; width: 100%; min-width: 0; min-height: 44px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; }
+#settings-view.workspace-page .settings-name-form input::placeholder { color: var(--settings-muted); }
+#settings-view.workspace-page .settings-name-form input:hover { border-color: var(--settings-muted); }
+#settings-view.workspace-page button { min-width: 44px; min-height: 44px; font-weight: 500; }
+#settings-view.workspace-page .settings-name-form button { flex: none; padding: 10px 14px; border: 1px solid transparent; border-radius: 8px; background: var(--settings-accent); color: var(--on-accent); font-size: 12px; font-weight: 600; }
+#settings-view.workspace-page .settings-name-form button:hover { box-shadow: inset 0 0 0 2px var(--on-accent); }
+#settings-view.workspace-page .settings-name-feedback { min-height: 18px; margin-top: 8px; color: var(--settings-muted); font-size: 11px; line-height: 1.6; }
+#settings-view.workspace-page .settings-name-feedback[data-state="saved"] { color: var(--settings-accent); }
+#settings-view.workspace-page .settings-name-feedback[data-state="notice"] { color: var(--error); }
+#settings-view.workspace-page .settings-section-title { margin: 26px 0 12px; color: var(--ink); font-size: 14px; font-weight: 570; text-transform: none; letter-spacing: normal; }
+#settings-view.workspace-page .settings-explainer { max-width: 45ch; margin: 0 0 12px; color: var(--settings-muted); font-size: 12px; line-height: 1.6; }
+#settings-view.workspace-page .provider-connections { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; border-top: 1px solid var(--line); }
+#settings-view.workspace-page .connection-row { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 73px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+#settings-view.workspace-page .settings-provider-icon { display: grid; place-items: center; width: 32px; height: 36px; flex: none; color: var(--settings-accent); }
+#settings-view.workspace-page .settings-provider-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#settings-view.workspace-page .settings-provider { flex: 1; min-width: 0; }
+#settings-view.workspace-page .connection-row strong { display: block; font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+#settings-view.workspace-page .settings-provider-detail { display: block; margin-top: 3px; font-size: 11px; line-height: 1.6; color: var(--settings-muted); }
+#settings-view.workspace-page .connection-state { display: block; margin-top: 3px; color: var(--settings-muted); font-size: 11px; line-height: 1.6; }
+#settings-view.workspace-page .connection-row > .connection-state { flex: none; margin: 0; text-align: right; }
+#settings-view.workspace-page .connection-state[data-connected="true"] { color: var(--settings-accent); }
+#settings-view.workspace-page .connection-state[data-connected="true"]::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+#settings-view.workspace-page .connection-row button { flex: none; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--settings-accent); font-size: 12px; text-decoration: none; }
+#settings-view.workspace-page .connection-row button:hover { background: var(--surface); border-color: var(--settings-accent); }
+#settings-view.workspace-page .provider-connections > p { min-width: 0; padding-top: 9px; color: var(--settings-muted); font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+#settings-view.workspace-page .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 68px; padding: 12px 0; margin: 0; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 500; }
+#settings-view.workspace-page .settings-row > span { min-width: 0; }
+#settings-view.workspace-page .settings-row small { display: block; max-width: 55ch; margin-top: 3px; color: var(--settings-muted); font-size: 11px; line-height: 1.6; font-weight: 400; }
+#settings-view.workspace-page .settings-row a { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 44px; min-height: 44px; color: var(--settings-accent); font-size: 12px; text-underline-offset: 4px; }
+#settings-view.workspace-page select { flex: none; width: auto; min-width: 90px; min-height: 44px; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--settings-accent); font: inherit; font-size: 13px; }
+#settings-view.workspace-page select option { background: var(--surface); color: var(--ink); }
+#settings-view.workspace-page .settings-row input[type="checkbox"] { appearance: none; position: relative; display: block; flex: none; width: 44px; height: 44px; min-height: 44px; padding: 0; margin: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+#settings-view.workspace-page .settings-row input[type="checkbox"]::before { content: ''; position: absolute; inset: 10px 0; border: 1px solid var(--settings-muted); border-radius: 20px; background: var(--surface); }
+#settings-view.workspace-page .settings-row input[type="checkbox"]::after { content: ''; position: absolute; top: 14px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: var(--settings-muted); }
+#settings-view.workspace-page .settings-row input[type="checkbox"]:checked::before { background: var(--settings-accent); border-color: var(--settings-accent); }
+#settings-view.workspace-page .settings-row input[type="checkbox"]:checked::after { transform: translateX(20px); background: var(--page); }
+#settings-view.workspace-page .settings-row input[type="checkbox"]:hover::before { border-color: var(--ink); }
+#settings-view.workspace-page #settings-sync { flex: none; white-space: nowrap; padding: 10px 0 10px 10px; background: transparent; color: var(--settings-accent); font-size: 12px; }
+#settings-view.workspace-page #settings-last-sync { font-variant-numeric: tabular-nums; }
+#settings-view.workspace-page #settings-sync.syncing .sync-icon { animation: sync-turn 1s linear infinite; }
+#settings-view.workspace-page .settings-detail { border-bottom: 1px solid var(--line); }
+#settings-view.workspace-page .settings-detail > summary { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; min-height: 44px; padding: 16px 0; color: var(--ink); font-size: 13px; }
+#settings-view.workspace-page .settings-detail > summary:hover { background: transparent; color: var(--settings-accent); }
+#settings-view.workspace-page .settings-detail > summary::after { color: var(--settings-muted); }
+#settings-view.workspace-page .settings-detail p { max-width: 70ch; margin-bottom: 14px; color: var(--settings-muted); font-size: 12px; line-height: 1.7; }
+#settings-view.workspace-page .settings-detail button { margin: 0 0 12px; padding: 10px 0; background: transparent; color: var(--settings-accent); font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+#settings-view.workspace-page .settings-signout { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 23px; padding: 10px 0; border-radius: 0; background: transparent; color: var(--settings-accent); font-size: 13px; }
+#settings-view.workspace-page .settings-signout::after { content: '\2192'; font-size: 20px; }
+#settings-view.workspace-page .settings-signout:hover { text-decoration: underline; text-underline-offset: 4px; }
+#settings-view.workspace-page .settings-issue-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 0; color: var(--settings-muted); font-size: 12px; text-underline-offset: 4px; }
+#settings-view.workspace-page #settings-message { margin-top: 12px; color: var(--settings-muted); font-size: 12px; line-height: 1.6; }
+#settings-view.workspace-page :focus-visible { outline: 2px solid var(--settings-accent); outline-offset: 3px; }
 .planner[data-accent="sand"] { --planner-green: #d8c49f; }
 .planner[data-accent="clay"] { --planner-green: #d4ac91; }
 .planner[data-accent="sand"] #planner-nav button[aria-current], .planner[data-accent="clay"] #planner-nav button[aria-current] { background: var(--planner-green); }
-@media (max-width: 400px) { #settings-view { padding: 22px; } .settings-row { gap: 10px; } .settings-intro strong { font-size: 18px; } }
-@media (prefers-reduced-motion: reduce) { #settings-sync.syncing .sync-icon { animation: none; } }
-.settings-issue-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; font-size: 12px; color: #d5dda9; text-underline-offset: 4px; }
+@media (max-width: 350px) {
+  #settings-view.workspace-page #accounts-title { font-size: 29px; }
+  #settings-view.workspace-page .settings-name-form > div { gap: 8px; }
+  #settings-view.workspace-page .connection-row { gap: 7px; }
+  #settings-view.workspace-page .connection-row button { padding-inline: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #settings-view.workspace-page #settings-sync.syncing .sync-icon { animation: none; }
+}
+@media (forced-colors: active) {
+  #settings-view.workspace-page .settings-row input[type="checkbox"] { appearance: auto; }
+  #settings-view.workspace-page .settings-row input[type="checkbox"]::before,
+  #settings-view.workspace-page .settings-row input[type="checkbox"]::after { display: none; }
+}

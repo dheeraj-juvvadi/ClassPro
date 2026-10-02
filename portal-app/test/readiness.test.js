@@ -56,7 +56,8 @@ test('issue submission confirms only accepted reports and public pages fit mobil
   assert.ok(signIn.y >= 0 && signIn.y + signIn.height <= 844, JSON.stringify(signIn));
   await page.setViewportSize({ width: 320, height: 568 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'small phone login');
-  assert.equal(await page.locator('#sign-in').evaluate(el => getComputedStyle(el).position), 'sticky');
+  assert.equal(await page.locator('#sign-in-label').innerText(), 'Continue');
+  assert.equal(await page.locator('#password').isVisible(), false);
   await page.locator('#account').focus();
   assert.equal(await page.locator('#sign-in').evaluate(el => getComputedStyle(el).position), 'relative');
   await page.locator('#account').blur();

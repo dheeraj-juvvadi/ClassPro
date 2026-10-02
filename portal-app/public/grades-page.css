@@ -1,0 +1,38 @@
+/* Existing grade planning and history in their own workspace. */
+body.planner #grades-view {
+  width: 100%;
+  max-width: 900px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #f1eee3;
+}
+#grades-title { margin: 0 0 8px; }
+#grades-view .grades-intro { margin: 0 0 24px; color: var(--planner-muted); }
+#grades-view .journey-heading h3 { margin: 0; font-size: 16px; font-weight: 500; letter-spacing: -.02em; }
+#grades-content .grade-course-list { display: grid; gap: 16px; margin-top: 24px; }
+.grade-course {
+  --mark-sage: var(--planner-green, #c5d4a7);
+  --mark-muted: #adb4a4;
+  --mark-line: #373d36;
+  min-width: 0;
+  padding: 8px 24px;
+  border: 1px solid #434b3d;
+  border-radius: 16px;
+  background: #1c1e1b;
+  color: #f1eee3;
+}
+.grade-course > .course-heading { gap: 4px; padding-block: 16px; }
+.grade-course .course-title { font-size: 18px; font-weight: 500; line-height: 1.4; letter-spacing: -.025em; }
+.grade-course .course-code { color: var(--mark-muted); font-size: 11px; font-weight: 500; }
+#grades-empty { margin: 24px 0; color: var(--planner-muted); }
+@media (max-width: 640px) {
+  .grade-course { padding-inline: 16px; }
+}
+@media (max-width: 380px) {
+  .grade-course { padding-inline: 12px; }
+  .grade-course .course-title { font-size: 16px; }
+}
