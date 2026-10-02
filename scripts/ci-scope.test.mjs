@@ -17,6 +17,8 @@ test('Vercel skips only when the last successful deployment proves app inputs un
   assert.equal(shouldBuild(['docs/releasing.md', 'ratio-diagnostic/server.py']), false);
   assert.equal(shouldBuild(['portal-app/public/index.html']), true);
   assert.equal(shouldBuild(['portal-app/package-lock.json']), true);
+  assert.equal(shouldBuild(['portal-app/README.md']), false);
+  assert.equal(shouldBuild(['portal-app/README.md', 'portal-app/public/app.js']), true);
   assert.equal(shouldBuild(['scripts/vercel-ignore.mjs']), true);
   assert.equal(shouldBuild(['.gitignore']), true);
 });

@@ -211,3 +211,66 @@
   #projection-result [data-tone="risk"] .date-result-percentage { text-decoration: underline dotted; }
   #projection-dialog :is(#projection-apply, #projection-review-custom) { border: 1px solid ButtonText; }
 }
+
+/* Direct calendar selection and live subject hours. */
+#projection-dialog :is(.date-planner-header, .date-planner-layout, .date-planner-footer) { width: min(480px, calc(100% - 36px)); }
+#projection-dialog .date-planner-header { margin-top: 72px; margin-bottom: 24px; }
+#projection-title { font-size: 30px; letter-spacing: -.04em; }
+#projection-customize { margin: 0 0 36px; }
+#projection-customize .date-actions { margin: 0 0 12px; padding: 3px; border-radius: 25px; }
+#projection-customize .date-actions button { border-radius: 22px; }
+#projection-customize .date-actions svg { display: none; }
+#projection-dialog .projection-range-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#projection-customize .date-range-summary { display: flex; align-items: center; gap: 10px; border: 0; padding: 8px 0; margin: 0; }
+#projection-customize .date-range-summary > div > span { display: none; }
+#projection-customize .date-range-summary strong { font-size: 14px; white-space: nowrap; }
+#projection-customize #projection-clear { min-width: 44px; min-height: 44px; padding-inline: 4px; font-size: 11px; border: 0; }
+#projection-customize #projection-calendar { min-height: 330px; }
+#projection-customize #projection-calendar::part(header) { justify-content: flex-end; gap: 4px; }
+#projection-customize #projection-calendar::part(heading) { order: -1; margin-right: auto; font-size: 14px; }
+#projection-customize #projection-calendar::part(button) { border: 0; font-size: 20px; background: transparent; }
+#projection-customize calendar-month::part(table) { border-spacing: 0 8px; }
+#projection-customize calendar-month::part(button) {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 100%; min-width: 44px; height: 44px; min-height: 44px; gap: 4px; padding: 3px 0;
+  border: 0; border-radius: 0; color: var(--plan-ink); background: transparent; font: 400 13px/16px Inter, sans-serif;
+}
+#projection-customize calendar-month::part(button)::after { content: '?'; color: #969f8f; font: 400 8px/10px Inter, sans-serif; }
+#projection-customize calendar-month::part(do-1)::after { content: 'DO 1'; }
+#projection-customize calendar-month::part(do-2)::after { content: 'DO 2'; }
+#projection-customize calendar-month::part(do-3)::after { content: 'DO 3'; }
+#projection-customize calendar-month::part(do-4)::after { content: 'DO 4'; }
+#projection-customize calendar-month::part(do-5)::after { content: 'DO 5'; }
+#projection-customize calendar-month::part(holiday)::after { content: 'Holiday'; }
+#projection-customize calendar-month::part(holiday) { color: #b3ac9e; }
+#projection-customize calendar-month::part(plan-selected),
+#projection-customize calendar-month::part(plan-start),
+#projection-customize calendar-month::part(plan-end) {
+  box-sizing: border-box; background: #b8c398; color: #23281d; font-weight: 500; opacity: 1;
+  border: solid #fff; border-width: 1px 0; border-radius: 0;
+}
+#projection-customize calendar-month::part(plan-selected)::after { color: #424b35; }
+#projection-customize calendar-month::part(plan-start) { border-left-width: 1px; border-top-left-radius: 999px; border-bottom-left-radius: 999px; }
+#projection-customize calendar-month::part(plan-end) { border-right-width: 1px; border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
+#projection-customize calendar-month::part(plan-start plan-end) { border-radius: 999px; }
+#projection-customize .date-planner-calendar-foot { margin: 0; }
+#projection-customize .date-planner-calendar-foot p { font-size: 10px; overflow-wrap: anywhere; }
+#projection-live-meta { margin: 10px 0; font-size: 11px; color: var(--plan-muted); }
+.projection-hours-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--plan-line); font-size: 12px; }
+.projection-hours-row span { min-width: 0; overflow-wrap: anywhere; }
+.projection-hours-row strong { flex: none; font-weight: 500; color: var(--plan-attend); }
+#projection-class-options { border: 0; padding: 0; margin: 8px 0; background: transparent; }
+#projection-class-options > summary { min-height: 44px; display: flex; align-items: center; gap: 5px; color: var(--plan-muted); font-size: 11px; }
+#projection-dialog #projection-review-custom { margin-top: 16px; min-height: 50px; }
+#projection-customize .date-selected-item button:last-child { min-width: 44px; }
+@media (max-width: 350px) {
+  #projection-dialog :is(.date-planner-header, .date-planner-layout, .date-planner-footer) { width: calc(100% - 12px); }
+  #projection-customize .date-range-summary { gap: 7px; }
+  #projection-customize .date-range-summary strong { font-size: 12px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #projection-dialog :is(#projection-apply, #projection-review-custom) { transition: opacity 120ms ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #projection-dialog *, #projection-dialog *::before, #projection-dialog *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

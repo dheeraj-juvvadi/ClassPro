@@ -54,9 +54,9 @@ test('compact journey, keyboard expansion, auto-fill, safe text, refresh and mob
   await page.waitForFunction(() => document.body.dataset.page === 'marks');
   assert.equal(await page.locator('#grades-view').isHidden(), true);
   await page.locator('#planner-menu > summary').click();
-  await page.getByRole('button', { name: 'Grade planning', exact: true }).click();
+  await page.getByRole('button', { name: 'Grade calculator', exact: true }).click();
   assert.equal(new URL(page.url()).hash, '#grades');
-  assert.equal(await page.title(), 'Grade planning · Anon');
+  assert.equal(await page.title(), 'Grade calculator · Anon');
   assert.equal(await page.locator('#grades-title').evaluate(el => el === document.activeElement), true);
   assert.equal(await page.locator('#planner-menu').getAttribute('open'), null);
   await page.evaluate(() => anonSettings.update({ connections: { portal: { connected: true } }, academicHistory: { status: 'unavailable' } }));

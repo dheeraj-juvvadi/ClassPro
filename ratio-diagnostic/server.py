@@ -29,6 +29,7 @@ from provider_flow import providers, combined, same_student, normalize_account, 
 from session_store import SessionStore, lifetime
 import sync_schedule
 import attendance_trends
+from portal_exams import refresh_exams
 from client_logs import ClientLogStore
 
 # Upstream diagnostics include identifiers and CAPTCHA answers. Silence only
@@ -276,8 +277,13 @@ def report(data, previous=None):
         marks.append({"code": course.get("courseCode"), "title": course.get("title"),
                       "scored": course.get("totalMarkGot"), "total": course.get("totalMaxMarks"),
                       "components": components})
-    return {"updatedAt": datetime.now(timezone.utc).isoformat(),
-            **extras(data, previous), "marks": {"data": marks}}
+    result = {"updatedAt": datetime.now(timezone.utc).isoformat(),
+              **extras(data, previous), "marks": {"data": marks}}
+    if isinstance(data.get("exams"), dict):
+        result["exams"] = data["exams"]
+    elif isinstance((previous or {}).get("exams"), dict):
+        result["exams"] = {**previous["exams"], "stale": True}
+    return result
 
 
 async def invoke(request, path, payload):
@@ -574,6 +580,8 @@ async def login(request: Request):
     states = providers(entry)
     if not same_student(states, provider, data, payload["account"]):
         return failure("ACCOUNT_MISMATCH", "Connect the same student's account for both providers.", 409)
+    if provider == "portal":
+        data["exams"] = await refresh_exams(data["cookies"])
     states[provider] = {"cookies": data["cookies"], "username": login_payload["username"],
                         "password": payload["password"], "report": report(data), "expired": False}
     entry["remember"] = payload.get("remember", entry.get("remember", True)) is not False
@@ -625,7 +633,7 @@ async def refresh_job(token, entry, request):
         entry["sync_attempted_at"] = time.time()
         try:
             data, succeeded = await asyncio.wait_for(
-                refresh_providers(request, entry, invoke, report), timeout=90)
+                refresh_providers(request, entry, invoke, report, refresh_exams), timeout=90)
         except Exception as error:
             entry["sync_failed"] = True
             exception_type = type(error).__name__

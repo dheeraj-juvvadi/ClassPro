@@ -39,7 +39,7 @@ globalThis.createAcademicCalendar = ({ container, source, now, filters = {} }) =
     for (let day = 1; day <= count; day++) {
       const date = new Date(month.getFullYear(), month.getMonth(), day, 12);
       const state = model.dayState(source(), date);
-      const exam = /exam|assessment|test/i.test(state.label || '');
+      const exam = /exam|assessment|test/i.test(state.label || '') || globalThis.anonExamDates?.forDate(date).length > 0;
       const label = state.kind === 'holiday' ? 'Holiday' : state.dayOrder ? `DO ${state.dayOrder}` : '—';
       const cell = button('', `${date.toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' })}. ${label === '—' ? 'Unconfirmed' : label}${exam ? '. Exam' : ''}`, () => { selected = date; render(); });
       cell.dataset.date = model.key(date); cell.dataset.kind = exam ? 'exam' : state.kind;
@@ -61,6 +61,12 @@ globalThis.createAcademicCalendar = ({ container, source, now, filters = {} }) =
     const label = courseDetails.clean(state.label);
     if (label && !/^(day order \w+|teaching day|holiday)$/i.test(label)) detail.append(el('p', label, 'calendar-event'));
     if (state.kind === 'unknown') detail.append(el('p', 'No academic calendar entry for this date.', 'calendar-event'));
+    for (const exam of globalThis.anonExamDates?.forDate(selected) || []) {
+      const item = el('div', undefined, 'calendar-exam');
+      item.append(el('strong', exam.title), el('p', [exam.session || 'Session not published',
+        exam.stale ? 'Cached exam date' : exam.provisional ? 'Provisional exam date' : 'Exam Time Table'].join(' · ')));
+      detail.append(item);
+    }
     const classes = model.classes(source(), selected, filters);
     const agenda = el('div', undefined, 'calendar-day-classes');
     agenda.append(el('h4', `${classes.length} ${classes.length === 1 ? 'class' : 'classes'}`));

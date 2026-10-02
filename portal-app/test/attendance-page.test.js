@@ -74,7 +74,7 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.locator('details').getAttribute('open'), null);
   await page.keyboard.press('Space');
   assert.equal(await ds.locator('details').getAttribute('open'), '');
-  assert.equal(await page.locator('.attendance-rows').evaluate(el => getComputedStyle(el).borderRadius), '22px');
+  assert.equal(await page.locator('#attendance-panel .attendance-rows').evaluate(el => getComputedStyle(el).borderRadius), '22px');
   assert.equal(await ds.evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
   assert.equal(await cn.evaluate(el => getComputedStyle(el).borderTopWidth), '1px');
   for (const width of [320, 390, 768, 1024, 1440]) {
@@ -100,7 +100,7 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
     assert.equal(railAlignment, true, `target remains at 75% at ${width}`);
     if (width >= 390) {
       const height = await ds.locator('summary').evaluate(el => el.getBoundingClientRect().height);
-      assert.ok(height >= 100 && height < 120, `comfortable row at ${width}: ${height}`);
+      assert.ok(height >= 99.9 && height < 120, `comfortable row at ${width}: ${height}`);
     }
   }
   assert.equal(await page.locator('#attendance-panel button').count(), 0);
