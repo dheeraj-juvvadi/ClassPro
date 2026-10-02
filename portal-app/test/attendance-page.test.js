@@ -58,7 +58,8 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.getByRole('meter').getAttribute('aria-valuenow'), '81.82');
   assert.equal(await ds.getByRole('meter').getAttribute('aria-valuetext'), '81.8% attendance; target 75%.');
   assert.equal(await ds.locator('.attendance-rail-fill').evaluate(el => el.style.width), '81.82%');
-  assert.equal(await page.locator('.attendance-target-key').innerText(), '75% target');
+  assert.equal(await page.locator('.attendance-target-key').count(), 0);
+  assert.equal(await page.locator('#attendance-panel > .section-heading').isVisible(), false);
   await ds.locator('summary').focus(); await page.keyboard.press('Enter');
   assert.equal(await ds.locator('.attendance-percent').innerText(), '81.8%');
   assert.match(await ds.locator('.attendance-course-meta').innerText(), /Dr. Test/);
@@ -97,7 +98,10 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
       return Math.abs((target.left + target.width / 2 - bounds.left) / bounds.width - 0.75) < 0.001;
     }));
     assert.equal(railAlignment, true, `target remains at 75% at ${width}`);
-    if (width >= 390) assert.ok(await ds.locator('summary').evaluate(el => el.getBoundingClientRect().height) < 100, `compact row at ${width}`);
+    if (width >= 390) {
+      const height = await ds.locator('summary').evaluate(el => el.getBoundingClientRect().height);
+      assert.ok(height >= 100 && height < 120, `comfortable row at ${width}: ${height}`);
+    }
   }
   assert.equal(await page.locator('#attendance-panel button').count(), 0);
   assert.equal(await ds.locator('summary').evaluate(el => getComputedStyle(el, '::after').content), 'none');

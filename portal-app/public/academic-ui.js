@@ -97,12 +97,9 @@ globalThis.academicUI = (() => {
     courses = data;
     if (!data.length) { get('calculate-attendance').disabled = true; return; }
     const statuses = data.map(course => margin(course.present, course.conducted));
-    const target = create('p', 'attendance-target-key');
-    const marker = create('span', ''); marker.setAttribute('aria-hidden', 'true');
-    target.append(marker, document.createTextNode('75% target'));
     const list = create('div', 'attendance-rows');
     data.forEach((course, index) => list.append(courseCard(course, statuses[index], schedule)));
-    container.append(target, list);
+    container.append(list);
     get('calculate-attendance').disabled = !data.length;
   }
   function renderRecovery(course, card, schedule, filters = {}, date = anonScheduleModel.clock('Asia/Kolkata')) {

@@ -46,8 +46,8 @@
   <link rel="stylesheet" href="/date-planner.css?v=163785134b">
   <link rel="stylesheet" href="/workspace-pages.css?v=f0b3d4e8b2">
   <link rel="stylesheet" href="/ascii-art.css?v=9f381fa0d3">
-  <link rel="stylesheet" href="/attendance-page.css?v=ea8bb41ce3">
-  <link rel="stylesheet" href="/marks-page.css?v=1b3e74c323">
+  <link rel="stylesheet" href="/attendance-page.css?v=3eaa858c5d">
+  <link rel="stylesheet" href="/marks-page.css?v=0fafc3f4bc">
   <link rel="stylesheet" href="/grades-page.css?v=37e32d8899">
   <script src="/marks-target-math.js?v=b401b85ba4" defer></script>
   <script src="/marks-target.js?v=1e5643126d" defer></script>
@@ -70,7 +70,7 @@
   <script src="/date-planner-results.js?v=8fb95a941c" defer></script>
   <script src="/date-planner-day.js?v=3630cdff9b" defer></script>
   <script src="/date-attendance.js?v=b680e9a323" defer></script>
-  <script src="/academic-ui.js?v=9efe9377d8" defer></script>
+  <script src="/academic-ui.js?v=33399e1880" defer></script>
   <script src="/login-admission.js?v=b122a07aa7" defer></script>
   <script src="/provider-connections.js?v=7d4ac181f0" defer></script>
   <script src="/client-ocr.js?v=21050a80f0" defer></script>
@@ -208,11 +208,11 @@
       <p id="reports-message" class="message" role="status" aria-live="polite" hidden></p>
       <div id="report-content" aria-busy="false">
         <section id="attendance-panel" class="report-section" aria-labelledby="attendance-title">
-          <div class="section-heading"><h2 id="attendance-title">Attendance</h2><span id="attendance-count" class="quiet"></span></div>
+          <div class="section-heading" hidden><h2 id="attendance-title">Attendance</h2><span id="attendance-count" class="quiet"></span></div>
           <div id="attendance-content"></div>
         </section>
         <section id="marks-panel" class="report-section" aria-labelledby="marks-title">
-          <div class="section-heading"><h2 id="marks-title">Marks</h2><span id="marks-count" class="quiet"></span></div>
+          <div class="section-heading" hidden><h2 id="marks-title">Marks</h2><span id="marks-count" class="quiet"></span></div>
           <div id="marks-content"></div>
         </section>
       </div>

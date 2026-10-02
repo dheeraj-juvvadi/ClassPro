@@ -1,12 +1,13 @@
 /* Mini scores share the compact attendance surface. */
 body.planner[data-page="marks"] #reports-view{max-width:960px;margin-inline:auto}
 body.planner[data-page="marks"] #reports-title{font-size:32px;font-weight:500;line-height:1.2}
-body.planner #marks-panel .marks-list{display:block;margin-top:12px;padding:0 14px;background:#232720;border:0;border-radius:20px}
+body.planner #marks-panel{margin-top:0}
+body.planner #marks-panel .marks-list{display:block;margin-top:0;padding:0 14px;background:#232720;border:0;border-radius:20px}
 body.planner #marks-panel .mark-course{padding:14px 0;min-width:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 body.planner #marks-panel .mark-course+.mark-course{border-top:1px solid #3b4235}
 body.planner #marks-panel .mark-course-header{display:flex;align-items:center;gap:10px;min-height:0;padding:0;margin:0 0 10px}
 body.planner #marks-panel .course-heading{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
-body.planner #marks-panel .course-title{order:-1;font-size:14px;font-weight:550;line-height:1.4;letter-spacing:0;text-wrap:balance;overflow-wrap:anywhere}
+body.planner #marks-panel .mark-course .course-title{order:-1;font-size:13px;font-weight:450;line-height:1.45;color:#bbc1b4;letter-spacing:0;text-wrap:balance;overflow-wrap:anywhere}
 body.planner #marks-panel .course-code{font-size:10px;line-height:1.4;letter-spacing:0;color:#adb4a4}
 body.planner #marks-panel .marks-score-block{display:block;flex:none;margin:0;padding:0}
 #marks-panel .mini-score{display:inline-flex;align-items:baseline;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums;color:#f1eee3}
@@ -21,4 +22,4 @@ body.planner #marks-panel .mark-course .assessment-name{font-size:11px;font-weig
 body.planner #marks-panel .mark-course .assessment-row .mini-score{flex:none}
 body.planner #marks-panel .mark-course .assessment-row .mini-score[data-pending="true"] strong{font-size:12px}
 body.planner #marks-panel .mark-course .assessments>.quiet,body.planner #marks-panel .mark-course .assessments>.message{flex-basis:100%;font-size:12px;line-height:1.5;margin:0}
-@media(max-width:380px){body.planner #marks-panel .marks-list{padding-inline:12px}body.planner #marks-panel .course-title{font-size:13px}#marks-panel .marks-score-block .mini-score strong{font-size:20px}body.planner #marks-panel .mark-course .assessments{gap:5px}}
+@media(max-width:380px){body.planner #marks-panel .marks-list{padding-inline:12px}#marks-panel .marks-score-block .mini-score strong{font-size:20px}body.planner #marks-panel .mark-course .assessments{gap:5px}}
