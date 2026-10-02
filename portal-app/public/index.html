@@ -78,7 +78,7 @@
   <script src="/provider-connections.js?v=7d4ac181f0" defer></script>
   <script src="/client-ocr.js?v=21050a80f0" defer></script>
   <script src="/auth-client.js?v=11b6bc9c7a" defer></script>
-  <script src="/login-flow.js?v=f2e201eeca" defer></script>
+  <script src="/login-flow.js?v=68bfc0de18" defer></script>
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=3582c4ea22" defer></script>
   <script src="/settings.js?v=6429bc5d86" defer></script>
@@ -86,7 +86,7 @@
   <script src="/app.js?v=2bdc13a5e6" defer></script>
   <script src="/credential-integrity.js?v=fbfd4079df" defer></script>
   <script src="/offline-shell.js?v=183c619836" defer></script>
-  <script src="/login-effects.js?v=5518c810e3" defer></script>
+  <script src="/login-effects.js?v=e6fe094e1b" defer></script>
 </head>
 <body class="garden-login">
   <div class="botanical-backdrop" aria-hidden="true"></div>
@@ -127,11 +127,11 @@
     <section id="login-view" class="login-layout" aria-labelledby="login-title" hidden>
       <div class="login-card">
         <h1 id="login-title">Sign in.</h1>
-        <p id="login-description">Start with your SRM email.</p>
+        <p id="login-description">Start with your SRM ID.</p>
         <form id="login-form" data-step="email">
           <div id="login-account-field" class="login-field">
-            <label for="account">Email address</label>
-            <input id="account" name="account" type="email" inputmode="email" enterkeyhint="next" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="you@srmist.edu.in" aria-describedby="account-error" required>
+            <label for="account">Your SRM ID</label>
+            <input id="account" name="account" type="email" inputmode="email" enterkeyhint="next" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="NetID or SRM email" aria-describedby="account-error" required>
             <span id="account-error" class="login-field-note" hidden></span>
           </div>
           <div id="login-account-row" class="login-account-row" hidden>

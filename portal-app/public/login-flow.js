@@ -6,6 +6,7 @@ globalThis.anonLoginFlow = (() => {
   const form = el('login-form');
   const account = el('account');
   const passwords = [['password', 'academia'], ['portal-password', 'portal']];
+  const SRM_DOMAIN = '@srmist.edu.in';
   let step = 'email';
   let submittedAccount = '';
   let isBusy = false;
@@ -15,6 +16,18 @@ globalThis.anonLoginFlow = (() => {
       el(`${id}-error`).hidden = true;
       el(`${id}-error`).textContent = '';
     }
+  }
+  // Bare NetIDs are completed for the student automatically, as the older
+  // release did; a full address typed by the student is left untouched.
+  function normalizeAccount() {
+    if (!anonAuth.enabled) return account.value;
+    const typed = account.value.trim();
+    if (!typed || typed.includes('@')) return typed;
+    account.value = typed + SRM_DOMAIN;
+    account.removeAttribute('aria-invalid');
+    const error = el('account-error');
+    if (error) { error.hidden = true; error.textContent = ''; }
+    return account.value;
   }
   function sync(busy = isBusy) {
     isBusy = busy;
@@ -35,7 +48,7 @@ globalThis.anonLoginFlow = (() => {
     el('login-title').textContent = expanded ? (dual ? 'Both passwords.' : 'Your password.') : 'Sign in.';
     el('login-description').textContent = expanded
       ? (dual ? 'Enter your Academia and Student Portal passwords to use the complete app.' : 'Use your password and the verification code to sign in.')
-      : (dual ? 'Start with your SRM email.' : 'Start with your SRM ID or email.');
+      : (dual ? 'Start with your SRM ID — we add @srmist.edu.in.' : 'Start with your SRM ID or email.');
     el('password-help').textContent = dual
       ? 'Both passwords are needed. Connected accounts stay connected while you finish verification.'
       : 'Use your Academia password.';
@@ -55,6 +68,7 @@ globalThis.anonLoginFlow = (() => {
     sync();
     if (isBusy) return false;
     if (step === 'password') return true;
+    normalizeAccount();
     if (!account.reportValidity()) return false;
     const identity = account.value.trim().toLowerCase();
     if (submittedAccount && identity !== submittedAccount) {
@@ -75,6 +89,11 @@ globalThis.anonLoginFlow = (() => {
     (first || el('manual-captcha-answer')).focus({ preventScroll: true });
     return false;
   }
+  account.addEventListener('blur', () => { if (step === 'email' && !isBusy) normalizeAccount(); });
+  account.addEventListener('keydown', event => { if (event.key === 'Enter' && step === 'email' && !isBusy) normalizeAccount(); });
+  form.addEventListener('click', event => {
+    if (step === 'email' && !isBusy && event.target.closest('#sign-in')) normalizeAccount();
+  });
   el('login-change-account').addEventListener('click', () => {
     if (isBusy) return;
     step = 'email';
