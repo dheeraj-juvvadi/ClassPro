@@ -2,7 +2,6 @@ services:
   - type: web
     name: goscraper
     runtime: docker
-    repo: https://github.com/dheeraj-juvvadi/revamp-tracker
     branch: main
     dockerfilePath: portal-go/Dockerfile
     dockerContext: .

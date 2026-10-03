@@ -23,10 +23,10 @@ http.createServer(async (request, response) => {
       let bytes = 0;
       for await (const chunk of request) { bytes += chunk.length; if (bytes > 8192) { response.writeHead(413).end(); return; } chunks.push(chunk); }
       const headers = { 'Content-Type': 'application/json', Origin: 'https://revamp-tracker.vercel.app', 'Sec-Fetch-Site': 'same-origin', 'X-Client-Trace': randomUUID(), 'X-Login-Mode': 'manual' };
-      const cookie = (request.headers.cookie || '').split(';').map(value => value.trim()).find(value => /^classpro_go_session=[a-f0-9]{64}$/.test(value));
+      const cookie = (request.headers.cookie || '').split(';').map(value => value.trim()).find(value => /^anon_go_session=[a-f0-9]{64}$/.test(value));
       if (cookie) headers.Cookie = cookie;
       const result = await fetch(new URL(path, upstream), { method: request.method, headers, body: request.method === 'POST' ? Buffer.concat(chunks) : undefined, redirect: 'manual', signal: AbortSignal.timeout(60000) });
-      const cookies = result.headers.getSetCookie().filter(value => value.startsWith('classpro_go_session=')).map(value => value.replace(/;\s*Secure\b/gi, ''));
+      const cookies = result.headers.getSetCookie().filter(value => value.startsWith('anon_go_session=')).map(value => value.replace(/;\s*Secure\b/gi, ''));
       if (cookies.length) response.setHeader('Set-Cookie', cookies);
       response.setHeader('Content-Type', result.headers.get('content-type') || 'application/json');
       response.writeHead(result.status).end(Buffer.from(await result.arrayBuffer()));

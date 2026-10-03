@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#191b19">
+  <title>Settings · Anon</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="./page.css">
+  <script src="../navigation.js" defer></script>
+  <script src="./page.js" defer></script>
+</head>
+<body data-page="settings">
+  <div class="app">
+    <a class="settings-skip" href="#settings-content">Skip to settings</a>
+    <header class="masthead"></header>
+    <main id="settings-content" tabindex="-1">
+      <div class="page-heading settings-heading">
+        <h1>Settings</h1>
+        <p>A few things that make this space yours.</p>
+      </div>
+
+      <section aria-labelledby="profile-title">
+        <div class="settings-section-head">
+          <h2 id="profile-title">Your profile</h2>
+          <span class="settings-tag">Sample</span>
+        </div>
+        <div class="settings-identity">
+          <span class="settings-avatar" id="profile-initials" aria-hidden="true">AS</span>
+          <div>
+            <p class="settings-name" id="profile-name">Aarav Sharma</p>
+            <p class="settings-detail">B.Tech · Computer Science</p>
+          </div>
+        </div>
+        <form id="profile-form" class="settings-name-form">
+          <label for="display-name">Display name</label>
+          <div class="settings-name-controls">
+            <input id="display-name" name="display-name" type="text" value="Aarav Sharma"
+              maxlength="60" autocomplete="off" required aria-describedby="profile-feedback">
+            <button type="submit" class="settings-save">Save sample</button>
+          </div>
+          <p id="profile-feedback" class="settings-feedback" role="status" aria-live="polite" aria-atomic="true">Only updates this preview. Refresh to reset.</p>
+        </form>
+      </section>
+
+      <section class="settings-section" aria-labelledby="connections-title">
+        <div class="settings-section-head">
+          <h2 id="connections-title">Account connections</h2>
+          <span class="settings-context">Preview only</span>
+        </div>
+        <p class="settings-explainer">Connect both Academia and Student Portal to use the full app.</p>
+        <ul class="settings-connections" aria-label="Sample account connections">
+          <li class="settings-connection">
+            <span class="settings-provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="m3 9 9-5 9 5-9 5-9-5Zm4 3v5c3 3 7 3 10 0v-5M21 9v7"/></svg>
+            </span>
+            <div class="settings-provider"><h3>Academia</h3><p>Academic account</p></div>
+            <span class="settings-connection-state"><span aria-hidden="true">●</span> Sample<br>connection</span>
+          </li>
+          <li class="settings-connection">
+            <span class="settings-provider-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M6 16c0-4 6-4 6 0m3-7h3m-3 4h3"/></svg>
+            </span>
+            <div class="settings-provider"><h3>Student Portal</h3><p>Student account</p></div>
+            <span class="settings-connection-state"><span aria-hidden="true">●</span> Sample<br>connection</span>
+          </li>
+        </ul>
+        <p class="settings-caption">These are sample states. No live accounts are connected.</p>
+      </section>
+
+      <section class="settings-section" aria-labelledby="preferences-title">
+        <div class="settings-section-head"><h2 id="preferences-title">Your preferences</h2></div>
+        <div class="settings-reminder-row">
+          <div>
+            <label for="class-reminders" class="settings-reminder-label">Class reminders</label>
+            <p id="reminder-description" class="settings-detail">15 and 5 minutes before class.</p>
+          </div>
+          <div class="settings-switch-wrap">
+            <span id="reminder-state" aria-hidden="true">Off</span>
+            <span class="settings-switch">
+              <input id="class-reminders" type="checkbox" role="switch" aria-describedby="reminder-description reminder-feedback">
+              <span class="settings-switch-track" aria-hidden="true"></span>
+            </span>
+          </div>
+        </div>
+        <p id="reminder-feedback" class="settings-feedback" role="status" aria-live="polite" aria-atomic="true">Sample toggle only. No notifications will be sent.</p>
+      </section>
+
+      <footer class="settings-footer">
+        <a class="settings-signout" href="/login/">
+          <span>Sign out</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H4v16h6m4-12 4 4-4 4m-6-4h10"/></svg>
+        </a>
+        <p class="settings-caption">Returns to the sample sign-in screen.</p>
+      </footer>
+      <noscript><p class="settings-caption">Enable JavaScript to try the sample name editor and reminder toggle.</p></noscript>
+    </main>
+    <nav class="bottom-nav"></nav>
+  </div>
+</body>
+</html>

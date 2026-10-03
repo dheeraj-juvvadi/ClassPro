@@ -14,12 +14,14 @@ type Config struct {
 	Origin, WorkerURL, WorkerToken, StaticDir, Addr string
 	Secure                                          bool
 	MaxSessions, MaxConcurrent, RatePerMinute       int
+	MaxQueued                                       int
 	SessionTTL, ChallengeTTL, CacheTTL, Timeout     time.Duration
+	QueueWait                                       time.Duration
 	TrustedProxies                                  []*net.IPNet
 }
 
 func configFromEnv() (Config, error) {
-	config := Config{Origin: os.Getenv("APP_ORIGIN"), WorkerURL: env("WORKER_URL", "http://127.0.0.1:3101"), WorkerToken: os.Getenv("WORKER_TOKEN"), StaticDir: os.Getenv("STATIC_DIR"), Addr: ":" + env("PORT", "8080"), Secure: true, MaxSessions: 4, MaxConcurrent: 2, RatePerMinute: 30, SessionTTL: 30 * time.Minute, ChallengeTTL: 2 * time.Minute, CacheTTL: time.Minute, Timeout: 90 * time.Second}
+	config := Config{Origin: os.Getenv("APP_ORIGIN"), WorkerURL: env("WORKER_URL", "http://127.0.0.1:3101"), WorkerToken: os.Getenv("WORKER_TOKEN"), StaticDir: os.Getenv("STATIC_DIR"), Addr: ":" + env("PORT", "8080"), Secure: true, MaxSessions: 4, MaxConcurrent: 2, RatePerMinute: 30, MaxQueued: 64, SessionTTL: 30 * time.Minute, ChallengeTTL: 2 * time.Minute, CacheTTL: time.Minute, Timeout: 90 * time.Second, QueueWait: 12 * time.Second}
 	origin, err := url.Parse(config.Origin)
 	if err != nil || origin.Host == "" || origin.User != nil || origin.RawQuery != "" || origin.Fragment != "" || origin.Path != "" {
 		return config, fmt.Errorf("APP_ORIGIN must be an exact origin without trailing slash")
@@ -48,6 +50,20 @@ func configFromEnv() (Config, error) {
 			}
 			*target = parsed
 		}
+	}
+	if value := os.Getenv("MAX_QUEUED"); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed < 1 || parsed > 100000 {
+			return config, fmt.Errorf("invalid MAX_QUEUED")
+		}
+		config.MaxQueued = parsed
+	}
+	if value := os.Getenv("QUEUE_WAIT_MS"); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed < 100 || parsed > 120000 {
+			return config, fmt.Errorf("invalid QUEUE_WAIT_MS")
+		}
+		config.QueueWait = time.Duration(parsed) * time.Millisecond
 	}
 	for _, value := range strings.Split(os.Getenv("TRUSTED_PROXY_CIDRS"), ",") {
 		if strings.TrimSpace(value) == "" {

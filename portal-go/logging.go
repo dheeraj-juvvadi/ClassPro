@@ -106,7 +106,7 @@ func observeRequests(next http.Handler, logger *slog.Logger) http.Handler {
 }
 
 func requestHasSessionCookie(request *http.Request) bool {
-	for _, name := range []string{cookieName, "__Host-classpro_state_0", "classpro_state_0"} {
+	for _, name := range []string{cookieName, "__Host-anon_state_0", "anon_state_0"} {
 		if cookie, err := request.Cookie(name); err == nil && cookie.Value != "" {
 			return true
 		}

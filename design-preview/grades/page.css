@@ -1,0 +1,44 @@
+body[data-page="grades"] main { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+.grades-heading { margin-bottom: 22px; }
+.grades-heading p, .tool-intro, .field-note, .result-note, .scheme-note { text-wrap: pretty; }
+.grades-skip { position: fixed; top: 10px; left: 16px; z-index: 30; min-height: 44px; padding: 10px 14px; border-radius: 8px; background: var(--sage); color: var(--page); clip-path: inset(100%); }
+.grades-skip:focus { clip-path: none; }
+[hidden] { display: none !important; }
+.tool-tabs { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface); }
+.tool-tabs button { min-width: 0; min-height: 44px; padding: 9px 10px; border-radius: 8px; font-size: 13px; line-height: 1.4; font-weight: 550; color: var(--muted); }
+.tool-tabs button[aria-selected="true"] { background: var(--sage); color: var(--page); }
+.tool-tabs button:hover { box-shadow: inset 0 0 0 1px var(--sage); }
+.tool-intro { margin: 20px 0 18px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.planning-form { display: grid; gap: 15px; }
+.field { min-width: 0; }
+.field label { display: block; margin-bottom: 7px; font-size: 13px; line-height: 1.5; }
+.field input, .field select { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.field select { padding-right: 8px; }
+.field input::placeholder { color: var(--muted); opacity: .8; }
+.field input[readonly] { color: var(--muted); }
+.field input:hover, .field select:hover { border-color: var(--muted); }
+.field select:focus-visible { outline: 2px solid var(--sage); outline-offset: 4px; }
+.field [aria-invalid="true"] { border-color: var(--risk); }
+.field-note { margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.field-error { margin-top: 6px; color: var(--risk); font-size: 12px; line-height: 1.6; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 12px; }
+.field-grid .field { display: flex; flex-direction: column; }
+.field-grid label { flex: 1; }
+.planning-form > .field-note { margin-top: -7px; }
+.calculate-button { min-height: 44px; padding: 11px 16px; border-radius: 9px; background: var(--sage); color: var(--page); font-size: 13px; line-height: 1.5; font-weight: 600; }
+.calculate-button:hover { box-shadow: inset 0 0 0 2px var(--ink); }
+.planning-result { margin-top: 23px; padding-top: 19px; border-top: 1px solid var(--line); }
+.result-label { color: var(--muted); font-size: 12px; }
+.planning-result output { display: block; margin-top: 5px; color: var(--sage); font-size: 28px; font-weight: 560; line-height: 1.4; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.planning-result[data-state="limited"] output { color: var(--risk); font-size: 23px; }
+.result-note { margin-top: 5px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.scheme-note { margin-top: 17px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+@media (max-width: 350px) {
+  .field-grid { grid-template-columns: minmax(0, 1fr); }
+  .tool-tabs button { padding-inline: 6px; }
+}
+@media (forced-colors: active) {
+  .tool-tabs button[aria-selected="true"] { outline: 2px solid Highlight; outline-offset: -3px; }
+  .calculate-button { border: 1px solid ButtonText; }
+  .field [aria-invalid="true"] { outline: 2px dashed CanvasText; }
+}

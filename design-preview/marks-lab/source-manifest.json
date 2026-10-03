@@ -1,0 +1,55 @@
+{
+  "project": "Anon Marks native mobile mockup v6",
+  "library": "/Users/rajenderrao/interface-motion-library/README.md",
+  "repository": "https://github.com/keshav-exe/mdxcn",
+  "commit": "2928126ba146ebbae9c2351deca27d27bb40e744",
+  "license": "MIT, Copyright (c) 2026 Keshav Bagaade",
+  "licenseFile": "LICENSE.mdxcn",
+  "renderedComponent": "GraphSpec",
+  "upstreamFiles": [
+    {
+      "path": "registry/default/graph-spec/graph-spec.tsx",
+      "sha256": "597e45b49a1dd2e0a59ac837826e08b3e0089ac8e9af73f575c48b253667637b",
+      "local": "upstream/graph-spec.tsx",
+      "renderedCopy": "src/registry/default/graph-spec/graph-spec.tsx",
+      "changes": "SpecRow.value widened from string to ReactNode for accessible score formatting; upstream parser, definition-list markup and component composition preserved. Brand and responsive styles applied in src/style.css. Decorative frame caption remains screen-reader accessible. MotionConfig reducedMotion=always keeps records present without scroll-triggered hiding."
+    },
+    {
+      "path": "registry/default/graph-frame/graph-frame.tsx",
+      "sha256": "f9c35b5c3c24d86b9fa58f671f60fccccad47e71d2569da15c0f83c2c0436889",
+      "local": "upstream/graph-frame.tsx",
+      "modified": false
+    },
+    {
+      "path": "registry/default/graph-frame/graph-motion.ts",
+      "sha256": "c94ab7fca8f73a21fd4b024812e32cfe2cff09ea07c3ea60e09246ee8d705411",
+      "local": "upstream/graph-motion.ts",
+      "modified": false
+    },
+    {
+      "path": "lib/utils.ts",
+      "sha256": "14300d758170c270c75b057f38fedb3793a5920ea872f0477e29fb131185e8a7",
+      "local": "upstream/utils.ts",
+      "modified": false
+    },
+    {
+      "path": "registry/default/graph-invoice/graph-invoice.tsx",
+      "sha256": "b737627e8c7b2c9f9af64c7fccf99bf3cdb8210557c8dec2000cf0c90c269160",
+      "local": "upstream/graph-invoice.tsx",
+      "usage": "Inspected alternative only; not imported or rendered."
+    }
+  ],
+  "data": {
+    "source": "/tmp/classpro-sourced-academic-v4/src/marks-courses.ts",
+    "copy": "src/marks-courses.ts",
+    "modified": false,
+    "note": "Synthetic design fixtures; 5 courses, 15 named assessments, 12 released, 3 pending, 1 genuine zero. Default data unchanged. Query ?stress=1 adds long-label QA strings only."
+  },
+  "assets": "Existing Anon logo, floral art and local Inter font reused from /tmp/classpro-sourced-academic-v4/public/assets. No screenshot source assets embedded.",
+  "constraints": "No repository edits, app API integration, timeline, accordion, plus control or subject selector.",
+  "referenceInspected": [
+    "/tmp/classpro-academic-studies-v2/baseline-home.png",
+    "/tmp/classpro-sourced-academic-v4/marks-all-assessments.png",
+    "/tmp/classpro-android-references-v6/google-classroom-play-3.png"
+  ]
+}

@@ -1,6 +1,6 @@
-# Ratio-D Student Portal client
+# the upstream client Student Portal client
 
-Upstream: https://github.com/projectakshith/ratio-d
+Upstream: the upstream reference
 
 Pinned revision: `413b7f0055a14794ea11cb858c05abab311f89b4`.
 
@@ -36,9 +36,9 @@ only through private stdin/stdout pipes. It has no public listener.
 - Manual CAPTCHA remains available. Invalid credentials are not retried.
 - Upstream's broad success test is additionally checked against our attendance parser.
 
-## Deliberate differences from Ratio-D
+## Deliberate differences from the upstream client
 
-Ratio-D calls a separate Rust TinyOCR service. This adapter runs the exact TinyOCR
+the upstream client calls a separate Rust TinyOCR service. This adapter runs the exact TinyOCR
 weights, native 175x45 grayscale preprocessing, vocabulary and greedy CTC decoder
 locally through ONNX Runtime with one CPU thread. It does not run the Rust HTTP
 server; no third-party OCR service receives images. See model/README.md.

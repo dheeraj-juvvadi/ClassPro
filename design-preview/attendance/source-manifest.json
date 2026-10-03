@@ -1,0 +1,33 @@
+{
+  "repository": "https://github.com/keshav-exe/mdxcn",
+  "commit": "2928126ba146ebbae9c2351deca27d27bb40e744",
+  "license": "MIT Copyright (c) 2026 Keshav Bagaade",
+  "files": [
+    {
+      "path": "registry/default/graph-bullet/graph-bullet.tsx",
+      "sha256": "c4e6e9699602d10bd1dc90608b9937fbda26e26f4ece1c5d316b2b5cea0e7423",
+      "modified": false
+    },
+    {
+      "path": "registry/default/graph-timeline/graph-timeline.tsx",
+      "sha256": "00566c6b60cef83b09bcb901cc12e22a1d25a6ef72f1a43d5511574ca1931f69",
+      "modified": false
+    },
+    {
+      "path": "registry/default/graph-frame/graph-frame.tsx",
+      "sha256": "f9c35b5c3c24d86b9fa58f671f60fccccad47e71d2569da15c0f83c2c0436889",
+      "modified": false
+    },
+    {
+      "path": "registry/default/graph-frame/graph-motion.ts",
+      "sha256": "c94ab7fca8f73a21fd4b024812e32cfe2cff09ea07c3ea60e09246ee8d705411",
+      "modified": false
+    },
+    {
+      "path": "lib/utils.ts",
+      "sha256": "14300d758170c270c75b057f38fedb3793a5920ea872f0477e29fb131185e8a7",
+      "modified": false
+    }
+  ],
+  "styling": "Unchanged full React source, original graph utility CSS excerpt; brand/responsive presentation via external stylesheet"
+}

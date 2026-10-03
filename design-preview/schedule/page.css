@@ -1,0 +1,51 @@
+body[data-page="schedule"] .page-heading { margin-bottom: 20px; }
+body[data-page="schedule"] :is(h2, h3) { text-wrap: balance; }
+body[data-page="schedule"] p { text-wrap: pretty; }
+body[data-page="schedule"] main:focus-visible { outline: 2px solid var(--sage); outline-offset: -2px; }
+.schedule-context { color: var(--muted); font-size: 11px; margin-bottom: 10px; }
+.schedule-context span { color: var(--sage); }
+.weekday-switch { display: grid; grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.weekday-switch[hidden] { display: none; }
+.weekday-switch button { min-width: 44px; min-height: 44px; padding: 10px 4px; border-radius: 10px; color: var(--muted); font-size: 12px; }
+.weekday-switch button:hover { background: var(--surface); color: var(--ink); }
+.weekday-switch button[aria-pressed="true"] { background: var(--sage); color: var(--page); font-weight: 600; }
+.schedule-section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; padding: 20px 0 11px; }
+.schedule-section-head h2 { font-size: 14px; font-weight: 550; text-wrap: balance; }
+.schedule-section-head p { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.schedule-surface { background: var(--surface); border-radius: 18px; padding: 0 14px; }
+.schedule-table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; }
+.schedule-table .time-column { width: 57px; }
+.schedule-table .room-column { width: 48px; }
+.schedule-table thead th { color: var(--muted); font-size: 10px; font-weight: 450; padding: 12px 0 9px; border-bottom: 1px solid var(--line); }
+.schedule-table thead th:last-child { text-align: right; }
+.schedule-table tbody th, .schedule-table tbody td { padding: 14px 0; vertical-align: top; }
+.schedule-table tbody tr + tr > * { border-top: 1px solid var(--line); }
+.schedule-table tbody th { padding-inline: 0 8px; font-weight: 400; }
+.course-name { display: block; font-size: 14px; font-weight: 560; line-height: 1.4; overflow-wrap: anywhere; }
+.course-meta { display: block; color: var(--muted); font-size: 10px; line-height: 1.5; margin-top: 4px; }
+.class-time, .class-room { font-variant-numeric: tabular-nums; }
+.class-time time { display: block; font-size: 12px; line-height: 1.5; }
+.class-time time:last-child { color: var(--muted); font-size: 10px; margin-top: 4px; }
+.class-room { font-size: 11px; text-align: right; line-height: 1.7; overflow-wrap: anywhere; }
+.schedule-key { margin-top: 10px; color: var(--muted); font-size: 10px; text-wrap: pretty; }
+.schedule-links { margin-top: 22px; }
+.schedule-links a { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); color: var(--sage); font-size: 12px; padding-block: 10px; }
+.schedule-links a:hover span:first-child { text-decoration: underline; text-underline-offset: 3px; }
+body[data-page="schedule"] .sample-note { text-wrap: pretty; }
+.schedule-skip { position: absolute; top: 8px; left: 24px; z-index: 20; padding: 12px; background: var(--sage); color: var(--page); border-radius: 8px; transform: translateY(-150%); }
+.schedule-skip:focus { transform: translateY(0); }
+body[data-page="schedule"] :is(button, a):focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; }
+@media (max-width: 350px) {
+  body[data-page="schedule"] main { padding-inline: 14px; }
+  .schedule-surface { padding-inline: 12px; }
+  .schedule-table .time-column { width: 51px; }
+  .schedule-table .room-column { width: 44px; }
+}
+@media (forced-colors: active) {
+  .weekday-switch button { border: 1px solid ButtonText; }
+  .weekday-switch button[aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: -3px; }
+  .schedule-surface { border: 1px solid CanvasText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="schedule"] *, body[data-page="schedule"] *::before, body[data-page="schedule"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

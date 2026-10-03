@@ -1,0 +1,4 @@
+Rare UI Family Drawer
+Commit: 1d572f4b1862f5f6b1be61bb33380fede433e1df
+Source: https://github.com/swamimalode07/rare-ui/blob/1d572f4b1862f5f6b1be61bb33380fede433e1df/components/ui/family-drawer.tsx
+License: MIT + Commons Clause + Attribution; see LICENSE-Rare-UI.txt

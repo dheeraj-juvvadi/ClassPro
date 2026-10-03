@@ -44,7 +44,7 @@ func (backend *fakeWorker) Call(ctx context.Context, action, id string, body jso
 
 func fixture() (*Server, *fakeWorker) {
 	backend := &fakeWorker{calls: make(map[string]int)}
-	config := Config{Origin: "https://classpro.example", Secure: true, MaxSessions: 4, MaxConcurrent: 2, RatePerMinute: 100, SessionTTL: 30 * time.Minute, ChallengeTTL: 2 * time.Minute, CacheTTL: time.Minute, Timeout: time.Second}
+	config := Config{Origin: "https://anon.example", Secure: true, MaxSessions: 4, MaxConcurrent: 2, RatePerMinute: 100, SessionTTL: 30 * time.Minute, ChallengeTTL: 2 * time.Minute, CacheTTL: time.Minute, Timeout: time.Second}
 	return NewServer(config, backend), backend
 }
 
@@ -97,7 +97,7 @@ func TestHealthIsCheapAndStrict(t *testing.T) {
 
 func TestCSRFAndBodyValidation(t *testing.T) {
 	server, backend := fixture()
-	for _, origin := range []string{"", "null", "http://classpro.example", "https://classpro.example.evil", "https://classpro.example/"} {
+	for _, origin := range []string{"", "null", "http://anon.example", "https://anon.example.evil", "https://anon.example/"} {
 		response := perform(server, "POST", "/api/challenge", `{}`, nil, origin)
 		if response.Code != 403 {
 			t.Fatalf("accepted origin %q", origin)

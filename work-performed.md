@@ -8,19 +8,19 @@
 - `implementation-backlog.md` now tracks user's full readiness checklist. Working on metadata/custom 404/robots/sitemap/OG image next; these are local until next frontend deploy. Still no goal commits/pushes; preserve unrelated Go/Appwrite edits.
 
 ## 2026-09-17: active autonomous goal — branding, Azure, unified login and desktop
-- User authorized continued implementation/deployment, Azure completion, Ratio-D feature work and desktop improvements, without interruptions. Active goal exists; do not mark complete while work remains. User subsequently requested shared ID + separate Academia/SP passwords, distinct insight courses, ASCII confetti empty states, edge-attached navigation, removal of blue tap flash, and ~20% longer vibration.
-- Azure COMPLETED: built `classpro-diag:20260917-safe` on VM using pinned Python 3.11 dependencies; 46 tests pass (38.537s). Deployed with `ratio-diagnostic/deploy_azure.py` preserving Config/HostConfig + session mount. New image sha256 ee637d5d54368fcd18e0f0460a84db6a48186cd18b9058e4dc8da48f06101520. Health OK, public /api/session 200, five remembered sessions restored. Rollback container `classpro-azure-before-20260917-safe`; root-only config/store backup `/root/anon-rollback-20260917`.
+- User authorized continued implementation/deployment, Azure completion, the upstream client feature work and desktop improvements, without interruptions. Active goal exists; do not mark complete while work remains. User subsequently requested shared ID + separate Academia/SP passwords, distinct insight courses, ASCII confetti empty states, edge-attached navigation, removal of blue tap flash, and ~20% longer vibration.
+- Azure COMPLETED: built `classpro-diag:20260917-safe` on VM using pinned Python 3.11 dependencies; 46 tests pass (38.537s). Deployed with `portal-backend/deploy_azure.py` preserving Config/HostConfig + session mount. New image sha256 ee637d5d54368fcd18e0f0460a84db6a48186cd18b9058e4dc8da48f06101520. Health OK, public /api/session 200, five remembered sessions restored. Rollback container `classpro-azure-before-20260917-safe`; root-only config/store backup `/root/anon-rollback-20260917`.
 - Live settings: SESSION_LIMIT=200, API_CONCURRENCY=4, OCR_CONCURRENCY=2, IO_THREADS=8, 7-day persistence. VM Standard_B2ats_v2, ~893MiB RAM; idle new container ~90MiB. These are conservative ceilings, NOT a 100-user throughput claim.
 - Backend fixes now deployed: all previous local FIFO/session-limit/OCR-init/challenge-eviction/SQLite closing changes, per-session request locks, module-scoped upstream print suppression (no process-wide stdout redirection), cancellation-safe OCR permits, configurable rate limits (default stays 30/IP/min), shared-ID normalization. Academia adds @srmist.edu.in; Portal strips only that suffix. Native OCR retains its slot after request cancellation until inference actually exits.
 - SSH with existing ~/.ssh/classpro_azure works. Upload to /home/azureuser directly (deploy subdirectory is not writable). No keys changed. Build context `/home/azureuser/anon-build-20260917`; build/test logs in home. Do not use old invalid deploy/backend.tar.gz.
 - Frontend DEPLOYED via isolated `/tmp/anon-frontend-20260917`: Vercel `dpl_BR7hkVawtbcm3RN73qmTVp6zWofE`, alias anon-tracker.vercel.app, Ready. Includes logo.svg, SVG/ICO favicon, regenerated install/touch icons, shared login, class reminders, desktop.css, navigation/tap fixes, confetti, unique insight courses, 7-day copy, haptics 8→10ms and success 12→14ms (35ms gap unchanged).
 - Frontend tests: 5 targeted checks passed before latest navigation update; navigation exposed menu stacking bug, fixed with header stacking level and planner-ui passes again. Shared login test checks separate passwords and no credentials in cache. Reminder test covers opt-in, day/window dedup and unknown calendar. Desktop/mobile geometry checked through T3 preview; snapshots repeatedly fail, do not claim screenshot-based visual verification.
-- Ratio-D reference fetched: origin/main still 413b7f0, reference checkout 0 ahead/behind. Added separate opt-in 15/5 minute reminders from that behavior, with date+course+start dedup. No background push claim.
+- the upstream client reference fetched: origin/main still 413b7f0, reference checkout 0 ahead/behind. Added separate opt-in 15/5 minute reminders from that behavior, with date+course+start dedup. No background push claim.
 - No commits/pushes made in this goal so far. Pre-existing Go/Appwrite work preserved. Frontend deployed directly, so next git deployment must include these local changes. Pending: more login/cache edge-case tests, sustained synthetic resource checks, persistence performance review, desktop/empty-state refinement, update final stale Status below.
 
 ## Latest production change: four-session cap hotfix
 - User encountered "Diagnostic sessions are full" and requested removal. Raised only the existing production hardcoded cap from 4 to 200; did NOT deploy the local backend concurrency batch.
-- Production confirmed exactly one `if len(sessions) >= 4:` and SESSION_LIMIT unset. Edited that literal in running classpro-azure container, syntax-compiled before writing, saved backup /app/ratio-diagnostic/server.py.before-session-cap, restarted existing container with session-data bind mount preserved.
+- Production confirmed exactly one `if len(sessions) >= 4:` and SESSION_LIMIT unset. Edited that literal in running classpro-azure container, syntax-compiled before writing, saved backup /app/portal-backend/server.py.before-session-cap, restarted existing container with session-data bind mount preserved.
 - IMPORTANT: this is a writable-container hotfix, not a new image. It survives restart but will be lost upon container recreation from the old image. Next deployment must include session-limit source changes. Same image name remains classpro-diag:attendance-delta.
 - Public verification: /api/challenge with provider=academia returned 200. Five independent cookie jars then created five simultaneously retained sessions without sign-out; all five returned 200 and set session cookies. Deleted exactly those five test sessions afterward; all cleanup requests returned 200. No credentials or SRM login traffic used.
 - 200 is an admission ceiling, NOT measured simultaneous login capacity or resource headroom. Production API serialization and 48h persistence remain unchanged; local FIFO/OCR/7-day changes are still undeployed.
@@ -37,7 +37,7 @@
 - System Git was initially blocked by Xcode license; user fixed it.
 - Located newer checkout using read-only local search. User approved switching to it.
 - Ran `git fetch revamp` in newer checkout; HEAD `3e44d7b`, GitHub `revamp/main` `b48c37c`: 51 ahead, 0 behind. No pull needed.
-- Pre-existing modified files: appwrite-backend/build.mjs, appwrite-backend/start.mjs, portal-go/config.go, portal-go/http_auth.go, portal-go/operations.go, portal-go/routes.go, portal-go/server.go, ratio-diagnostic/server.py.
+- Pre-existing modified files: appwrite-backend/build.mjs, appwrite-backend/start.mjs, portal-go/config.go, portal-go/http_auth.go, portal-go/operations.go, portal-go/routes.go, portal-go/server.go, portal-backend/server.py.
 - Pre-existing untracked files: appwrite.config.json, portal-go/pool_test.go, portal-go/portal-go. Do not overwrite or stage these blindly.
 - Existing tracked diff totals: 201 insertions, 55 deletions across 8 files.
 - No repository AGENTS.md found via glob; inherited global instructions apply.
@@ -52,7 +52,7 @@
 
 ## 2026-09-17: security audit findings (read-only, no clearance)
 - Subagent audit of first-party code. No covert collection endpoints or request-derived shell execution found. Key findings:
-  - ratio-diagnostic/server.py:350-352 + provider_flow.py:57-59 store account passwords in remembered sessions; session_store.py keeps Fernet key beside sqlite db. Compromise of SESSION_STORE_DIR exposes passwords.
+  - portal-backend/server.py:350-352 + provider_flow.py:57-59 store account passwords in remembered sessions; session_store.py keeps Fernet key beside sqlite db. Compromise of SESSION_STORE_DIR exposes passwords.
   - portal-python/core/portal_client.py:68 unrestricted redirects; 307/308 upstream redirect could forward login body. portal-go/direct.go:98-145 restricts origins correctly.
   - portal-app/public/api/proxy.js:37-56 forwards cookies/Authorization/body to BACKEND_URL without HTTPS/host validation.
   - appwrite-backend/build.mjs:9-21 downloads unpinned Go toolchain with checksum from same live metadata.
@@ -73,10 +73,10 @@
 - user approved retiring ClassPro deployments: deleted 61 READY production deployments (42 revamp-tracker history + 19 class-pro) and 1 superseded manual deploy; retained current production + previous ready rollback. Post-cleanup: revamp-tracker 2 READY, class-pro 0 READY. class-pro.vercel.app now 308 (alias remains).
 - temp worktree removed with --force after confirming changes committed; worktree list clean.
 - user informed production alias is anon-tracker; vercel inspect confirms alias resolves to latest git deploy.
-- uncommitted backend work (portal-go config/routes/server/operations/http_auth, ratio-diagnostic server.py, appwrite build/start, pool_test.go) remains intact and uncommitted.
+- uncommitted backend work (portal-go config/routes/server/operations/http_auth, portal-backend server.py, appwrite build/start, pool_test.go) remains intact and uncommitted.
 
 ## 2026-09-17: current capacity (measured limits, not benchmarked throughput)
-- Deployed backend is ratio-diagnostic (Python/Ratio-D per docs/anon-academic-data.md): OCR_CONCURRENCY=6 (>=5 OCR logins), SESSION_LIMIT=200 (sessions dict), API_CONCURRENCY=24, RATE_PER_MINUTE=600, MAX default 30 req/IP/min hardcoded at server.py:219 (rate check), session cap 4 hardcoded at server.py:281.
+- Deployed backend is portal-backend (Python/the upstream client per docs/anon-academic-data.md): OCR_CONCURRENCY=6 (>=5 OCR logins), SESSION_LIMIT=200 (sessions dict), API_CONCURRENCY=24, RATE_PER_MINUTE=600, MAX default 30 req/IP/min hardcoded at server.py:219 (rate check), session cap 4 hardcoded at server.py:281.
 - IMPORTANT: server.py has BOTH new env-tunable limits (lines 49-58) and old hardcoded checks (lines 219, 281). The hardcoded ones win today: effective = 4 sessions, 30 req/IP/min, 503 on gate full (no FCFS queue in Python path).
 - portal-go effective: MaxSessions=4, MaxConcurrent=2, MaxQueued=64, QueueWait=12s (config.go:24) unless env overridden; bounded waiter queue exists (server.go:100-136) but is not strict FIFO.
 - Session persistence: remembered sessions stored encrypted (Fernet) in sqlite via SESSION_STORE_DIR; remember=True default, 48h persistence; key stored beside db (audit risk above). Without SESSION_STORE_DIR, sessions are memory-only and lost on restart.
@@ -98,7 +98,7 @@
 
 ## Synthetic persistence verification after user login confirmation
 - User confirmed live login works after the origin fix.
-- Added test_112_sessions_restore_isolation_logout_and_expiration to ratio-diagnostic/test_session_store.py. Synthetic data only, temporary local SQLite directory, no SRM traffic or production data.
+- Added test_112_sessions_restore_isolation_logout_and_expiration to portal-backend/test_session_store.py. Synthetic data only, temporary local SQLite directory, no SRM traffic or production data.
 - Each of 112 sessions includes separate account/cookie values and 20 synthetic course records (roughly 42 KB report text per session). Verified restart restore, exact provider-data round trip, mutation isolation, logout removal, preservation of other sessions, and expiration.
 - Targeted unittest PASSED: 1 test, 0.202s total. This duration covers the whole local test, not per-login latency or production throughput.
 - Observed ResourceWarning for unclosed sqlite3 connections. SessionStore uses connection context managers that commit/rollback but do not explicitly close. This needs remediation and repeated-cycle testing before sustained-load claims.
@@ -192,7 +192,7 @@ memory was 332 MiB, container 62.47 MiB. Daily client review timer active and ra
 logs mode 0600. Release validation: 32 frontend and 61 backend tests passed.
 
 Remaining: observe real mixed-load latency and CPU credits; actual 1,000-user SRM throughput/four-second full-login
-maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterward.
+maximum remains unproven. Continue remaining readiness/UI/the upstream client agenda afterward.
 
 ## 2026-09-17: queue lifecycle hardening
 
@@ -224,7 +224,7 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   observation; this does not prove sustained peak capacity.
 - Next: validated release, verify asset exclusion, continue desktop/mobile audit.
   Reviewed bidyut10/opensourceui week-strip calendar and React Bits sidebar;
-  Ratio-D upstream remains 413b7f0 after fetch.
+  the upstream client upstream remains 413b7f0 after fetch.
 
 ## 2026-09-17: block-print loader and responsive calendar
 
@@ -246,7 +246,7 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   T3 frame callbacks were throttled, so they cannot establish frame-rate or
   battery performance on a real mobile device. No physical-phone claim made.
 - Next: release this UI agenda, then safe busy-response login retries and
-  shared-campus admission, followed by installed-app and Ratio-D improvements.
+  shared-campus admission, followed by installed-app and the upstream client improvements.
 
 - Loader/calendar release d8a5979 passed 32 frontend and 67 backend tests;
   GitHub run 35248397986 succeeded and the 966-byte flower is served in production.
@@ -266,7 +266,7 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   CAPTCHA cleanup and preserved rate buckets across token rotation are covered.
 - Same-session waits no longer occupy shared worker permits. Combined admission
   remains bounded to 64 waiters/12 seconds; memory is rechecked after waiting.
-- Found and fixed two hidden embedded Ratio-D limits: loopback-IP throttling
+- Found and fixed two hidden embedded the upstream client limits: loopback-IP throttling
   and eviction after 20 CAPTCHA sessions. The private ASGI copy uses wrapper
   admission; standalone upstream limiting remains on. Reserved CAPTCHA space
   protects issued challenges. Closing one client no longer closes the shared
@@ -314,7 +314,7 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   cancellation order, challenge retention and password rejection. The preceding
   full suite passed 87 tests; release validation reruns it with the sixth case.
 - Next: top sync popdown with truthful queued/completed/error states, then
-  public-readiness verification and Ratio-D feature refinements.
+  public-readiness verification and the upstream client feature refinements.
 
 ## 2026-09-18: returning-app sync feedback
 
@@ -333,13 +333,13 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   no overflow and correct placement. Physical-phone frame rate remains untested.
 - Removed “Leaving already?” from the entire greeting pool as requested.
 - Next: validated release and live asset verification, then reconcile the
-  readiness checklist and implement the next useful Ratio-D feature.
+  readiness checklist and implement the next useful the upstream client feature.
 
 ## 2026-09-18: marks target planner
 
 - Sync notice/greeting release d26f626 passed 42 frontend/88 backend checks;
   GitHub run 35291530328 succeeded. Live JavaScript confirms both changes.
-- Refetched Ratio-D; origin/main remains 413b7f0. Reviewed its marks-target
+- Refetched the upstream client; origin/main remains 413b7f0. Reviewed its marks-target
   workflow and implemented an Anon planner inside each course's assessment view.
 - Students choose their marking scheme, target total and expected remaining
   internals. Supports theory/practical 60/40, internal-only and custom weights.
@@ -517,10 +517,10 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
 - Verified the complete timetable/calendar is already in the browser report
   cache and optional periods are profile-scoped browser preferences. Extended
   offline tests reopen Schedule, restore excluded periods and change them locally.
-- Reviewed Ratio-D 413b7f0's AES-GCM/IndexedDB/localStorage credential flow.
+- Reviewed the upstream client 413b7f0's AES-GCM/IndexedDB/localStorage credential flow.
   Academia retries with a password after expiry; Portal sends a password on
   every refresh. Server receives credentials to relogin. Findings and migration
-  considerations are in docs/ratio-browser-credentials.md. No credential storage
+  considerations are in docs/browser-credentials-review.md. No credential storage
   migration was made as part of this inspection.
 - Seven marks/offline checks and four app navigation/cache checks pass. Layout
   and native controls checked at 320–1280px; no popup or new network calls.
@@ -555,3 +555,12 @@ maximum remains unproven. Continue remaining readiness/UI/Ratio-D agenda afterwa
   Vercel is READY and confirms the ignored-build command executed. GitHub run
   35420475614 succeeded through Linux image tests, Azure deployment and public
   health verification. The user requested stopping after this current chore.
+
+## September 20, 2026 — semester history
+
+- Verified the Student Portal Grade / Mark & Credit request and its official
+  cumulative and semester summaries in the owner's signed-in portal.
+- Added bounded history fetching, strict parsing, cached failure fallback,
+  official CGPA/earned-credit autofill, and a compact expandable Marks view.
+- Added synthetic parser/HTTP/browser regression coverage; no live transcript
+  or credentials are included in the repository. See docs/academic-history.md.

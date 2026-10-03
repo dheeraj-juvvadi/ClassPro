@@ -35,11 +35,11 @@ func main() {
 			log.Fatal(err)
 		}
 		app.httpAuth = newHTTPAuth(codec)
-		if os.Getenv("PORTAL_CLIENT") == "ratio-python" {
-			app.ratio = true
-			ratio := newRatioWorker()
-			app.worker = ratio
-			defer ratio.shutdown()
+		if os.Getenv("PORTAL_CLIENT") == "portal-python" {
+			app.portalAdapter = true
+			portalAdapter := newPortalWorker()
+			app.worker = portalAdapter
+			defer portalAdapter.shutdown()
 			go app.Reap(ctx)
 		}
 	} else {

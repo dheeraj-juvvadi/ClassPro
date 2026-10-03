@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const cookieName = "classpro_go_session"
+const cookieName = "anon_go_session"
 
 type flight struct {
 	done   chan struct{}
@@ -30,7 +30,7 @@ type rate struct {
 }
 
 type Server struct {
-	ratio    bool
+	portalAdapter    bool
 	httpAuth *httpAuth
 	config   Config
 	worker   worker
@@ -38,6 +38,8 @@ type Server struct {
 	sessions map[string]*session
 	rates    map[string]rate
 	slots    chan struct{}
+	queueMu  sync.Mutex
+	waiting  int
 	static   http.Handler
 }
 
@@ -81,6 +83,8 @@ func randomID() string {
 	return hex.EncodeToString(token[:])
 }
 
+// acquire takes a slot only if one is free. Background maintenance uses this so
+// it can never delay a caller; request paths use acquireContext instead.
 func (server *Server) acquire() bool {
 	select {
 	case server.slots <- struct{}{}:
@@ -88,6 +92,47 @@ func (server *Server) acquire() bool {
 	default:
 		return false
 	}
+}
+
+// acquireContext waits for a slot, queueing behind work already in flight rather
+// than rejecting outright. It fails only when the wait queue is saturated or the
+// deadline passes, so steady load drains instead of returning errors.
+func (server *Server) acquireContext(ctx context.Context) bool {
+	select {
+	case server.slots <- struct{}{}:
+		return true
+	default:
+	}
+	if !server.enqueue() {
+		return false
+	}
+	defer server.dequeue()
+	timer := time.NewTimer(server.config.QueueWait)
+	defer timer.Stop()
+	select {
+	case server.slots <- struct{}{}:
+		return true
+	case <-timer.C:
+		return false
+	case <-ctx.Done():
+		return false
+	}
+}
+
+func (server *Server) enqueue() bool {
+	server.queueMu.Lock()
+	defer server.queueMu.Unlock()
+	if server.waiting >= server.config.MaxQueued {
+		return false
+	}
+	server.waiting++
+	return true
+}
+
+func (server *Server) dequeue() {
+	server.queueMu.Lock()
+	server.waiting--
+	server.queueMu.Unlock()
 }
 
 func (server *Server) call(action string, entry *session, payload []byte) reply {

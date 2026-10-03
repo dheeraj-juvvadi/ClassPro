@@ -47,7 +47,7 @@ func (auth *httpAuth) entry(state *clientState) (*directSession, *transientJar) 
 }
 
 func (server *Server) statelessRoute(writer http.ResponseWriter, request *http.Request) {
-	if server.ratio && server.ratioDispatch(writer, request) {
+	if server.portalAdapter && server.portalDispatch(writer, request) {
 		return
 	}
 	auth := server.httpAuth
@@ -108,7 +108,10 @@ func (server *Server) statelessRoute(writer http.ResponseWriter, request *http.R
 			}
 		}
 	}
-	if !server.acquire() {
+	// Queue for a slot rather than rejecting: this is the sign-in path, so a busy
+	// pool should delay a caller briefly instead of failing the login outright.
+	if !server.acquireContext(request.Context()) {
+		writer.Header().Set("Retry-After", "2")
 		send(writer, failure(503, "CAPACITY", "SRM is busy. Please retry shortly."))
 		return
 	}

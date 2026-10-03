@@ -115,9 +115,9 @@ func newStateCodec(key, audience string, secure bool) (*stateCodec, error) {
 }
 
 func (codec *stateCodec) name(index int) string {
-	prefix := "classpro_state_"
+	prefix := "anon_state_"
 	if codec.secure {
-		prefix = "__Host-classpro_state_"
+		prefix = "__Host-anon_state_"
 	}
 	return prefix + strconv.Itoa(index)
 }

@@ -53,6 +53,6 @@ and work-performed.md; remaining performance limits are listed explicitly.
 - [ ] Review production client-error summaries; daily collection exists, review is not automated diagnosis.
 - [ ] Decide whether to retain or retire the inactive Go/Appwrite adapters. Local Go tests pass; they are not the production backend.
 - [ ] Remove unused public concept/legacy assets from deployment after checking references and rollout needs.
-- [ ] Credential architecture follow-up only if requested: Ratio-D inspection is complete in docs/ratio-browser-credentials.md; Anon still uses server-side remembered sessions.
+- [ ] Credential architecture follow-up only if requested: the upstream client inspection is complete in docs/browser-credentials-review.md; Anon still uses server-side remembered sessions.
 
 Do not present unchecked items as shipped. Public/legal copy must describe the actual service without inventing operator details or promises. Analytics, credentials and reports must not enter public metadata or the sitemap.

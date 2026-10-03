@@ -119,7 +119,7 @@ not sustained capacity at a 1,000-user login/sync peak.
 ## Sign-in burst admission and embedded-client fixes
 
 The September 17 continuation removes two previously missed internal bottlenecks:
-the embedded Ratio-D limiter counted every request against its loopback IP
+the embedded the upstream client limiter counted every request against its loopback IP
 (Academia 5/minute, Portal login/challenge 15/minute), and its 20-entry CAPTCHA
 pool evicted active challenges. The private ASGI copy now uses the outer
 service's admission rules. Its standalone limiter remains enabled by default.

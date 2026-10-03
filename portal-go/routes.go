@@ -38,7 +38,7 @@ func (server *Server) route(writer http.ResponseWriter, request *http.Request) {
 			send(writer, failure(413, "INVALID_REQUEST", "Request is too large."))
 			return
 		}
-		if !(server.ratio && validRatioPayload(request.URL.Path, payload)) && !validPayload(request.URL.Path, payload) {
+		if !(server.portalAdapter && validPortalPayload(request.URL.Path, payload)) && !validPayload(request.URL.Path, payload) {
 			send(writer, failure(400, "INVALID_REQUEST", "Check your sign-in details and try again."))
 			return
 		}
@@ -61,7 +61,7 @@ func (server *Server) route(writer http.ResponseWriter, request *http.Request) {
 		authenticated := entry != nil && entry.authenticated
 		server.mu.Unlock()
 		var body []byte
-		if server.ratio {
+		if server.portalAdapter {
 			body, _ = json.Marshal(map[string]any{"authenticated": authenticated, "provider": "portal", "authMode": "http", "serverAuto": true})
 		} else {
 			body, _ = json.Marshal(map[string]bool{"authenticated": authenticated})
@@ -99,18 +99,47 @@ func (server *Server) route(writer http.ResponseWriter, request *http.Request) {
 		send(writer, failure(503, "CAPACITY", "Login capacity is full. Try again shortly."))
 		return
 	}
-	if !server.acquire() {
-		server.mu.Unlock()
+	// Reserve a slot before committing shared state. acquireContext can queue, so it
+	// must run with server.mu released: holding the lock across the wait would stall
+	// every other request behind one queued caller.
+	server.mu.Unlock()
+	if !server.acquireContext(request.Context()) {
 		writer.Header().Set("Retry-After", "2")
-		send(writer, failure(503, "SERVER_BUSY", "ClassPro is processing another request. Please retry shortly."))
+		send(writer, failure(503, "SERVER_BUSY", "Anon is processing another request. Please retry shortly."))
+		return
+	}
+	// mutate releases the slot on the success path; every other exit released here.
+	handed := false
+	defer func() {
+		if !handed {
+			<-server.slots
+		}
+	}()
+	// Re-validate: state may have changed while this request waited in the queue.
+	server.mu.Lock()
+	entry = server.lookup(request)
+	if entry != nil && entry.busy {
+		server.mu.Unlock()
+		send(writer, failure(409, "BUSY", "A request is already in progress."))
+		return
+	}
+	if entry == nil && request.URL.Path != "/api/challenge" {
+		server.mu.Unlock()
+		send(writer, failure(401, "SESSION_EXPIRED", "Sign in with your NetID and password."))
 		return
 	}
 	if entry == nil {
+		if len(server.sessions) >= server.config.MaxSessions {
+			server.mu.Unlock()
+			send(writer, failure(503, "CAPACITY", "Login capacity is full. Try again shortly."))
+			return
+		}
 		entry = &session{id: randomID(), token: randomID(), expires: time.Now().Add(server.config.ChallengeTTL)}
 		server.sessions[entry.token] = entry
 	}
 	entry.busy = true
 	server.mu.Unlock()
+	handed = true
 	server.mutate(writer, request, entry, payload)
 }
 

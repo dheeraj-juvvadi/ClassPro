@@ -11,7 +11,7 @@ Research only. No deployment or login attempts were performed for this review.
   normalization, timezone, and headers. No independently verified hosted login
   result was found. Its bridge comments assert stable egress/IP-bound security;
   persistent process lifetime alone does not guarantee static egress on Render.
-- `projectakshith/ratio-d`, `backend/core/portal_client.py`: uses an HTTP session
+- `the upstream client`, `backend/core/portal_client.py`: uses an HTTP session
   and checks an authenticated attendance page after submitting credentials.
 - `prashanth-karanam/srm-companion`, `server/scraper_engine.py`: recognizes a
   JavaScript login-loader response and follows the portal navigation.
@@ -97,7 +97,7 @@ No production changes were made for this source review.
 - https://github.com/satadru-bh/srm-academia/blob/main/session/StudentPortalClient.js
 - https://github.com/satadru-bh/srm-academia/blob/main/portal-bridge.js
 - https://github.com/satadru-bh/srm-academia/commit/725ca7c8f66e02995fef1b0979df130688c11429
-- https://github.com/projectakshith/ratio-d/blob/main/backend/core/portal_client.py
+- the upstream reference
 - https://github.com/prashanth-karanam/srm-companion/blob/main/server/scraper_engine.py
 - https://github.com/shreyas-sha3/YAA/blob/main/backend/app.py
 - https://render.com/docs/outbound-ip-addresses

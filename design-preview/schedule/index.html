@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#191b19">
+  <title>Schedule · Anon</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="./page.css">
+  <script src="../navigation.js" defer></script>
+  <script src="./page.js" defer></script>
+</head>
+<body data-page="schedule">
+  <div class="app">
+    <a class="schedule-skip" href="#schedule-content">Skip to schedule</a>
+    <header class="masthead"></header>
+    <main id="schedule-content" tabindex="-1">
+      <div class="page-heading">
+        <h1>Schedule</h1>
+        <p>Your week, one day at a time.</p>
+      </div>
+      <p class="schedule-context"><span>Sample timetable</span> · Weekly view</p>
+      <div class="weekday-switch" role="group" aria-label="Choose a weekday" hidden>
+        <button type="button" data-day="monday" aria-label="Monday" aria-pressed="true" aria-controls="day-schedule">Mon</button>
+        <button type="button" data-day="tuesday" aria-label="Tuesday" aria-pressed="false" aria-controls="day-schedule">Tue</button>
+        <button type="button" data-day="wednesday" aria-label="Wednesday" aria-pressed="false" aria-controls="day-schedule">Wed</button>
+        <button type="button" data-day="thursday" aria-label="Thursday" aria-pressed="false" aria-controls="day-schedule">Thu</button>
+        <button type="button" data-day="friday" aria-label="Friday" aria-pressed="false" aria-controls="day-schedule">Fri</button>
+      </div>
+      <section id="day-schedule" aria-labelledby="day-title">
+        <div class="schedule-section-head">
+          <h2 id="day-title">Monday</h2>
+          <p id="day-summary">4 classes · 3h 20m</p>
+        </div>
+        <div class="schedule-surface">
+          <table class="schedule-table">
+            <caption class="sr-only" id="schedule-caption">Monday sample classes. Times use a 24-hour clock.</caption>
+            <colgroup><col class="time-column"><col><col class="room-column"></colgroup>
+            <thead><tr><th scope="col">Time</th><th scope="col">Course</th><th scope="col">Room</th></tr></thead>
+            <tbody id="course-rows">
+              <tr><td class="class-time"><time datetime="08:00">08:00</time><span class="sr-only"> to </span><time datetime="08:50">08:50</time></td><th scope="row"><span class="course-name">Data Structures</span><span class="course-meta">21CSC201J · Class</span></th><td class="class-room">B-204</td></tr>
+              <tr><td class="class-time"><time datetime="10:00">10:00</time><span class="sr-only"> to </span><time datetime="10:50">10:50</time></td><th scope="row"><span class="course-name">Computer Networks</span><span class="course-meta">21CSC302J · Class</span></th><td class="class-room">B-206</td></tr>
+              <tr><td class="class-time"><time datetime="11:00">11:00</time><span class="sr-only"> to </span><time datetime="11:50">11:50</time></td><th scope="row"><span class="course-name">Operating Systems</span><span class="course-meta">21CSC202J · Class</span></th><td class="class-room">B-204</td></tr>
+              <tr><td class="class-time"><time datetime="13:00">13:00</time><span class="sr-only"> to </span><time datetime="13:50">13:50</time></td><th scope="row"><span class="course-name">Discrete Mathematics</span><span class="course-meta">21MAB204T · Class</span></th><td class="class-room">A-103</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="schedule-key">24-hour time · Gaps between classes are free time.</p>
+      </section>
+      <nav class="schedule-links" aria-label="Planning links">
+        <a id="calendar-link" href="../calendar/?date=2026-10-05"><span>View Monday in calendar</span><span aria-hidden="true">→</span></a>
+        <a href="../home/"><span>Back to home</span><span aria-hidden="true">→</span></a>
+      </nav>
+      <p class="sample-note">Synthetic classes, times and rooms for this design preview. This is not an institutional timetable.</p>
+      <noscript><p class="sample-note">Monday’s sample is shown. Enable JavaScript to choose another weekday.</p></noscript>
+      <p class="sr-only" id="schedule-status" role="status" aria-atomic="true"></p>
+    </main>
+    <nav class="bottom-nav"></nav>
+  </div>
+</body>
+</html>

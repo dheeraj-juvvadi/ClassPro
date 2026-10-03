@@ -14,7 +14,7 @@ PLAYWRIGHT_CHANNEL=chrome RELEASE_PYTHON=/tmp/anon-release-venv/bin/python \
 ```
 
 Requirements: Node 22+, npm, Git, Chrome (or installed Playwright Chromium), and
-a Python 3.11 environment containing `ratio-diagnostic/requirements.txt`.
+a Python 3.11 environment containing `portal-backend/requirements.txt`.
 Without `PLAYWRIGHT_CHANNEL`, install Chromium with `npx playwright install chromium`
 from portal-app. Local tests must pass before any commit or push occurs.
 
@@ -28,6 +28,14 @@ Deployment scripts/workflow changes and manual dispatch run all checks. Tests
 cover deleted/renamed inputs and missing history. Pull requests only validate.
 Vercel and Azure are separate deployments, not an atomic release.
 Keep API changes backward compatible across the two deployment windows.
+
+The API proxy runs in Mumbai (`bom1`) beside the India backend. Keep the
+project's `resourceConfig.functionDefaultRegions` and public/vercel.json aligned;
+for CLI uploads use `--regions bom1` and verify the built function's region.
+September 21 checks measured a fresh public sync at 1.16 seconds (817 ms backend).
+Providers refresh concurrently inside the existing bounded queue, attendance is
+shared within each refresh, and light queues return a 200–299 ms follow-up hint.
+Expired upstream sessions still require re-authentication and can take longer.
 
 Azure uses repository secrets `AZURE_DEPLOY_KEY`, `AZURE_KNOWN_HOSTS` and variable
 `AZURE_DEPLOY_HOST`. Its dedicated SSH key is restricted in authorized_keys to

@@ -1,0 +1,8 @@
+**
+!portal-backend/
+!portal-backend/**
+portal-backend/**/__pycache__/
+!portal-python/
+!portal-python/ocr.py
+!portal-python/model/
+!portal-python/model/**

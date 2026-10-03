@@ -1,0 +1,2286 @@
+================================================================================
+PROJECT PORTFOLIO — DHEERAJ CHANDRA (JUVVADI)
+Prepared for: AI Engineer / Applied AI Engineer interviews
+Purpose: full technical brief. This document is written so that a reader who has
+         NEVER seen the source repos can still explain, defend, and whiteboard
+         every project — the WHY, the WHERE (exact files), and the HOW
+         (actual algorithms, constants, schemas, and measured numbers).
+================================================================================
+
+HOW TO READ THIS DOCUMENT
+-------------------------
+Each project has the same shape:
+
+  1. ONE-LINE PITCH        - what you say in 10 seconds
+  2. WHY IT EXISTS         - the real problem and the motivation
+  3. WHAT IT IS / SCOPE    - honest boundary of what was actually built
+  4. STACK + WHERE IT LIVES- repos, directories, key files
+  5. ARCHITECTURE          - components and data flow
+  6. HOW IT ACTUALLY WORKS - implementation detail: algorithms, constants,
+                             schemas, function names, hyperparameters
+  7. MEASURED NUMBERS      - only numbers that were actually produced
+  8. INTERVIEW TALKING PTS - the "what would you say" angle
+  9. HONEST LIMITATIONS    - what is NOT proven. (Critical: never oversell.)
+
+RANKING (best-first for an AI ENGINEER role)
+--------------------------------------------
+The ordering below weights three things: (a) how much genuine AI/ML sits in the
+core of the system, (b) whether it runs in production or on real hardware vs.
+only in a notebook, and (c) how much defensible engineering depth surrounds it.
+
+  #1  Rexy - Local-First On-Device RAG / AI Memory System
+      -> Most AI-Engineer-native project. Owns the entire modern RAG stack:
+         embeddings, vector search, hybrid retrieval, LLM inference, prompting,
+         on-device acceleration. Retrieval + generation + evaluation all present.
+
+  #2  Anon (revamp-tracker) - Production Student-Portal AI Companion
+      -> Real users, real deployment, and a genuine trained neural OCR model
+         (CRNN + CTC) running in production. Strongest "I ship and operate ML"
+         evidence. Systems depth is exceptional.
+
+  #3  Safety-Gated Edge ML for Avionics Anomaly Detection
+      -> Deep classical-ML + DL ensemble (PCA reconstruction, One-Class SVM,
+         MLP) on NASA flight telemetry, with a deterministic safety gate.
+         Strong research/academic depth and a genuinely novel safety framing.
+
+  #4  Multimodal Traffic Incident Detection & Response Prioritisation
+      -> Vision (YOLOv8) + text (NLP) + tabular (XGBoost/RF) fusion, DBSCAN
+         hotspot clustering, HDFS integration. Broad applied-ML surface.
+
+  #5  Accident-Prone Hotspot Detection Using YOLOv8 Integrated with HDFS
+      -> Published/presented work. CV + big-data storage. Real WebHDFS calls.
+
+  #6  Multicloud Analytics Dashboard (GCP BigQuery + Azure + Gemini)
+      -> LLM API integration plus multi-cloud data engineering.
+
+  #7  Semantic Search and Evaluation System (MiniLM-L6-v2)
+      -> Information-retrieval evaluation discipline; embeddings + metrics.
+
+  #8  MedInv - Medical Inventory & Patient Management (Next.js + MySQL)
+      -> Full-stack product engineering; less AI, high execution quality.
+
+  #9  Jobyard - Distributed Job Scheduler
+      -> Systems/distributed-systems depth; complements the AI work.
+
+  #10 Enhanced Hand Gesture Recognition (OpenCV + Flask)
+      -> Classical CV pipeline; good for explaining CV fundamentals.
+
+  #11 ATLAS Smart Learning Platform
+      -> Design/handbook-stage concept; present as design work, not shipped code.
+
+  #12 Academic delivery artifacts (RMMM plans, user stories, sprint retros)
+      -> Evidence of process maturity, useful as a soft-skill appendix.
+
+================================================================================
+#1  REXY — LOCAL-FIRST ON-DEVICE AI MEMORY SYSTEM FOR ANDROID
+================================================================================
+
+1. ONE-LINE PITCH
+-----------------
+Rexy indexes everything on your Android phone (photos, documents, SMS, contacts,
+files), builds a local searchable database, and lets you ask natural-language
+questions that are answered by a large language model running entirely
+on-device — no cloud, no data leaving the phone.
+
+2. WHY IT EXISTS
+----------------
+- Every "AI assistant" on a phone ships your private data (messages, photos,
+  documents) to a remote server to do retrieval-augmented generation.
+- Rexy's thesis: privacy is an architecture decision, not a policy. If the
+  index and the model both live on the device, no data can leak by design.
+- Secondary motivation: offline capability. Cloud assistants are useless with
+  no signal; a local index + local model still answers.
+- Technical motivation: proving that a usable RAG pipeline fits inside a phone
+  — constrained RAM, no CUDA, a shared NPU/GPU, and thermal limits.
+
+3. WHAT IT IS / SCOPE — HONEST BOUNDARY
+---------------------------------------
+- Status: an ACTIVE PROTOTYPE (the repo README says this explicitly). It is not
+  a published app on the Play Store.
+- Three real, working components:
+    a) A Jetpack Compose Android app that does retrieval + local generation.
+    b) A Python indexing pipeline that runs on a Mac and pushes the index to the
+       phone over ADB.
+    c) An experimental macOS companion app (SwiftUI/Xcode) for managing device
+       indexing from a desktop UI.
+- The app runs even without the big model files, but then it falls back to a
+  hash-based stub embedder (search accuracy becomes effectively random). Real
+  retrieval requires the ONNX embedding model; real generation requires the
+  .gguf LLM.
+- Generated artifacts (indexes, phone extracts, APKs, native build folders,
+  virtualenvs, model weights) are intentionally NOT committed.
+
+4. STACK + WHERE IT LIVES
+-------------------------
+Root: ~/Documents/rexy
+
+  android-app/    Jetpack Compose app + Kotlin + C++ JNI bridge
+  indexer/        Python 3.11 extraction / OCR / embedding / index build
+  mac-app/        RexyMac — experimental SwiftUI companion (Xcode project)
+
+Android source root:
+  android-app/app/src/main/kotlin/com/rexy/app/
+
+Key Kotlin files (all paths relative to that root):
+  RexyApplication.kt     - singleton holders wiring the whole object graph
+  data/EmbeddingEngine.kt- ONNX Runtime MiniLM-L6-v2 sentence embeddings
+  data/HybridSearchEngine.kt - vector + BM25 fusion retrieval (THE core file)
+  data/IndexRepository.kt    - reads the pushed index.db (SQLite)
+  data/OnDeviceIndexer.kt    - on-device indexing path
+  data/LiveDeviceAccess.kt   - live access to device content
+  data/PersonalMemoryStore.kt
+  data/WebContextFetcher.kt  - optional web context injection
+  data/LlamaInference.kt     - Kotlin side of llama.cpp
+  data/db/ChatDatabase.kt    - Room chat history
+  utils/ModelManager.kt      - llama.cpp JNI lifecycle
+  utils/PromptBuilder.kt     - ChatML prompt assembly (the RAG prompt)
+  ui/screens/*               - HomeScreen, ChatScreen, SearchScreen, SettingsScreen
+  ui/components/SiriOrb.kt, MessageBubble.kt, MemoryCard.kt, GlassCard.kt
+
+Native:
+  android-app/app/src/main/cpp/rexy_llama_jni.cpp   - the C++ JNI bridge
+
+Python indexer (~/Documents/rexy/indexer):
+  rexy_indexer.py             CLI entry (805 lines): connect / run / flags
+  setup.sh                    installs ADB, Tesseract, Python 3.11, PyTorch MPS
+  pipeline/adb_extractor.py   pull content off the phone via ADB (520 lines)
+  pipeline/text_extractor.py  text + Tesseract OCR extraction (317 lines)
+  pipeline/chunker.py         overlapping token windows (329 lines)
+  pipeline/embedder.py        MiniLM-L6-v2 embeddings (202 lines)
+  pipeline/index_builder.py   builds index.db (412 lines)
+  pipeline/adb_pusher.py      push index + models back to phone (262 lines)
+  models/download_model.sh    fetches the GGUF LLM
+  requirements.txt
+
+5. ARCHITECTURE — COMPONENTS AND DATA FLOW
+------------------------------------------
+On-device object graph (created once in RexyApplication as singletons):
+
+  RexyApplication
+   ├── ModelManager        -> owns the llama.cpp JNI lifecycle
+   ├── IndexRepository     -> opens SQLite index.db (ADB-pushed from Mac)
+   ├── EmbeddingEngine     -> MiniLM-L6-v2 ONNX, 384-d, on-device
+   ├── HybridSearchEngine  -> sqlite-vec vector search + FTS5 BM25, fused
+   └── ChatDatabase (Room) -> chat history persistence
+
+  UI (Jetpack Compose)
+   ├── HomeScreen    -> memory grid + category chips
+   ├── ChatScreen    -> streaming chat + SiriOrb animation
+   ├── SearchScreen  -> real-time hybrid search + result cards
+   └── SettingsScreen-> model status, index stats, inference tuning
+
+Two-phase offline/online data flow (this is the clever part):
+
+  PHASE A — INDEX BUILD (on a Mac, not the phone; the phone is too weak to
+            embed a whole device's content quickly):
+
+    Android Phone  ──ADB──▶  M1 Mac  ──ADB──▶  Android Phone
+     (raw files)              (OCR + embed)     (index.db + model files)
+
+  PHASE B — RUNTIME QUERY (100% on the phone, no network):
+
+    user question
+      -> EmbeddingEngine embeds the query (MiniLM ONNX)
+      -> HybridSearchEngine runs vector search + BM25 in parallel
+      -> Reciprocal-Rank / weighted fusion
+      -> top-K chunks fetched from index.db
+      -> PromptBuilder assembles a ChatML prompt with the chunks as context
+      -> ModelManager runs llama.cpp to stream an answer
+      -> answer + source cards rendered in Compose
+
+  PHASE C — OPTIONAL WEB CONTEXT: WebContextFetcher can add web text to the
+            prompt when the user explicitly wants it; PromptBuilder takes a
+            `webContext` parameter and surfaces it in [APP STATUS].
+
+6. HOW IT ACTUALLY WORKS — IMPLEMENTATION DETAIL
+------------------------------------------------
+
+6.1 INDEX SCHEMA (index_builder.py, _create_schema / _create_vec_table)
+The index is a single SQLite file. Pragmas set for speed/safety balance:
+
+    PRAGMA journal_mode = WAL;          -- write-ahead logging
+    PRAGMA synchronous  = NORMAL;       -- durability/perf tradeoff
+    PRAGMA cache_size   = -32000;       -- 32 MB page cache (negative = KiB)
+    PRAGMA temp_store   = MEMORY;
+
+Three data structures live in one file:
+
+  (a) chunks — the canonical row store:
+        id, chunk_id (UNIQUE, "{source_path}::chunk_{n}"), text,
+        source_type, source_path, chunk_index, total_chunks,
+        timestamp, metadata (JSON string)
+      Plus indexes on source_type and source_path.
+
+  (b) chunks_fts — keyword search (this is the BM25 half):
+        CREATE VIRTUAL TABLE chunks_fts USING fts5(
+            text, chunk_id UNINDEXED, tokenize = 'porter unicode61');
+      'porter unicode61' = Porter stemming + Unicode-aware tokenisation,
+      which matters because the corpus is mixed-language (English + Hinglish
+      SMS, filenames, OCR noise).
+
+  (c) vec_chunks — the vector half (sqlite-vec extension):
+        CREATE VIRTUAL TABLE vec_chunks USING vec0(embedding FLOAT[384]);
+      384 = all-MiniLM-L6-v2's output dimension.
+
+  (d) rexy_meta — key/value table recording how/when the index was built.
+
+  Why one SQLite file matters: it is a single artifact that can be atomically
+  pushed over ADB and read on-device with no server, no daemon, no index
+  rebuild, and no partial-state corruption.
+
+6.2 CHUNKING (chunker.py) — constants and the tricky part
+    CHUNK_TOKENS   = 512     target chunk size
+    OVERLAP_TOKENS = 50      overlap between adjacent chunks
+    TOKENS_PER_WORD = 1.35   wordpiece expansion factor (word -> token estimate)
+
+  The strategy: split on sentence boundaries FIRST, then pack sentences into
+  ~512-token windows with 50 tokens of overlap. Token count is approximated as
+  len(text.split()) * 1.35 — deliberately avoiding a tokenizer dependency.
+
+  The subtle engineering is in _split_sentences(): naive regex sentence
+  splitting destroys abbreviations and decimals. So it first REPLACES risky
+  dots with a placeholder, then splits, then restores:
+      "Mr|Mrs|Ms|Dr|Prof|Sr|Jr|vs|etc|Inc|Ltd|Corp|Co." -> \1<DOT>
+      "3.14"                                           -> 3<DOT>14
+    then: re.split(r"(?<=[.!?])\s+(?=[A-Z\d\"])", text)
+    then: restore <DOT>, and additionally split on blank-line paragraph breaks.
+
+  Why overlap matters: a fact that straddles a chunk boundary must still be
+  retrievable. 50 tokens of overlap is the cheap insurance.
+
+  TextChunk is a dataclass carrying: chunk_id, text, source_path, source_type,
+  chunk_index, total_chunks, approx_tokens, metadata.
+
+6.3 EMBEDDINGS (embedder.py)
+    MODEL_NAME      = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_DIM   = 384
+    DEFAULT_BATCH_SIZE = 64
+
+  Device selection is a strict priority ladder — MPS beats CUDA beats CPU:
+      _select_device(): torch.backends.mps.is_available() -> "mps" ... -> "cpu"
+  The model is LAZY-loaded on first use, and there is an explicit warm-up
+  encode of ["warmup"] so the first real batch is not pathologically slow.
+
+  Measured/planned throughput on an M1 Pro (documented in the file header):
+      model ~90 MB; MPS throughput ~2,000-4,000 tokens/s
+      10,000 chunks x ~300 tokens avg -> ~3-8 minutes
+
+6.4 ON-DEVICE EMBEDDING (EmbeddingEngine.kt)
+  This is where the project stops being a Python script and becomes real
+  on-device inference engineering:
+
+    EMBEDDING_DIM = 384, MAX_SEQ_LEN = 128
+    Tokenizer: WordPiece with [CLS] [SEP] [PAD] [UNK]
+
+    Session options (the interesting part):
+      addNnapi()                                   -- Qualcomm Hexagon NPU first
+      addXnnpack(intra_op_num_threads = 4)         -- ARM NEON fallback
+      setIntraOpNumThreads(4)
+      setOptimizationLevel(ALL_OPT)
+
+  That provider ladder — NNAPI, then XNNPACK, then default CPU — is the
+  standard way to get acceptable latency for a transformer on ARM. Output is
+  384-d float32, L2-normalized so cosine similarity becomes a dot product.
+  The vocab is loaded from vocab.txt into a String->Int map; the model and
+  vocab are pushed to the app's external-files dir alongside index.db.
+
+6.5 HYBRID RETRIEVAL — THE CORE ALGORITHM (HybridSearchEngine.kt)
+  Constants you should be able to defend out loud:
+
+      private val alpha: Float = 0.7f      // vector weight
+      const val DEFAULT_TOP_K   = 5        // final results returned
+      const val CANDIDATE_POOL  = 20       // candidates pulled per retriever
+
+  The search() function is a coroutine and runs the two retrievers
+  CONCURRENTLY, timing each:
+
+      val vectorDeferred = async { index.vectorSearch(queryEmbedding, CANDIDATE_POOL) }
+      val ftsDeferred    = async { index.ftsSearch(query, CANDIDATE_POOL) }
+
+  Then it fuses:
+      allChunkIds = vectorResults.keys UNION ftsResults.keys
+      for each id:
+          vecScore = vectorMap[id] ?: 0f
+          ftsScore = ftsMap[id]    ?: 0f
+          hybrid   = alpha * vecScore + (1f - alpha) * ftsScore   // 0.7/0.3
+      sort desc by hybrid, take topK * 3      // OVER-FETCH before filtering
+
+  Then it fetches full chunk rows from SQLite, re-attaches the three scores
+  (hybridScore, vectorScore, ftsScore), applies an optional content-type
+  filter, and finally takes topK.
+
+  Design reasoning worth stating in an interview:
+   - Why hybrid at all: pure embeddings miss exact strings — a phone number,
+     an account number, a filename, an error code. BM25 nails those; embeddings
+     miss them because they are semantically arbitrary. Pure BM25 misses
+     paraphrase ("money" vs "payment"). You need both.
+   - Why alpha = 0.7: semantic intent should dominate for natural-language
+     questions, but keyword signal must still be able to promote exact matches.
+   - Why over-fetch topK*3: the content-type filter is applied AFTER fusion,
+     so the pool must be wider than the answer set or filtering would starve
+     the result list.
+   - Why the scores are kept separately and returned: it makes retrieval
+     debuggable. You can see WHY a chunk won — vector or keyword.
+   - Timing instrumentation: embedMs, vectorMs, ftsMs, totalMs are returned in
+     RetrievalResult and logged. Retrieval latency is treated as a first-class
+     metric, not an afterthought.
+
+6.6 INTENT ROUTING (HybridSearchEngine.parseIntent)
+  Before retrieval, queries are pattern-matched to narrow the search space.
+  This is a cheap, deterministic pre-filter — the pragmatic alternative to
+  running an LLM classifier on-device.
+
+    ParsedIntent(cleanQuery, contentTypeFilter, targetApp, temporalFilter)
+
+    Rule 1 — "search X on WhatsApp" / "find X in Gmail"
+      Regex: (?:search|find|look for)\s+(.+?)\s+(?:on|in)\s+(\w+)
+      App -> type mapping:
+        whatsapp|telegram|sms -> SearchResult.TYPE_MESSAGE
+        gmail|mail            -> SearchResult.TYPE_EMAIL
+        drive|docs|dropbox    -> SearchResult.TYPE_DOCUMENT
+        photo|gallery|camera  -> SearchResult.TYPE_PHOTO
+      The extracted search term becomes cleanQuery; the type becomes the
+      contentTypeFilter passed into search().
+
+    Rule 2 — "photos of X" / "pictures of X" / "images of X"
+      Strips several prefix variants ("show me photos of ", "find photos of ")
+      and forces TYPE_PHOTO.
+
+    TemporalFilter enum exists: TODAY, LAST_WEEK, LAST_MONTH, LAST_YEAR.
+
+  Interview framing: this is a two-stage router — a fast deterministic stage
+  handles the common, enumerable intents, and everything else falls through to
+  semantic hybrid retrieval. It is a good example of NOT using an LLM where a
+  regex is cheaper, faster, and more predictable.
+
+6.7 PROMPT ASSEMBLY — THE RAG PROMPT (PromptBuilder.kt)
+  This is the file that turns retrieval into an answer. It is an object with a
+  single build() function producing a ChatML-style prompt.
+
+    Constants:
+      IM_START = "<|im_start|>"   IM_END = "<|im_end|>"
+      roles: system / user / assistant
+      MAX_CONTEXT_TOKENS     = 420     // budget for retrieved context
+      APPROX_CHARS_PER_TOKEN = 4       // cheap token estimation
+
+    build(query, history, retrievedChunks, indexStats, webContext, memories,
+          deviceOwnerName, currentDate)
+
+    Prompt layout, in order:
+      1. <|im_start|>system   -> Rexy persona
+      2. <|im_start|>user     -> [APP STATUS] ... [END]   (index/web state)
+      3. <|im_start|>user     -> [USER MEMORY]  ... [END] (last 8 memories)
+      4. <|im_start|>user     -> [DEVICE CONTEXT] ... [END]
+                                 the retrieved chunks, but only TAKE(2),
+                                 each rendered as
+                                 "N. <title (<=80 chars)> (<contentType>, <appName|device>)"
+      5. recent conversation history (last N turns)
+      6. the user's new message as the final human turn
+
+    Why this matters for an interview:
+      - [DEVICE CONTEXT] is the RAG grounding section. Everything the model is
+        allowed to "know" about the user's phone arrives here.
+      - retrievedChunks.take(2) is a deliberate context-budget decision: a 3B
+        Q4 model on a phone has a tiny usable context, so dumping top-5 chunks
+        would crowd out the conversation and degrade instruction-following.
+      - The explicit section markers ([APP STATUS], [USER MEMORY],
+        [DEVICE CONTEXT], [END]) give the model unambiguous boundaries so it can
+        distinguish retrieved facts from user claims and from its own persona.
+      - memories.takeLast(8) bounds personalisation the same way.
+      - MAX_CONTEXT_TOKENS = 420 with a 4-chars-per-token estimate keeps the
+        context block within budget without shipping a real tokenizer to the UI.
+
+6.8 LOCAL LLM INFERENCE (rexy_llama_jni.cpp + ModelManager.kt)
+  The generation half is llama.cpp bound to Kotlin through a hand-written JNI
+  bridge. Key implementation facts from the C++:
+
+    struct RexyContext {
+        llama_model*   model;
+        llama_context* ctx;
+        int n_ctx   = 4096;    // context window
+        int n_batch = 128;     // prompt batch size
+        std::mutex mutex;      // one inference at a time per context
+    };
+
+    - Backend init is guarded by std::call_once(g_backend_once, ...) calling
+      llama_backend_init() — correct, thread-safe one-time global init.
+    - A llama_sampler chain is built explicitly, in this order:
+        top_k(32)  ->  top_p(top_p)  ->  temp(temperature)  ->  dist(seed)
+      This is the modern llama.cpp sampling API; the ordering matters because
+      each sampler transforms the candidate distribution for the next.
+    - tokenize() wraps llama_tokenize with a two-pass null-buffer call to size
+      the token vector, and throws on INT32_MIN (the overflow sentinel).
+    - Strings cross the boundary through jstring_to_string(), which correctly
+      calls ReleaseStringUTFChars — a classic JNI leak source handled properly.
+    - A per-context std::mutex serialises generation, which is the right call
+      on a phone where concurrent decode would thrash memory bandwidth.
+
+  Kotlin side: ModelManager owns lifecycle (load/close), LlamaInference streams
+  tokens, SettingsScreen exposes inference tuning, ChatScreen renders the
+  stream with the SiriOrb animation.
+
+6.9 MODEL FILES AND DEPLOYMENT PATHS
+    /sdcard/Android/data/com.rexy.app/files/
+      index.db
+      minilm-l6-v2.onnx     (embedding model)
+      vocab.txt             (WordPiece vocab)
+      models/Llama-3.2-3B-Instruct-Q4_K_M.gguf   (~2 GB)
+
+  Requirements documented: Android Studio Hedgehog+, Android NDK r26+, a
+  Snapdragon 8 Gen 1 or better (arm64-v8a), Android 12+, 12 GB+ RAM
+  recommended. llama.cpp is kept OUTSIDE the repo and pointed at via a
+  Gradle/CMake argument — correct practice for a large native dependency.
+
+6.10 INDEXER CLI (rexy_indexer.py, 805 lines)
+    .venv/bin/python rexy_indexer.py connect   # verify ADB + device + storage
+    .venv/bin/python rexy_indexer.py run       # full extract->ocr->chunk->
+                                               # embed->build->push pipeline
+    Flags: --skip-extract, --skip-push, --serial
+      --skip-extract  reuse already-extracted phone data (big time saver)
+      --skip-push     build index.db locally for inspection
+      --serial        handle multiple connected devices one at a time
+    setup.sh bootstraps everything: Homebrew ADB + Tesseract + Python 3.11,
+    a .venv, PyTorch 2.4 with MPS, verifies Metal GPU availability, and
+    creates extracted/ and output/ directories.
+
+7. MEASURED NUMBERS
+-------------------
+  (Only what is actually stated in the repo — do not inflate these.)
+
+  - Embedding model: all-MiniLM-L6-v2, ~90 MB, 384 dimensions.
+  - MPS throughput planning figure: ~2,000-4,000 tokens/s on M1 Pro.
+  - 10,000 chunks x ~300 tokens avg -> ~3-8 minutes to embed.
+  - Batch size 64 for indexing; MAX_SEQ_LEN 128 on-device.
+  - LLM: Llama-3.2-3B-Instruct, Q4_K_M quantisation, ~2 GB on disk.
+  - On-device context window: n_ctx = 4096; prompt batch n_batch = 128.
+  - Retrieval: top-K = 5 final results from a 20-candidate pool per retriever,
+    fused with alpha = 0.7 vector / 0.3 keyword.
+  - Context injected into the prompt: top 2 retrieved chunks, ~420-token
+    budget, ~4 chars/token.
+  - Hardware target: Snapdragon 8 Gen 1+, Android 12+, 12 GB+ RAM.
+
+  What is NOT measured and must not be claimed: no retrieval quality metric
+  (no recall@k / MRR / nDCG benchmark), no tokens/sec figure for the on-device
+  GGUF model, and no accuracy comparison against a cloud baseline. Those are
+  the obvious next measurements — and saying so is a strength, not a weakness.
+
+8. INTERVIEW TALKING POINTS
+---------------------------
+- "I built the full RAG loop, not a wrapper: chunking -> embedding -> hybrid
+  retrieval -> prompt budget -> local generation -> streaming UI."
+- The hybrid-retrieval decision is the best story: explain why pure vectors
+  fail on exact identifiers (phone numbers, filenames) and why pure BM25 fails
+  on paraphrase, then show the 0.7/0.3 fusion with per-retriever scores
+  retained for debuggability.
+- Explain the two-phase architecture as a resource decision: the phone cannot
+  afford to embed a whole device, so indexing is offloaded to an M1 Mac and
+  only the finished index travels back over ADB. That is a real systems
+  tradeoff, not a shortcut.
+- On-device inference depth: NNAPI -> XNNPACK -> CPU provider ladder, 4
+  intra-op threads, ALL_OPT, lazy model load with a warm-up pass, L2-normalized
+  embeddings, and a mutex-guarded llama.cpp context.
+- Prompt engineering under a hard budget: sectioned prompt with explicit
+  [DEVICE CONTEXT] grounding, only top-2 chunks, last-8 memories, 420-token
+  context cap — every number is a deliberate constraint, not a default.
+- Deterministic routing before LLM routing: regex intent parsing for
+  "photos of X" / "search X on WhatsApp" because it is faster and predictable.
+
+9. HONEST LIMITATIONS
+---------------------
+- It is an active prototype, not a shipped/published product.
+- No retrieval-quality evaluation exists yet (no recall@k / MRR / nDCG). If
+  asked "how do you know retrieval works?", the honest answer is: "I
+  instrumented latency and per-retriever scores, but I have not yet built a
+  labelled retrieval benchmark — that is the next thing I would do."
+- Without the ONNX model pushed, the app silently falls back to a hash-based
+  stub embedder; search accuracy is then effectively random. This is disclosed
+  in the README, which is good practice but also a sharp edge.
+- The prompt builder's composition uses ChatML (<|im_start|>), which is the
+  Qwen2.5 convention, while the documented model is Llama-3.2-Instruct (which
+  uses its own header tokens). That is an inconsistency worth flagging
+  proactively — it is exactly the kind of detail an interviewer respects you
+  for catching yourself.
+- The on-device WordPiece tokenizer is explicitly described as simplified
+  ("for full accuracy, replace with a proper HuggingFace tokenizer"), so
+  embedding quality on-device is below the indexing-side quality.
+- No published tokens/sec, thermals, or battery measurements on a physical
+  phone.
+
+================================================================================
+#2  ANON (revamp-tracker) — PRODUCTION STUDENT-PORTAL AI COMPANION
+================================================================================
+
+1. ONE-LINE PITCH
+-----------------
+Anon is a production web app that logs into SRM Institute's student portal on
+the user's behalf — including reading the CAPTCHA with a locally-run CRNN
+neural network — and turns a slow, session-expiring portal into a fast,
+cached, offline-capable companion for attendance, marks, CGPA and timetable.
+
+2. WHY IT EXISTS
+----------------
+- SRM's official Student Portal is slow, throws sessions away constantly, and
+  requires re-solving a CAPTCHA on every visit. Students check attendance and
+  marks several times a week and pay that cost every time.
+- Nobody wants to type a password into a random third-party site. So a core
+  design goal was: credentials are never persisted, portal cookies never leave
+  the server, and the browser only ever holds an opaque random session id.
+- The CAPTCHA is the hard technical bottleneck. Solving it by hand on a phone
+  is the single worst part of the experience, and it is the reason a real
+  trained model (rather than a scraper) had to exist.
+- Secondary goal: make the data useful — projections, date planning, reminders,
+  grade targets — rather than just mirroring the portal's tables.
+
+3. WHAT IT IS / SCOPE — HONEST BOUNDARY
+---------------------------------------
+- This is REAL and DEPLOYED. Production frontend: https://anon-tracker.vercel.app
+  Deployment repository: dheeraj-juvvadi/revamp-tracker, branch main, Vercel root
+  directory portal-app/public. The Python backend runs on an Azure VM.
+- It has real users, real uptime concerns, a real incident postmortem, and a
+  private ops dashboard for the owner.
+- The upstream client is AGPL-3.0 licensed and is used as a pinned dependency
+  (`413b7f0055a14794ea11cb858c05abab311f89b4`). Some files under
+  portal-python/core and portal-python/services are copied from it unchanged,
+  with the license retained. This is correctly attributed, not hidden.
+- Honest scope note: reliability of the automatic CAPTCHA login is a milestone,
+  not a guaranteed contract. The project's own docs say so repeatedly, and the
+  docs distinguish "one successful automatic login" from "measured reliability".
+
+4. STACK + WHERE IT LIVES
+-------------------------
+Root: ~/classpro revamp   (this repository)
+
+  portal-app/      Frontend. Vanilla JS + hand-written CSS, served by Vercel
+                   from portal-app/public. Service worker for offline cache.
+  portal-backend/  Python FastAPI service running on Azure. The production
+                   backend. Session store, refresh queue, report parsing.
+  portal-go/       Isolated standard-library Go HTTP service. Owns public
+                   cookies, exact-origin CSRF, request limits, report
+                   coalescing, per-session cache. Delegates browser work to a
+                   Node worker (worker.mjs) over loopback RPC.
+  portal-python/   The upstream Student Portal client adapter + ONNX CAPTCHA OCR.
+  appwrite-backend/ Inactive/legacy adapter (retained, not production).
+  supabase/        Legacy (retained, not production).
+  ops/             Azure incident recovery notes.
+  docs/            ~29 design/architecture/operations documents.
+  work-performed.md  The running engineering log (56 KB). The best evidence of
+                     how the work was actually done, including failures.
+
+Key backend files (portal-backend):
+  server.py                    FastAPI app, routes, admission control
+  session_store.py             encrypted persistent session storage
+  refresh_queue.py             bounded background refresh queue
+  capacity.py                  memory/CPU admission checks
+  presence.py                  active-user heartbeat aggregation
+  client_logs.py               client error capture + rotation
+  sync_schedule.py             jittered IST sync slots
+  attendance_trends.py         attendance deltas over time
+  academic_data.py             grades / CGPA / credits parsing
+  provider_flow.py             Academia vs Portal provider routing
+  deploy_azure.py              deployment script preserving container config
+  benchmark_ocr.py / benchmark_sessions.py / benchmark_burst.py  (the harnesses)
+
+Key portal-python files:
+  ocr.py                       ONNX CRNN CAPTCHA solver
+  adapter.py                   adapter around the upstream client
+  protocol_evidence.py         captured protocol evidence
+  core/portal_client.py        upstream HTTPX client (copied unchanged)
+  services/portal_attendance_service.py, portal_marks_service.py
+  model/captcha_crnn.onnx + model/vocab.json   (the trained model)
+
+Key portal-go files:
+  main.go, server.go, routes.go, middleware.go
+  http_auth.go, integrity.go, security_test.go
+  portal_routes.go, portal_worker.go, portal_protocol.go, portal_reports.go
+  portal_compatibility.go, direct.go, direct_login.go, direct_reports.go
+  academia.go, academia_reports.go
+  worker.mjs + start.mjs  (Node worker hosting the browser session)
+  pool_test.go, client_state.go, fast_transport.go
+
+Frontend (portal-app/public) — note the depth of hand-written modules:
+  app.js, academic-ui.js, academic-summary.js, academic-history.js
+  academic-history-model.js, attendance-math.js, date-attendance.js
+  date-planner-calendar.js, date-planner-day.js, date-planner-results.js
+  class-reminders.js, client-ocr.js, client-logs.js, auth-client.js
+  credential-integrity.js, consent.js, api/ ...
+  Service worker + hashed assets (build:offline regenerates asset hashes)
+
+5. ARCHITECTURE
+---------------
+  Browser (Vercel static + SW cache)
+     |  same-origin fetch, HttpOnly Secure SameSite=Strict host-only cookie
+     v
+  portal-backend (FastAPI on Azure VM)
+     |  - origin + CSRF validation
+     |  - per-session request locks
+     |  - FIFO admission + bounded concurrency
+     |  - encrypted session store (Fernet + SQLite)
+     v
+  Provider layer (Academia | Portal)
+     |  Academia: /login + /refresh
+     |  Portal:   /portal/login + /portal/refresh  (compatibility endpoints)
+     v
+  Student Portal upstream (sp.srmist.edu.in)  +  CAPTCHA OCR (ONNX, local)
+
+  Parallel path — the Go service:
+    portal-go (public cookies, CSRF, rate limits, report coalescing)
+        | authenticated POST /rpc over 127.0.0.1:3101 only
+        v
+    worker.mjs (Node) hosts the real browser session using the unchanged
+    upstream PortalSession: challenge / prepare / login / reports / close
+    (separate per-session browser contexts, capacity limits, deadlines,
+     expiration cleanup, no public or static endpoints)
+
+  Private ops path:
+    portal-backend (Vercel) --HMAC-SHA256 signed--> loopback Azure agent
+      (anon-ops, private repo): CPU/mem/disk/response-time samples, active-user
+      presence, deployments, sanitized errors, password-confirmed restart.
+
+Why the Go service exists at all: the upstream login depends on real browser
+keyboard events and a real CAPTCHA image, so a full native port is not
+possible. Go therefore owns everything that CAN be moved off the browser
+(cookies, CSRF, limits, caching, coalescing) while delegating only the browser
+work to a locked-down local worker. That is a clean, defensible boundary.
+
+6. HOW IT ACTUALLY WORKS — IMPLEMENTATION DETAIL
+
+6.1 THE CAPTCHA OCR MODEL — the genuine ML component
+  File: portal-python/ocr.py  (58 lines) + portal-python/model/
+
+  What it is: a CRNN (convolutional recurrent neural network) trained for
+  CAPTCHA recognition, exported to ONNX, executed locally with ONNX Runtime on
+  CPU. It is NOT a third-party OCR API. Images never leave the server.
+
+  Provenance (this is the part that shows rigour):
+    Source: https://github.com/wtfPrethiv/TinyOCR
+    Revision: d59c4474cb5371bbe7866b18e6ffa1af0908dbae (2026-08-23)
+    License: MIT (retained in portal-python/model/LICENSE)
+    captcha_crnn.onnx generated from upstream best_captcha_crnn.pt using the
+    upstream's UNCHANGED scripts/export_onnx.py
+    Checkpoint SHA256: e9072bf58ad9ccbba4326ae9f2a607e6d64edebd52cd9ac0025e21aea419326e
+    ONNX SHA256:       339c366ccd8356a9707157b3ebd789d2d4f2e430a07db23c6091d7ea4a6636ff
+    Export env: Python 3.11, torch 2.6.0, onnx 1.17.0, onnxruntime 1.22.1,
+                numpy 2.2.6, Pillow 11.3.0
+
+  Export PARITY GATE (the important verification step):
+    Predictions matched PyTorch for ALL 512 bundled test images, plus random
+    batches of size 1/2/8/16. Maximum real-image logit difference: 3.815e-05.
+    Accuracy against bundled filenames: 494/512.
+    The docs explicitly caveat that this is not a production login-acceptance
+    measurement — correct, and worth repeating in an interview.
+
+  The inference path in ocr.py, step by step:
+    1. _load_session(root) — double-checked locking (module-level _session plus
+       a threading.Lock) so the ONNX session is created exactly once even under
+       concurrent logins.
+       SessionOptions: intra_op_num_threads = 1, inter_op_num_threads = 1,
+       log_severity_level = 3, providers = ["CPUExecutionProvider"].
+       -> ONE thread is deliberate: the service runs many OCR requests across
+          workers, so per-request parallelism would oversubscribe the CPU.
+    2. _charset(root) — lru_cache(maxsize=2) over vocab.json. It validates
+       vocabulary["blank_idx"] == 0 and raises if not, because the greedy CTC
+       decoder below hard-codes blank index 0. Charset = " " + vocab.
+    3. Preprocessing — EXACTLY the upstream pipeline, no resizing:
+         - reject anything that is not exactly 175x45 (raise ValueError)
+         - PIL convert("L") to grayscale
+         - normalize: (pixel / 255.0 - 0.5) / 0.5     -> [-1, 1] range
+         - reshape to [1, 1, H, W] NCHW float32
+    4. logits = session.run(...)[0]
+       Validate logits.shape[-1] == len(charset) or raise.
+    5. Greedy CTC decoding (no beam search — chosen for latency):
+         indices = argmax over the class axis per timestep
+         for each index:  skip if index == 0 (blank)
+                          skip if index == previous (collapse repeats)
+                          else append charset[index]
+       This is textbook CTC: collapse repeats first, then remove blanks.
+    6. Sanity guard on the decoded string:
+         must be 4..8 characters, must be ASCII, must be alphanumeric
+         otherwise raise ValueError("Uncertain OCR result")
+       -> This turns "the model produced garbage" into an explicit, typed
+          failure the caller can retry, instead of submitting a wrong answer
+          and burning a login attempt.
+
+  Where it runs: the Go API starts ONE bounded Python process per active
+  Student Portal session. The process keeps the upstream HTTPX client, cookie
+  jar, CAPTCHA page and nonce in VOLATILE memory, exits on logout/expiration/
+  error/restart, and has NO public listener — it communicates only over private
+  stdin/stdout pipes.
+
+  Deliberate difference from upstream: upstream calls a separate Rust TinyOCR
+  service over HTTP. This adapter runs the exact same TinyOCR weights locally
+  through ONNX Runtime with one CPU thread, so no third-party service ever
+  receives an image.
+
+  Retry policy (also a design decision worth explaining):
+    - At most FOUR automatic attempts, and only for CAPTCHA rejection detected
+      in alert elements.
+    - A fresh PortalSession / cookie jar on refresh and between automatic
+      CAPTCHA retries.
+    - Credentials rejection or unknown failure STOPS submission — it does not
+      request another CAPTCHA. (Retrying bad credentials is what gets accounts
+      locked.)
+    - Manual CAPTCHA entry remains available as a fallback.
+    - A 2-second pre-submit delay and 90 ms portal typing timing are preserved
+      because removing them empirically caused failed phone logins.
+    - Prepared challenges older than 60 seconds are refreshed.
+
+  Honest nuance the docs make explicit: the upstream classifier labels even an
+  unsubmitted login page "wrong_captcha" because validation scripts contain
+  that phrase. So Anon added a separate `alert_classification` diagnostic that
+  inspects only alert elements (no scripts, no hidden validation messages),
+  emits only fixed categories, and never page text. The adapter overrides the
+  raw classifier for retry decisions and keeps the original as `upstream_reason`
+  for comparison. That is careful, evidence-driven debugging.
+
+6.2 THE LOGIN / REPORT FLOW
+    POST /api/login {account, password}
+      -> backend loads the real portal form
+      -> OCR recognizes the CAPTCHA image locally
+      -> submits through the real browser session
+      -> returns an opaque HttpOnly session cookie ONLY on confirmed success
+    GET  /api/reports
+      -> attendance, internal-mark summary, and each available assessment
+         breakdown
+      -> complete reports cached for one minute
+      -> failures remain DISTINCT per report (partial failure does not blank
+         the good data)
+    DELETE /api/session
+      -> destroys the LOCAL session only. It deliberately does NOT claim to
+         terminate the remote portal session.
+    Mutations require a matching Origin. Credentials exist only for the
+    duration of the request.
+
+6.3 PROVIDER ROUTING (dual-provider support)
+    Academia: upstream client's /login and /refresh
+    Portal:   /portal/login and /portal/refresh
+    Public compatibility endpoints pick the provider from the request.
+    Accounts must match by registration number, or by normalized username when
+    a registration number is unavailable. Shared-ID normalization: Academia
+    adds @srmist.edu.in; Portal strips only that suffix.
+    Remembered sessions are encrypted at rest and expire after SEVEN DAYS of
+    inactivity. A failed provider refresh PRESERVES previous reports and shows
+    a warning — it never silently replaces good data with nothing.
+    Settings lets a user connect accounts without discarding the other one.
+
+6.4 WHAT DATA IS PULLED FROM THE PORTAL (exact upstream paths)
+    Everything under https://sp.srmist.edu.in/srmiststudentportal:
+      Attendance + monthly totals:
+        /students/report/studentAttendanceDetails.jsp
+      Internal marks:
+        /students/report/studentInternalMarkDetails.jsp
+      Timetable:
+        POST /students/report/studentTimeTableDetails.jsp
+        with iden=10, filter=, hdnFormDetails=1, csrfPreventionSalt=
+      Profile:
+        /students/report/studentPersonalDetails.jsp
+
+    Grade / Mark & Credit report (verified 2026-09-20 in the signed-in portal):
+      reads official CGPA, earned credits, required credits, semester GPAs and
+      subject grades. It fills the overall calculator and a collapsible
+      academic history view. Missing grades STAY missing — nothing is invented.
+      Cost: at most TWO extra requests per fetch, a 10-second total timeout,
+      a 512 KB response limit, no polling loop, no background job. A failed
+      fetch keeps the last successful history with a visible freshness warning.
+      Student grades are never written to analytics or operational logs.
+
+    Calendar: day orders come from the upstream client's bundled
+    src/data/calendar_data.json (copied to portal-backend/data/calendar_data.json
+    under the retained AGPL license). It is a 2026 calendar, NOT a live SRM
+    endpoint. Missing dates remain UNKNOWN and years are never substituted.
+    Campus time is Asia/Kolkata. Afternoon timetable hours below 7 are read as
+    PM. Counted hours use the upstream's 50-minute period convention.
+
+6.5 CONCURRENCY, CAPACITY AND ADMISSION CONTROL
+  This is the systems-engineering half of Anon and it is unusually rigorous.
+  Live Azure settings at the time of writing:
+      SESSION_LIMIT   = 200     (admission ceiling, NOT a throughput claim)
+      API_CONCURRENCY = 4
+      OCR_CONCURRENCY = 2
+      IO_THREADS      = 8
+      persistence     = 7 days
+      VM: Standard_B2ats_v2, ~893 MiB RAM; idle new container ~90 MiB
+
+  Request classes and their limits (docs/azure-capacity.md):
+    - Login / mutation handlers: EIGHT workers, FIFO overflow queue, bounded.
+    - Refresh: FOUR background workers, at most one job per session,
+      2,000 queued maximum. REFRESH_QUEUE_WAIT = 600 seconds (queued work
+      expires after ten minutes).
+    - A started upstream refresh has its own 90-second limit.
+    - Light queues return a 200-299 ms follow-up hint so the client polls
+      sensibly instead of hammering.
+
+  Memory admission (capacity.py):
+    - Expensive work and new sessions PAUSE below 160 MiB available memory.
+    - The check is done on BOTH available memory and a memory permit that is
+      released before waiting, so a burst cannot deadlock itself.
+    - Removed/expired sessions are checked BEFORE contacting upstream.
+    - Removed sessions release their queue slot and go straight back to login.
+
+  Session store optimisation (session_store.py) — a real measured win:
+    Problem: every save re-serialized and RE-ENCRYPTED the whole payload even
+    when nothing had changed.
+    Fix: detect unchanged payloads and skip re-encryption; update only the
+    expiry field separately.
+    Result (synthetic, network-disabled container, 0.5 CPU / 256 MiB,
+    112 sessions x 30 save/restore cycles):
+        before: median 552.47 ms, p95 601.95 ms, peak RSS 44,820 KiB
+        after:  median  99.59 ms, p95 100.73 ms, peak RSS 44,680 KiB
+    -> roughly a 5.5x latency reduction, and it was shipped as an image
+       (classpro-diag:20260917-store) after 47 tests passed.
+
+  Per-session request locks, cancellation-safe OCR permits (a native OCR
+  inference RETAINS its slot after request cancellation until inference
+  actually exits — otherwise a cancel would free a slot that is still burning
+  CPU), configurable rate limits (default 30/IP/min with separate 30/min
+  buckets for issued sessions AND unfinished sign-ins), and module-scoped
+  upstream print suppression (no process-wide stdout redirection).
+
+6.6 SECURITY MODEL (worth being able to recite)
+    - Session cookie: Secure, HttpOnly, SameSite=Strict, host-only.
+    - Cookies contain only opaque random session identifiers — no upstream
+      state is ever serialized into them.
+    - Mutations require exact Origin, a session CSRF token, and (for ops)
+      password confirmation.
+    - Login attempts have persistent per-source AND global limits.
+    - In-memory sessions expire after 30 idle minutes; remembered (disk)
+      sessions after 7 days of inactivity; unchecked "Keep me signed in" uses a
+      browser-session cookie with a 30-minute idle timeout and NO disk write.
+    - Credentials are never persisted. Passwords are request-local.
+    - Session store encryption with Fernet; the key and encrypted SQLite
+      records must survive container replacement and are restricted to the
+      container user (SESSION_STORE_DIR points at the mounted persistent dir).
+    - Diagnostics contain only fixed classifications, status codes, attempt
+      numbers, stages and exception class names — never page text.
+    - The ops bridge: Vercel signs requests to a loopback Azure agent with
+      HMAC-SHA256 plus timestamps and one-time NONCES (replay protection).
+      A secret gateway header filters requests at the proxy. Bridge secrets live
+      in production env vars and a root-readable host file, never in frontend
+      assets. The owner password is stored only as a SALTED SCRYPT HASH on
+      Azure. Deployment webhook signatures are verified before events are
+      accepted.
+    - The ops agent runs as its own user with a 100 MB memory cap, 10% of one
+      CPU, low scheduling priority, eight HTTP workers, bounded requests, and a
+      narrow sudo allowlist. Its root-owned helper accepts only THREE fixed
+      operations — it CANNOT execute arbitrary commands from the dashboard.
+    - Client logs bounded to 2 MB/day, 120 events/minute, 7 days retention.
+      Analytics keeps at most 10,000 events and 7 days; host samples 7 days;
+      audits 30 days. Presence saves aggregate expiry buckets — never user IDs
+      or session tokens — at most once every five seconds.
+
+6.7 THE PRODUCTION INCIDENT (docs/postmortem.md) — a strong interview story
+    Date: September 19-20, 2026. Duration: ~7 hours of degradation.
+
+    Symptom: the Azure VM went to ~95% CPU with ~477 GB of DISK READS per hour,
+    while actual network traffic was tiny (~3.5 MB in, 2.4 MB out).
+
+    The key analytical move: they proved it was NOT an attack. The huge numbers
+    were reads from the server's own disk, not visitors downloading hundreds of
+    gigabytes. When memory is exhausted the OS thrashes — reading the same 1 GB
+    a hundred times counts as 100 GB of reads even though the information is
+    1 GB. The VM had only 892 MiB of usable RAM.
+
+    Suspected trigger: a scheduled firmware-information refresh that started
+    immediately before the spike; later logs explicitly reported memory
+    pressure. Extra guest monitoring services were also consuming memory.
+    Stated honestly: "the exact offending process was not captured because
+    normal logging also stalled" — this was never claimed as a proven bug.
+
+    The second, confirmed failure: restarting cleared the resource spike but
+    changed the server's temporary Cloudflare tunnel address. The website kept
+    calling the OLD address. The backend was healthy but unreachable. This was
+    confirmed directly, and is a classic example of a restart-induced
+    configuration regression.
+
+    Fixes shipped:
+      - Permanent HTTPS Azure hostname replacing the temporary tunnel; the old
+        tunnel was disabled; HTTPS auto-starts and handles cert renewal.
+      - Disabled the suspected firmware refresh and blocked its services from
+        restarting (normal OS security updates left on).
+      - Freed memory: removed the guest monitoring agent. Available RAM went
+        from ~164 MiB to ~329 MiB.
+      - Contained runaway memory: capped the app at 384 MiB, retained low-memory
+        admission checks, added HTTPS limits. The deployment script carries the
+        limits forward. A runaway app may restart at its limit but can no longer
+        consume the whole VM.
+      - No VM size upgrade; saved user sessions preserved.
+
+    Follow-up: the private ops dashboard (anon-ops) was built after this, with
+    a deliberately small footprint — 100 MB ceiling, limited CPU, one-minute
+    samples, and it reads only NEW log bytes (256 KB per collection) instead of
+    rescanning old files. Recovery actions require a password and have cooldowns
+    and a three-attempt daily limit; automatic recovery starts OFF.
+
+    Why this matters in an interview: it demonstrates hypothesis-driven
+    incident analysis under uncertainty, the discipline to separate "what I
+    proved" from "what I suspect", and the judgement to fix the blast radius
+    (caps and admission control) rather than just the symptom.
+
+6.8 PRODUCT FEATURES BUILT ON TOP OF THE DATA
+    - Attendance: per-course hours, percentage, attended/missed counts, and
+      per-course MARGIN against that course's own 75% target (overall
+      attendance never overrides a course's requirement).
+    - Academic history: official CGPA, earned/required credits, semester GPAs,
+      subject grades, in a collapsible view.
+    - Grade target planner: inline slider / grade targets for marks planning.
+    - Date attendance planner: a lightweight calendar, automatic date ranges,
+      per-class and partial-hour controls. Rules: Leave adds absent hours;
+      Attend and future OD add present hours; past OD corrects existing
+      absences capped at the recorded absence total; unselected teaching days
+      through the last leave date count as attended; unknown calendar dates are
+      disclosed and excluded.
+    - Timetable: full timetable plus optional schedule periods feeding the
+      next-class/today widgets, reminders and projections.
+    - Class reminders: opt-in 15/5 minute reminders with date+course+start
+      de-duplication; no background push is claimed.
+    - Home widgets: today's remaining classes only. One class shows a shared
+      lower message; two classes use the third widget for the remaining count;
+      zero classes shows "You are done for the day". A class remains through its
+      end minute and disappears on the following minute.
+    - Offline: bounded public offline shell, cache-first boot, full timetable and
+      optional-period choices reopen from browser cache offline. Expired server
+      sessions clear the local report cache and return to login; a NETWORK
+      failure retains the cache.
+    - Accessibility/SEO: custom 404, per-page titles and meta descriptions, a
+      primary CTA above the fold verified at mobile breakpoints, favicon set,
+      robots.txt, sitemap.xml listing public pages only, Open Graph image,
+      audited alt text (decorative art uses empty alt / aria-hidden, and build
+      checks enforce HTML alt attributes), inline form errors and retry states.
+    - Privacy: Vercel Analytics and Speed Insights installed BEHIND OPTIONAL
+      CONSENT, with verified consent withdrawal.
+
+7. MEASURED NUMBERS (only measured values — never present these as scale claims)
+--------------------------------------------------------------------------------
+  OCR throughput (real ONNX inference on synthetic 175x45 images, 100-item
+  bursts, 10 s per worker count, 192 MiB RAM, 1.8 CPU quota, network-disabled
+  isolated container):
+
+    | Workers | Inferences/sec | p95 queue+inference | Max observed | Peak RSS |
+    |       1 |         323.14 |          295.48 ms  |    319.18 ms | 59.9 MiB |
+    |       2 |         353.83 |          270.32 ms  |    293.24 ms | 63.0 MiB |
+    |       4 |         355.98 |          271.36 ms  |    286.14 ms | 63.5 MiB |
+    |       6 |         356.21 |          273.39 ms  |    285.09 ms | 68.4 MiB |
+
+    Two workers were chosen: throughput is essentially flat after two, so extra
+    workers buy nothing while consuming memory. (An unrestricted 2-CPU run hit
+    388.43/sec, explicitly excluded because it does not reflect the production
+    quota.)
+
+  Session persistence (synthetic ~42 KB provider report/session, 1 CPU/192 MiB,
+  three save/restore cycles, corrected harness):
+    - 2,000 sessions passed at 145,668 KiB peak RSS.
+    - Median full save/restore: 1,389.78 ms; maximum 5,741.56 ms.
+    - Incremental single-session save: mean 9.545 ms.
+
+  Burst behaviour: 1,000 synthetic authenticated users fired 2,000 concurrent
+  ASGI session/force-sync requests into a 192 MiB / 1.8 CPU container with a
+  20 MiB test reserve (>10% headroom): all accepted in 1.667 s, per-user p95
+  1,497.1 ms, max 1,519.41 ms. Four refresh workers drained all 1,000 jobs in
+  33.666 s with a 20 ms simulated upstream delay; RSS 134,560 KiB.
+  The docs explicitly caution: with real upstream latency L seconds, four
+  workers need roughly 250 x L seconds to drain 1,000 jobs. Queuing keeps the
+  app usable; it cannot make 1,000 upstream operations finish simultaneously.
+
+  Store optimisation: median 552.47 ms -> 99.59 ms; p95 601.95 -> 100.73 ms
+  (see 6.5).
+
+  Verification boundaries stated in the repo:
+    - 75 frontend tests passing; 47 backend tests passing on pinned production
+      deps (38.421 s); 42 tests in an earlier run (37.009 s).
+    - OCR export parity: 512/512 images matched PyTorch; 494/512 accuracy
+      against bundled filenames; max logit difference 3.815e-05.
+    - One verified live login: /api/login completed in 4,365 ms, followed by
+      /api/reports in 886 ms; the app displayed five attendance courses and
+      four internal-mark summaries. This used a fresh backend browser session.
+    - A real Student Portal CAPTCHA loaded in 1.51 s after the incident fixes.
+    - Azure idle container ~90 MiB RSS.
+
+  NONE of this is a claim of SRM login capacity or a 100-user throughput
+  guarantee. The docs say this repeatedly and that repetition is the point.
+
+8. INTERVIEW TALKING POINTS
+---------------------------
+- "The most interesting ML in my production system is a CRNN that reads
+  CAPTCHAs entirely on my own server — I never send a user's document or image
+  to a third-party OCR API."
+- Walk the export-parity gate: I verified my ONNX export matched PyTorch on
+  512 images with a max logit difference of 3.8e-05, pinned both SHA256 hashes,
+  and locked the preprocessing to the upstream's exact 175x45 grayscale with
+  [-1,1] normalization — because changing any of those silently breaks a model.
+- Greedy CTC decoding with a sanity guard: collapse repeats, drop blanks, then
+  REJECT any decode that is not 4-8 ASCII alphanumerics. That guard converts
+  garbage output into a typed, retryable failure instead of a wrong CAPTCHA
+  submission that burns a login attempt.
+- Retry policy as a safety decision: retry ONLY explicit CAPTCHA rejections,
+  cap at four attempts, fresh cookie jar between retries, and never retry bad
+  credentials — because retrying credentials is what locks accounts.
+- The memory-pressure admission design: work pauses below 160 MiB available,
+  and the memory permit is released before waiting, so a burst cannot deadlock.
+- The session-store change is a great "small fix, big win" story: skipping
+  re-encryption of unchanged payloads cut median save latency from 552 ms to
+  100 ms.
+- The incident postmortem: prove it isn't an attack by comparing network bytes
+  against disk reads, explain OS thrashing in plain language, then find the real
+  second bug (the restart changed the tunnel hostname, so the frontend was
+  calling a dead address). Then fix the blast radius with memory caps and
+  admission control.
+- I can talk about what I refused to claim: the repo repeatedly separates
+  measured capacity from real-world SRM throughput, and states that one
+  successful automatic login is a milestone, not a reliability benchmark.
+
+9. HONEST LIMITATIONS
+---------------------
+- Real multi-user login capacity was never measured against the live SRM
+  portal. Synthetic burst and OCR benchmarks are explicitly not that.
+- The 200-session limit is an ADMISSION CEILING, not measured simultaneous
+  login capacity or resource headroom.
+- The OCR confidence thresholds mentioned in the earlier Node adapter
+  (mean >= 90, min char >= 80 on a 0-100 scale; Tesseract fallback requiring
+  two agreeing variants and mean >= 65) are stated in the docs as UNCALIBRATED,
+  and model scores are not measured accuracy.
+- Earlier backend attempts where the user typed the CAPTCHA failed; the first
+  success changed browser configuration AND OCR at the same time, so the
+  successful result does not isolate each change's causal contribution. The
+  docs say this outright.
+- The VM is genuinely small (~893 MiB usable RAM) with no size upgrade, so the
+  architecture is bounded by design rather than by choice.
+- Legacy code paths remain: portal-app/src/server.js (historical Node backend),
+  appwrite-backend/, supabase/. These are retained but are NOT production, and
+  the backlog explicitly tracks the unresolved decision of whether to retire
+  them.
+- Some items are still open in implementation-backlog.md: physical-phone motion/
+  scroll/battery verification, controlled real SRM burst measurement, and an
+  automated review of production client-error summaries.
+
+================================================================================
+#3  SAFETY-GATED EDGE MACHINE LEARNING FOR AVIONICS ANOMALY DETECTION
+================================================================================
+
+1. ONE-LINE PITCH
+-----------------
+A real-time flight-telemetry anomaly detection system that runs an ensemble of
+three ML models (PCA reconstruction, One-Class SVM, and a deep MLP) over
+avionics sensor data, and — crucially — passes every ML decision through a
+DETERMINISTIC safety gate before anything actionable reaches a cockpit.
+
+2. WHY IT EXISTS
+----------------
+- Aircraft generate enormous volumes of telemetry, but the systems that watch
+  it are largely threshold-based: they fire when a single parameter crosses a
+  fixed limit. That misses correlated, multi-parameter drift where every
+  individual value still looks normal.
+- The obvious fix — "let a neural network decide" — is unacceptable in
+  safety-critical aviation. A model that is right 99% of the time is still
+  wrong 1% of the time, and in an aircraft an automated wrong action is worse
+  than no action at all.
+- That tension is the entire thesis of this project: use ML to DETECT and
+  LOCALISE anomalies (where being probabilistic is fine), but never let ML
+  AUTHORISE a mitigation action. Authorisation stays deterministic and
+  auditable. The project calls this a "safety gate".
+- Research framing came from a documented gap analysis: explainable AI,
+  real-time processing, and rare-failure detection are the open problems in
+  aircraft predictive maintenance.
+
+3. WHAT IT IS / SCOPE — HONEST BOUNDARY
+---------------------------------------
+- It is a B.Tech capstone project (course code 21CSC314P-BDE), co-submitted
+  with a team. It is a research/engineering prototype and an academic
+  submission — NOT a deployed system on an aircraft.
+- The submission corpus is substantial: a project handbook, a technical report,
+  an architecture document, IEEE-aligned paper drafts, references, user
+  stories, functional documentation, use-case and component diagrams, and
+  formal originality/plagiarism declarations.
+- IMPORTANT INTERNAL NUANCE you must understand before the interview:
+  the DESIGN documents (and the README) describe the full three-model ensemble
+  — PCA reconstruction + One-Class SVM + MLP — trained on NASA DASHlink data,
+  with a documented MLP architecture and a reported 99.05% validation accuracy.
+  The runnable demo backend in the repo is a LIGHTER stand-in: it uses
+  scikit-learn's IsolationForest on synthetic normal data, with heuristic
+  localisation rules. Both are real work, but they are different things and you
+  must not conflate them. Explain that distinction clearly if asked — it shows
+  integrity, and it lets you talk about both the research design and the demo
+  implementation.
+
+4. STACK + WHERE IT LIVES
+-------------------------
+Primary repo: ~/minor project   (titled "Safety-Gated Flight Anomaly Detection System")
+
+  README.md              overview, architecture diagram, endpoints, data notes
+  PROJECT_DESIGN.md      the full design doc with the ML math (equations 1-4)
+  backend/
+    main.py              FastAPI server (64 lines)
+    requirements.txt     fastapi, uvicorn, scikit-learn, pandas, numpy
+    core/model.py        EdgeML inference wrapper (53 lines)
+    core/safety_gate.py  deterministic safety rules (54 lines)
+    core/simulator.py    flight telemetry simulator (36 lines)
+    Dockerfile
+  src/
+    App.tsx              React/TypeScript dashboard (308 lines)
+    index.css
+  docker-compose.yml, Dockerfile
+
+Referenced but not present in this checkout (the training pipeline described in
+the README): backend/scripts/train_deep_model.py (MLP, 120 epochs, early
+stopping), backend/scripts/train_baselines.py (PCA + OneClassSVM),
+backend/scripts/evaluate_three_model_flow.py,
+backend/scripts/generate_model_performance_report.py, and the
+backend/data/fdr_telemetry_dataset.csv + backend/data/nasa_dashlink/ corpus.
+
+Supporting delivery artifacts (external):
+  ~/Downloads/Architecture Document (1).docx   - the formal architecture doc
+  ~/Downloads/References.docx                  - the reference corpus
+  ~/Downloads/Sprint Retrospective_final_userstories 2.xlsx - user stories
+  ~/23CSC.../21CSC314P-BDE-Project_Report_Review 1(70,71,90).docx - report review
+
+5. ARCHITECTURE
+---------------
+Event-driven architecture: every incoming telemetry update is treated as an
+independent EVENT and processed immediately, not batched. This is a deliberate
+choice for safety-critical monitoring, where near-real-time reaction matters.
+
+  telemetry event
+     |
+     v
+  feature engineering        (normalize, denoise, derive diff + rolling stats)
+     |
+     v
+  anomaly detection          THREE models in parallel:
+     |                         - PCA reconstruction   (unsupervised baseline)
+     |                         - One-Class SVM        (novelty detection)
+     |                         - MLP neural network   (supervised patterns)
+     v
+  ensemble aggregation       (voting consensus across the three)
+     |
+     v
+  safety gate                DETERMINISTIC rules -> APPROVED / BLOCKED / REVIEW / SAFE
+     |
+     +--> normal telemetry stored as routine operational data
+     +--> anomaly -> alert event pushed to the dashboard with context + confidence
+
+  Diagram chain in the formal architecture document:
+  avionics sensors -> preprocessing -> edge inference -> safety-gated validation
+  -> alert generation -> fail-safe handling -> logging -> maintenance analytics.
+
+Actors: pilot, maintenance engineer, system administrator.
+
+Data exchange contract (from the architecture document):
+  - Frequency: CONTINUOUS near-real-time streaming for telemetry; alert
+    generation is event-driven (only on anomaly, so no wasted communication);
+    model training/evaluation is periodic scheduled BATCH work on history.
+  - Datasets:
+      input telemetry:   ALT, CAS (calibrated airspeed), EGT_1 (engine temp),
+                         VIB_1 (vibration), PTCH (pitch), timestamp, flight
+                         record index
+      engineered features: derived difference metrics + rolling statistics
+      inference output:  anomaly flags, anomaly scores, predicted issue
+                         categories, confidence levels, per-model outputs
+      safety decision:   status (APPROVED/BLOCKED/REVIEW/SAFE), recommended
+                         action, justification
+  - Modes of exchange: JSON over HTTP for API calls between backend and
+    dashboard; WebSockets for real-time UI updates; CSV files for historical
+    telemetry and for training/evaluation reproducibility.
+
+6. HOW IT ACTUALLY WORKS
+
+6.1 THE THREE MODELS (design, per README + PROJECT_DESIGN.md)
+
+  (a) PCA RECONSTRUCTION — the unsupervised baseline.
+      Fit PCA on normal flight data; reconstruct each new sample; the
+      reconstruction error is the anomaly score. Systematic deviations from
+      normal flight patterns produce large reconstruction error. Chosen because
+      it is mathematically stable and interpretable, giving a reliable baseline
+      for detecting global deviations from the normal flight envelope.
+      Reported with Precision = TP/(TP+FP) and Recall = TP/(TP+FN).
+
+  (b) ONE-CLASS SVM — novelty detection in high-dimensional space.
+      Learns the boundary of NORMAL operations (trained on normal data only)
+      and flags points outside that envelope. Excels at novel parameter
+      COMBINATIONS never seen in training. Uses an RBF kernel for non-linear
+      separation:
+
+        f_hat(x) = sign( SUM_{i in SV} y_i * alpha_i * K(x_i, x) - rho )
+          SV = support vectors, y_i = labels, alpha_i = Lagrange multipliers,
+          K = kernel, rho = decision threshold
+
+        K(x_i, x_j) = exp( -gamma * ||x_i - x_j||^2 )        (RBF)
+
+      Why it complements PCA: PCA finds global magnitude deviations; a
+      one-class SVM finds shape/geometry deviations in parameter space. The
+      design doc frames it as learning how altitude and airspeed conditions
+      define the boundary of normal flight.
+
+  (c) MULTI-LAYER PERCEPTRON — supervised deep pattern recognition.
+      Captures complex non-linear relationships between 12 engineered flight
+      features. Documented architecture:
+
+        Input (12 features) -> 128 -> 64 -> 32 -> Binary output (sigmoid)
+
+      Reported accuracy: 99.05% on validation data. Trained on real NASA
+      DASHlink data with 120 epochs and early stopping.
+
+6.2 THE SAFETY GATE — THE ACTUAL DIFFERENTIATOR (real code)
+    File: backend/core/safety_gate.py. This is the piece to lead with.
+    The gate takes the raw telemetry STATE plus the ML PREDICTION and returns a
+    status, an action, and a human-readable REASON.
+
+    Control flow, exactly as implemented:
+
+      If the ML model says there is no anomaly:
+        -> status SAFE, action None,
+           reason "Normal operation within flight envelope."
+
+      If there IS an anomaly, the gate switches on the LOCALISED subsystem:
+
+      ENGINE PERFORMANCE
+        altitude < 10,000 ft:
+          -> BLOCKED, "Throttle Reduction",
+             reason: unsafe to reduce thrust below 10,000 ft; maintain thrust
+             and alert the pilot.
+        altitude >= 10,000 ft:
+          -> APPROVED, "Gradual Throttle Reduction",
+             reason: safe altitude; mitigating engine overheat.
+
+      AIRSPEED SENSING
+        airspeed < 200 kts:
+          -> BLOCKED, "Switch to Alternate Static Source",
+             reason: airspeed critically low; manual pilot verification required
+             before switching sources.
+        airspeed >= 200 kts:
+          -> APPROVED, "Cross-check with GPS Ground Speed",
+             reason: safe to cross-reference secondary sensors.
+
+      CONTROL RESPONSE
+        -> REVIEW, "Engage Backup Actuators",
+           reason: control-surface anomaly requiring immediate pilot
+           confirmation before engaging backup systems.
+
+      ANY OTHER SUBSYSTEM
+        -> REVIEW, "Manual Pilot Check",
+           reason: anomaly detected but no automated mitigation is defined in
+           the safety envelope.
+
+    WHY THIS DESIGN IS THE POINT: the ML only ever says WHERE the problem is and
+    HOW confident it is. The mapping from "problem" to "action" is pure
+    deterministic rules with hard numbers (10,000 ft, 200 kts) that a human can
+    audit, certify, and argue with. The default for anything unrecognised is
+    REVIEW (human in the loop), never an automatic action. That is a genuinely
+    correct safety architecture and it is the single best thing to talk about.
+
+6.3 THE RUNNABLE DEMO (real code you can defend line by line)
+    backend/core/model.py — EdgeMLModel:
+      self.model = IsolationForest(contamination=0.05, random_state=42)
+      Trained on 1000 x 5 synthetic "normal" samples drawn from
+        loc   = [35000, 450, 800, 1.0, 0.0]
+        scale = [20, 2, 5, 0.02, 0.1]
+      Features: [altitude, airspeed, engine_temp, control_response,
+                 vertical_guidance]
+      predict() returns
+        is_anomaly    (model.predict == -1)
+        anomaly_score (model.decision_function)
+        localization  (heuristic)
+        sensor_group  (heuristic)
+
+      Localisation heuristics:
+        engine_temp > 850            -> "Engine Performance",   "EGT, N1, N2"
+        airspeed < 400               -> "Airspeed Sensing",     "Pitot-Static System"
+        control_response < 0.8       -> "Control Response",     "Flight Control Surfaces"
+        otherwise                    -> "Unknown Subsystem",    "Multiple"
+
+      Be explicit in an interview: this demo uses IsolationForest on synthetic
+      data as a lightweight stand-in, while the documented research system uses
+      the PCA + One-Class SVM + MLP ensemble trained on NASA DASHlink. Both are
+      deliberate; the demo exists so the full stack (API -> model -> safety gate
+      -> dashboard) can be demonstrated end to end without shipping gigabyte
+      datasets.
+
+    backend/core/simulator.py — FlightSimulator:
+      Baseline state: altitude 35000.0, airspeed 450.0, engine_temp 800.0,
+      control_response 1.0, vertical_guidance 0.0.
+      Each tick adds Gaussian noise:
+        altitude sigma 20, airspeed sigma 2, engine_temp sigma 5,
+        control_response sigma 0.02, vertical_guidance sigma 0.1
+      Injected fault signatures:
+        engine:   engine_temp += 120±10, airspeed -= 30±5
+        airspeed: airspeed -= 80±10
+        control:  control_response -= 0.4±0.05, vertical_guidance -= 2.0±0.5
+      Note how each injection is designed to push a specific parameter past the
+      corresponding localisation threshold in model.py — the simulator and the
+      localiser were designed together.
+
+    backend/main.py — FastAPI:
+      GET  /api/telemetry
+        - randomly injects an anomaly with probability 0.05 if none is active
+          (random.choice of "engine" | "airspeed" | "control")
+        - holds the injected anomaly for 15 ticks
+        - returns { telemetry, ml_analysis, safety_gate } in one payload
+      POST /api/inject/{anomaly_type}
+        - accepts engine | airspeed | control | clear
+        - holds for 30 ticks; "clear" resets
+        - returns an explicit error for invalid types
+      CORS is currently wide open (allow_origins=["*"]) — worth flagging as a
+      demo-only setting.
+      FastAPI auto-docs at /docs.
+
+6.4 THE DATA — NASA DASHLINK
+    The design targets NASA's DASHlink flight-data archives:
+      - Flight identifiers (e.g. file IDs such as 666200402020631)
+      - High-frequency telemetry: engine parameters, control surfaces, altitude,
+        airspeed, vibration
+      - Structured operational logs: timestamps, flight phases, maintenance flags
+      - Each flight record ships paired .csv (tabular) and .mat (raw sensor
+        matrix) formats for flexibility
+    Complementary public dataset research covered NASA C-MAPSS and NTSB data for
+    predictive-maintenance framing.
+
+6.5 RESEARCH GAP ANALYSIS THAT MOTIVATED THE DESIGN
+    Authored notes identified three open problems in aircraft predictive
+    maintenance: explainable AI, real-time processing, and rare-failure
+    detection. This project responds to all three — PCA and one-class SVM are
+    explainable in a way a deep net alone is not, FastAPI + streaming addresses
+    real-time, and one-class/novelty detection targets rare failures where
+    supervised learning has almost no positives to learn from.
+
+7. MEASURED NUMBERS
+-------------------
+  - MLP architecture: 12 -> 128 -> 64 -> 32 -> 1 (sigmoid).
+  - MLP validation accuracy: 99.05% (as reported in the project README).
+  - MLP training: 120 epochs with early stopping, on real NASA DASHlink data.
+  - IsolationForest demo: contamination = 0.05, random_state = 42,
+    1000 training samples, 5 features.
+  - Safety-gate thresholds: 10,000 ft altitude, 200 kts airspeed,
+    engine_temp 850 (localisation), control_response 0.8 (localisation),
+    airspeed 400 (localisation).
+  - Demo anomaly cadence: 5% random injection chance, 15-tick hold for
+    telemetry-driven injection, 30-tick hold for manual injection.
+  - Evaluation/capacity: FastAPI endpoint served at :8000 with auto-docs at
+    /docs; React dashboard at :5173.
+
+  Numbers to be careful with: 99.05% is a VALIDATION accuracy for the MLP as
+  documented in the design materials. Do not present it as an end-to-end system
+  accuracy, and do not present it as measured on a hidden test set unless you
+  can point to that evaluation output.
+
+8. INTERVIEW TALKING POINTS
+---------------------------
+- Lead with the safety-gate thesis, because it is the strongest idea in the
+  whole portfolio: ML for DETECTION and LOCALISATION, deterministic rules for
+  AUTHORISATION. In a safety-critical system, a 99% accurate model must never
+  be allowed to take an action on its own.
+- Then prove it with the code: the gate's default for an unrecognised anomaly
+  is REVIEW (human in the loop), not an automatic mitigation. Unrecognised
+  input fails safe.
+- Explain the ensemble as complementary, not redundant: PCA catches global
+  magnitude deviations from the normal envelope; one-class SVM catches novel
+  combinations that are individually normal; the MLP catches complex
+  non-linear supervised patterns. Three different failure modes, three
+  different detectors.
+- Remember the maths. You should be able to write the one-class SVM decision
+  function and the RBF kernel from memory:
+    f(x) = sign( sum_{i in SV} y_i alpha_i K(x_i, x) - rho )
+    K(x_i, x_j) = exp(-gamma ||x_i - x_j||^2)
+- Explain why one-class methods matter for aviation: there are almost no
+  labelled examples of a catastrophic failure, so supervised learning alone
+  cannot cover rare failures. Novelty detection is the only thing that can flag
+  a failure mode it has never seen.
+- The event-driven architecture is justified by safety, not fashion: every
+  telemetry record is an independent event, so nothing waits on a batch window.
+- Talk about the delivery artifacts as evidence of research maturity: IEEE
+  drafts, references, use-case and component diagrams, user stories, and formal
+  originality checks.
+
+9. HONEST LIMITATIONS
+---------------------
+- Not deployed in any aircraft environment. The knowledge base for this project
+  states this explicitly: the corpus supports a substantial academic submission
+  but NOT claims of deployment in an aircraft environment.
+- The 99.05% figure is a reported validation number for the MLP in the project
+  documentation; treat it as such.
+- The runnable demo backend uses IsolationForest on synthetic data rather than
+  the documented PCA + One-Class SVM + MLP ensemble. The three-model training
+  scripts are referenced in the README but are not present in the repo
+  checkout. If asked to reproduce the ensemble, be upfront that the training
+  pipeline lives outside this checkout.
+- The demo's CORS configuration allows all origins, which is a demo
+  convenience and not a production posture.
+- No formal safety certification, no DO-178C/DO-254 style process, no
+  flight-envelope validation against a certified aircraft model. The safety
+  gate is a demonstration of the ARCHITECTURE, not a certified subsystem.
+- Ground-truth anomaly labels for telemetry are inherently scarce, so
+  precision/recall on rare failures is hard to establish rigorously.
+
+================================================================================
+#4  MULTIMODAL TRAFFIC INCIDENT DETECTION & RESPONSE PRIORITISATION
+================================================================================
+
+1. ONE-LINE PITCH
+-----------------
+A multimodal fusion system that combines YOLOv8 vision detection, text/NLP
+classification, and tabular gradient-boosted models to detect traffic
+incidents, classify their severity, and score how urgently emergency services
+should respond.
+
+2. WHY IT EXISTS
+----------------
+- Incident detection from a single modality is brittle. Cameras see a
+  collision but not that it is a fuel tanker; a text report says "multi-vehicle
+  pile-up with fire" but carries no location; tabular records have severity but
+  no real-time signal.
+- Emergency response is a PRIORITISATION problem. When ten incidents arrive at
+  once, someone must decide which gets the one available ambulance. That is a
+  ranking problem, not just a classification problem.
+- The project therefore fuses three streams and outputs a priority score
+  (0-1), a severity class, a confidence, a response-time estimate and resource
+  hints — plus similar-incident matching.
+
+3. WHAT IT IS / SCOPE — HONEST BOUNDARY
+---------------------------------------
+- An academic research project ("research project bde"), associated with a
+  co-authored paper accepted at IDCIoT-2026. Part of a group effort.
+- It is a research/engineering pipeline with a real backend, real trained
+  model artifacts, a real HDFS integration, and a real (and honestly documented)
+  set of mixed results. It is not a deployed municipal system.
+- IMPORTANT: this project contains BOTH genuine successes and genuine failures.
+  The failures are documented in the output artifacts and are excellent
+  interview material — see section 7.
+
+4. STACK + WHERE IT LIVES
+-------------------------
+Repo: ~/research project bde
+
+  src/
+    complete_fusion_system.py       multimodal fusion orchestrator
+    ensemble_fusion_model.py        ensemble models
+    simple_ensemble_fusion.py
+    enhanced_fire_detector.py       fire/hazard detection
+    text_prioritizer.py             text analysis
+    rf_text_prioritizer.py          random-forest text prioritisation
+    random_forest_text_prioritizer.py
+    rl_response_optimization.py     reinforcement-learning response allocation
+    backend.py                      API server (Flask, :5000)
+    incident_server.py              incident manager (:8000)
+    performance_analyzer.py
+    system_validation.py
+    train_xgboost_severity_model.py
+    train_random_forest_severity_model.py
+  train/            accident/ dense_traffic/ fire/ sparse_traffic/ + labels/
+  models/           .joblib models + yolov8n.pt, yolov8n-cls.pt, encoders
+    models/best_models/  enhanced_fire_model.pkl, yolov8n.pt, model_summary.py
+  data/             processed_incidents.csv, image_to_excel_mapping.csv,
+                    combined_image_text_pairs.csv, yolo_dataset/, yolo_detect/,
+                    yolo_classify/ (documented as 40 GB+ scale)
+  outputs/results/  all measured metrics JSON + predictions CSV
+  images/           70+ plots: confusion matrices, PR curves, fusion
+                    comparison, hotspot heatmaps, feature importance
+  docs/             notebooks (advanced_colab_training, traffic_classification_
+                    training, yolov8_traffic_classification_local,
+                    lightweight_pretrained_traffic_classification), plus
+                    generate_*.py visualisation scripts
+  docker-compose.yml, requirements.txt, config/
+
+5. ARCHITECTURE
+---------------
+                MULTIMODAL FUSION ENGINE
+
+  Vision stream         Text stream          Tabular stream
+  YOLOv8 detection  ->  Text classifier  ->  XGBoost / RandomForest
+  (vehicles)            (NLP)                (severity)
+        \                    |                    /
+         \                   |                   /
+          ---------> Ensemble Fusion Layer <------
+                            |
+                 priority score / severity / confidence
+                            |
+              response time estimate + resource allocation hints
+                            |
+                    similar-incident matching
+
+  Analysis layers on top:
+    - Spatial: DBSCAN clustering for accident hotspots + heatmaps
+    - Temporal: time-of-day patterns, seasonal trends, peak incident times
+    - Correlation: weather impact, feature importance, modality contribution
+
+6. HOW IT ACTUALLY WORKS
+
+6.1 VISION — YOLOv8
+    - Detection/localisation: yolov8n.pt for bounding boxes, multi-scale
+      detection, real-time capable.
+    - Classification: yolov8n-cls.pt trained on four classes —
+      accident, dense_traffic, fire, sparse_traffic — over 800 samples.
+    - Traffic classes tracked from COCO: person, bicycle, car, motorcycle, bus,
+      truck, traffic light, stop sign.
+
+6.2 TEXT — NLP prioritisation
+    - Classifies incident text ("URGENT: Building fire with multiple
+      casualties") into severity levels.
+    - Implemented in both a base text_prioritizer.py and random-forest variants
+      (rf_text_prioritizer.py, random_forest_text_prioritizer.py).
+
+6.3 TABULAR — XGBoost and Random Forest
+    - Multi-class severity prediction (low/medium/high/critical) and binary
+      (incident/normal).
+    - Multiple trained variants exist as artifacts, e.g.
+      xgboost_tuned_severity_model.joblib, xgboost_enhanced_severity_model,
+      xgboost_unbalanced_model, rf_severity_label_encoder.joblib,
+      emergency_level_label_encoder.joblib. The presence of both balanced and
+      unbalanced variants shows the class-imbalance problem was worked
+      explicitly.
+
+6.4 FUSION
+    - A weighted fusion with tuned parameters (see 7) and an optional stacking
+      layer. The harness supports an ablation study across modalities.
+
+6.5 RESPONSE OPTIMISATION
+    - rl_response_optimization.py applies reinforcement learning to
+      resource-allocation decisions — the "which incident gets the ambulance"
+      problem, treated as sequential decision-making rather than a static score.
+
+6.6 HDFS INTEGRATION
+    - Real WebHDFS calls to http://localhost:9870/webhdfs/v1
+      (the artifact records "hdfs_integration": "REAL").
+    - Detection outputs are written to HDFS so large volumes of
+      detection/incident data sit in distributed storage.
+
+6.7 HOTSPOT ANALYSIS
+    - DBSCAN clustering produces hotspot clusters with centre latitude/
+      longitude and per-cluster severity counts (Slight / Serious / Fatal).
+      Sample clusters from the output artifact:
+        cluster 0: 115 points, centre ~51.5147/-0.1502,
+                   Slight 95, Fatal 11, Serious 9
+        cluster 1: 134 points, centre ~51.5121/-0.1279,
+                   Slight 107, Serious 22, Fatal 5
+        cluster 2:  33 points, centre ~51.5288/-0.1262
+
+7. MEASURED NUMBERS — including the failures (this section is your credibility)
+-------------------------------------------------------------------------------
+
+  SUCCESS — YOLOv8 traffic classification (outputs/results/cls_ap_metrics.json):
+    per-class AP:  accident 0.9883 | dense_traffic 0.9872 |
+                   fire 0.9964     | sparse_traffic 0.9708
+    macro AP:      0.9857        (4 classes, 800 samples)
+    -> This is a strong, clean result and you should quote it confidently.
+
+  SUCCESS — YOLOv8 detection on accident scenes
+  (outputs/results/model_accuracy_results.json, yolov8n.pt):
+    50 images, 235 detections, 47 images with detections
+    detection rate 0.94, avg 4.7 detections/image,
+    avg processing time 0.0371 s/image (~37 ms), avg confidence 0.501
+    class distribution: person 132, car 46, truck 41, bus 12,
+                        traffic light 3, motorcycle 1
+
+  MIXED — multimodal fusion (outputs/results/fusion_metrics.json):
+    96 pairs used, 0 missing
+    accuracy 0.8438, macro precision 0.7443, macro recall 0.6281,
+    macro F1 0.6551
+    tuned weights: alpha 0.0, beta 0.08, threshold 0.77 (optimised)
+    image weight w_img = 0.0; no stacker used
+    -> Note the honest reading: the optimiser drove the image weight to ZERO,
+       meaning on this sample the vision modality contributed nothing to the
+       fused decision. That is a finding, and it should be reported as one.
+
+  FAILURE — the fusion system overfits badly
+  (outputs/results/complete_fusion_results.json):
+    training accuracy 0.995  vs  test accuracy 0.125
+    (1,000 total samples, 9 features)
+    Concrete misclassifications from the artifact:
+      "URGENT: Building fire with multiple casualties"
+         expected CRITICAL -> predicted MEDIUM (confidence 0.463, rank 4)
+      "Traffic accident with injuries on highway"
+         expected HIGH -> predicted MEDIUM (confidence 0.765, rank 3)
+    -> Lead with this in an interview if asked about failures. A 0.995/0.125
+       gap is the textbook signature of memorisation: the model learned the
+       training rows, not the decision boundary.
+
+  FAILURE/MISLEADING — the small-support macro metric trap
+  (text_4class_metrics.json and rf_tabular_4class_metrics.json):
+    macro_precision 1.0 and macro_recall 1.0 reported —
+    BUT supports were: accident 24, fire 48, dense_traffic 0, sparse_traffic 0.
+    Two of four classes had ZERO test samples, so they scored 0.0 and the
+    "macro" value is computed over an empty denominator situation that inflates
+    the headline. The artifact itself records the corrected view:
+    macro_precision_over_4 = 0.5, macro_recall_over_4 = 0.5.
+    -> This is an excellent talking point about metric hygiene: always check
+       per-class support before trusting a macro average, and prefer
+       macro-over-all-classes when a class is missing from the test split.
+
+  MIXED — XGBoost severity (outputs/results/severity_metrics.json):
+    xgboost_tuned_severity_model.joblib: multiclass accuracy 0.5608,
+      macro precision 0.3779, macro recall 0.5085, macro F1 0.3406
+    Several other variants recorded 0.0 across the board — i.e. those exported
+    models were not usable as-is at evaluation time. Report this honestly.
+    0.5608 accuracy on a 4-class severity problem is a realistic, defensible
+    number and is far more useful than an inflated one.
+
+  Threshold behaviour (accuracy_vs_threshold.json):
+    accuracy rises monotonically with the acceptance threshold — 0.146 at
+    threshold 0.05 up to ~0.85 at threshold 0.90 — which is the expected
+    precision/coverage tradeoff and shows the confidence calibration was
+    actually studied rather than assumed.
+
+  HDFS pipeline (hdfs_pipeline_results.json, 2025-09-21):
+    integration "REAL", endpoint http://localhost:9870/webhdfs/v1,
+    5 images processed -> 39 detections with per-detection class, confidence
+    and bbox written through. Example: images_065.jpg produced person
+    detections at confidences 0.751, 0.718, 0.678, 0.552.
+
+8. INTERVIEW TALKING POINTS
+---------------------------
+- Lead with the success (macro AP 0.9857 on 4-class traffic classification)
+  and then immediately volunteer the failure (0.995 train / 0.125 test).
+  Volunteering a 0.125 test accuracy shows you understand overfitting at a
+  level most candidates cannot fake.
+- Explain WHY it overfitted: 1,000 samples, 9 features, and a model complex
+  enough to memorise. The fix set is obvious and you should have it ready:
+  more data, stronger regularisation, cross-validation instead of a single
+  split, feature reduction, and evaluating the text and tabular models
+  separately before fusing them.
+- The macro-average trap is the single best "senior engineer" signal in this
+  project: macro F1 reported as 1.0 while two of four classes had zero test
+  support. Say that you now always inspect per-class support and confusion
+  matrices before quoting a macro number.
+- The fusion weight result is a real research finding: the optimiser pushed the
+  image weight to 0.0, meaning on that sample vision added nothing. That is a
+  negative result worth reporting — it beats inventing a fake improvement.
+- Explain the modality-complementarity argument, then show the ablation
+  artifacts (priority_ablation_metrics.json, priority_ablation_correlations.json,
+  priority_performance_by_modality.json) as the evidence used to test it.
+- RL for response optimisation is a distinguishing detail: resource allocation
+  under scarcity is sequential decision-making, not classification.
+- HDFS is real, not decorative: WebHDFS at port 9870, detections written
+  through, and the artifact records it as "REAL".
+
+9. HONEST LIMITATIONS
+---------------------
+- Severe overfitting in the fusion model (train 0.995 vs test 0.125). This is
+  the headline limitation and must be stated before anyone else finds it.
+- Macro metrics are inflated by zero-support classes; the corrected
+  over-4-classes figures are ~0.5.
+- Several exported severity model variants scored 0.0 in evaluation, meaning
+  those artifacts were unusable as saved.
+- The optimised fusion weight for vision is 0.0, so the "multimodal" fusion is
+  effectively text+tabular on this dataset.
+- Reproducibility caveat: many artifacts reference absolute local paths
+  (e.g. /Users/rajenderrao/Downloads/trafficnet_dataset_v1/...), so metric
+  plots and dataset splits are not portable out of the box.
+- The dataset is London-area collision data (coordinates around 51.51, -0.15),
+  not Indian traffic, which limits the transferability of the hotspot findings.
+- Model paths inside the code differ from the actual files present
+  (e.g. code expects yolov8m-detect.pt while the repo ships yolov8n.pt),
+  so the pipeline as committed would need path fixes to re-run.
+
+================================================================================
+#5  ACCIDENT-PRONE HOTSPOT DETECTION USING YOLOv8 INTEGRATED WITH HDFS
+================================================================================
+
+1. ONE-LINE PITCH
+-----------------
+An academic project and conference paper that detects traffic accidents from
+imagery with YOLOv8 and stores/analyses the detections in Hadoop HDFS, with the
+goal of real-time accident detection, hotspot analysis, and faster emergency
+response in smart-city settings.
+
+2. WHY IT EXISTS
+----------------
+- Incident imagery is captured constantly (CCTV, dashcams, phones) but is
+  rarely analysed. Meanwhile the same stretches of road account for a
+  disproportionate share of serious accidents.
+- If detections land in distributed storage rather than a single machine, the
+  same pipeline scales from one camera to a city, and historical detections
+  accumulate into a hotspot map.
+- The "hotspot" framing turns detection into prevention: knowing where accidents
+  cluster lets authorities act on road design, signage and patrol placement
+  instead of only reacting afterwards.
+
+3. WHAT IT IS / SCOPE — HONEST BOUNDARY
+---------------------------------------
+- An academic research project with a paper: "Accident Prone Hotspot Detection
+  Using YOLOv8 Integrated with HDFS", co-authored, presented at an
+  international conference in February 2026 (IDCIoT-2026) — a presentation
+  certificate acknowledges the paper.
+- It shares a lot of implementation ground with project #4 (same repository,
+  same YOLOv8 artifacts, the HDFS pipeline output). Present them as related
+  work you contributed to, not as two fully independent systems.
+- It is a research contribution, not an operational smart-city deployment.
+
+4. STACK + WHERE IT LIVES
+-------------------------
+Same repository as #4: ~/research project bde
+
+  Evidence artifacts:
+    outputs/results/hdfs_pipeline_results.json   the HDFS run record
+    outputs/results/accident_hotspot_clusters.json  DBSCAN hotspot clusters
+    outputs/results/model_accuracy_results.json  YOLO detection metrics
+    images/  heatmaps and hotspot visualisations
+    docs/    training notebooks (including
+             yolov8_traffic_classification_local.ipynb and
+             lightweight_pretrained_traffic_classification.ipynb)
+    report_visuals/  figures prepared for the paper and report
+
+5. ARCHITECTURE AND HOW IT WORKS
+--------------------------------
+   camera / image input
+      -> YOLOv8 inference (yolov8n.pt, COCO-pretrained, 8 traffic-relevant
+         classes: person, bicycle, car, motorcycle, bus, truck, traffic light,
+         stop sign)
+      -> per-detection output: class_id, class_name, confidence, bbox
+      -> write to HDFS via WebHDFS REST (http://localhost:9870/webhdfs/v1)
+      -> aggregation + DBSCAN clustering on geolocated incidents
+      -> hotspot clusters with per-cluster severity composition
+      -> visualisation as heatmaps and cluster maps
+
+  Why HDFS rather than a database: the workload is append-heavy, large-object
+  image/detection data analysed in batch. HDFS gives cheap horizontal scale and
+  schema-on-read, and the detections remain raw for later re-analysis with
+  better models.
+
+6. MEASURED NUMBERS
+-------------------
+  - HDFS pipeline run (2025-09-21T11:00:35): integration flagged "REAL",
+    5 images processed, 39 detections emitted with class, confidence and bbox.
+  - YOLOv8n detection on 50 accident-scene images: 235 detections, 94% detection
+    rate, 4.7 detections/image average, ~37 ms/image, average confidence 0.501
+    (see project #4 section 7 for the full breakdown).
+  - Hotspot clustering (DBSCAN): clusters of 115, 134 and 33 incidents with
+    per-cluster Slight/Serious/Fatal counts — e.g. one central cluster with
+    95 Slight / 11 Fatal / 9 Serious.
+  - Presentation: international conference, February 2026, certificate retained.
+
+7. INTERVIEW TALKING POINTS
+---------------------------
+- The strongest angle is the storage decision: detection output is append-only,
+  high-volume and re-analysable, so it goes to HDFS rather than a relational
+  store. Explain why that is the right lazy-write/schema-on-read choice and what
+  it costs (no transactions, no sub-second point lookups).
+- Explain what a hotspot actually is: DBSCAN clusters over incident coordinates,
+  evaluated not just by size but by SEVERITY COMPOSITION. A cluster of 33
+  incidents containing fatalities can matter more than a cluster of 134 minor
+  ones — which is exactly why the artifact records severity counts per cluster.
+- Quantify detection behaviour: 94% detection rate across 50 accident images at
+  ~37 ms/image. That is the "can this run in real time" answer.
+- Say plainly that DBSCAN was chosen over k-means because the number of hotspots
+  is unknown in advance and outliers must be allowed to stay outliers. A k-means
+  answer to "where do accidents cluster?" would be circular.
+
+8. HONEST LIMITATIONS
+---------------------
+- The committed HDFS run processed 5 images. The measured HDFS throughput is
+  therefore a correctness demonstration, not a scale benchmark.
+- Coordinates in the hotspot clusters sit around London (51.5, -0.15), so the
+  hotspot findings are not Indian traffic findings.
+- YOLO detection here is COCO-pretrained object detection, not a bespoke
+  accident detector; "accident detection" is inferred from the scene content
+  (people, vehicles, and the classification model from project #4) rather than
+  from a dedicated crash-detection model.
+- Average detection confidence on accident scenes is 0.501, which is modest and
+  reflects hard, cluttered scenes.
+- Paper presentation is not the same as journal publication — say "presented at
+  a conference", not "published in a journal", unless you can point to the
+  publication record.
+
+================================================================================
+#6  MULTI-CLOUD ANALYTICS DASHBOARD (GCP BigQuery + Azure Storage + Gemini AI)
+================================================================================
+
+ONE-LINE PITCH
+A React + Node analytics dashboard that unifies business data across Google
+BigQuery and Azure Storage, and uses Google Gemini for AI-assisted analysis.
+
+WHY IT EXISTS
+Business data is rarely in one cloud. Answering a single question often means
+querying BigQuery, pulling files from Azure Blob, and then interpreting the
+result — so the dashboard collapses that into one surface, and adds an LLM so
+the user can ask in natural language instead of writing SQL.
+
+STACK + WHERE IT LIVES
+Repo: ~/mastering project
+  src/            React frontend
+    components/, hooks/, pages/, services/, App.jsx
+  server/         Node.js + Express backend (index.js, port 4000)
+    scripts/, data/ (sample Azure datasets)
+  docs/, config/
+  vite dev server on 5173, API on 4000
+  npm run dev / dev:client / dev:server
+
+HOW IT WORKS
+  - Frontend (Vite + React) talks to an Express server.
+  - Server holds GCP service-account credentials and a Gemini API key.
+  - BigQuery is queried for analytics; Azure Storage is read for file-based
+    datasets; Gemini is called for AI analysis/summarisation of the results.
+  - Configuration is entirely environment-driven (.env.example provided), which
+    is the right pattern for multi-cloud credentials.
+
+INTERVIEW TALKING POINTS
+  - Multi-cloud integration experience: two cloud providers with different auth
+    models (GCP service account vs Azure storage credentials) behind one API.
+  - LLM integration done server-side: the Gemini key never reaches the browser,
+    and the LLM is applied to already-retrieved data rather than being trusted
+    to produce facts.
+  - Good demo of "LLM as an interface layer over structured data" — a pattern
+    that comes up constantly in AI engineering roles.
+
+HONEST LIMITATIONS
+  - This began as a PROJECT PROPOSAL; verify what is actually implemented
+    before claiming production use.
+  - Requires real GCP/Azure/Gemini credentials to run, so it is not reproducible
+    without accounts.
+
+================================================================================
+#7  SEMANTIC SEARCH AND EVALUATION SYSTEM (MiniLM-L6-v2)
+================================================================================
+
+ONE-LINE PITCH
+A semantic search system built on MiniLM-L6-v2 sentence embeddings, delivered
+with an explicit EVALUATION component — the discipline of measuring retrieval
+quality rather than assuming it.
+
+WHY IT EXISTS
+Keyword search fails on paraphrase. Embedding search fixes that but introduces a
+new problem: how do you know it is actually better? This project's point is the
+evaluation half — turning "search feels better" into a measured claim.
+
+HOW IT WORKS (as documented)
+  - Encodes documents and queries with all-MiniLM-L6-v2 (384-dimensional
+    embeddings) — the same model family used in Rexy's retrieval stack.
+  - Compares retrieval quality using standard information-retrieval evaluation.
+  - Sits at the intersection of NLP and Information Retrieval coursework.
+
+INTERVIEW TALKING POINTS
+  - This is the project that justifies saying "I know how to EVALUATE retrieval".
+    Bring it up when an interviewer asks how you would measure a RAG system:
+    build a labelled query/relevance set, then report recall@k, MRR and nDCG —
+    and compare against a BM25 baseline.
+  - It pairs perfectly with Rexy: Rexy is the deployed system, this is the
+    measurement mindset. Say both.
+
+HONEST LIMITATIONS
+  - The artifact is a project report; deployment details should be re-checked in
+    the original report before making runtime claims.
+
+================================================================================
+#8  MEDINV — MEDICAL INVENTORY & PATIENT MANAGEMENT SYSTEM
+================================================================================
+
+ONE-LINE PITCH
+A full-stack, role-based healthcare inventory and patient management web app
+built with Next.js, React, TypeScript and MySQL.
+
+WHY IT EXISTS
+Clinics track medicine stock, expiry and patient orders in spreadsheets.
+That loses money on expired stock and makes audit trails unreliable. MedInv
+centralises inventory, patients, orders and logs with proper access control.
+
+STACK + WHERE IT LIVES
+Repo: ~/MedInv
+  Next.js App Router (app/), React + TypeScript, Tailwind, MySQL
+  middleware.ts          auth/route protection
+  hash-passwords.js      password hashing utility
+  db-schema.md           the schema documentation
+  scripts/, lib/, context/, hooks/, components/
+  vercel.json, DATABASE-SETUP-SUMMARY.md, DEPLOYMENT-GUIDE.md
+
+FEATURES
+  Dashboard with key metrics and inventory summary; patient management;
+  medicine and inventory tracking; order management; medical logs and patient
+  history; expiry alerts and notifications; analytics and reporting;
+  role-based access control.
+
+ENGINEERING DETAIL WORTH MENTIONING
+  - Explicit mobile-first responsive work: touch targets meeting WCAG 2.1
+    (minimum 44x44 px), adaptive typography with a 16 px minimum to avoid iOS
+    zoom, responsive tables with touch-optimised scrolling, a searchable command
+    menu (Cmd/Ctrl+K), and a 1120 px max content width on desktop.
+  - Progressive enhancement: layout is CSS-based so core functionality works
+    without JavaScript; enhanced interactions activate per device capability.
+  - A documented breakpoint system with mobile below 768 px.
+  - Deployability was treated as a requirement: designed to run on Vercel Hobby
+    plus a free MySQL tier with no paid subscription.
+
+INTERVIEW TALKING POINTS
+  - RBAC + audit logs + expiry alerting is a real domain-complexity story:
+    healthcare inventory has correctness and traceability requirements.
+  - Password hashing handled in a dedicated utility rather than inline.
+  - Use it to demonstrate full-stack ownership: schema -> API -> UI -> deploy.
+
+HONEST LIMITATIONS
+  - Predominantly product/CRUD engineering; limited ML content. Rank it lower
+    for an AI role but use it to prove you can ship a complete application.
+
+================================================================================
+#9  JOBYARD — DISTRIBUTED JOB SCHEDULER
+================================================================================
+
+ONE-LINE PITCH
+A distributed job scheduler delivered as a complete submission package with
+architecture, design and implementation artifacts.
+
+WHY IT EXISTS
+Reliable scheduled work across multiple machines requires coordination — who
+owns a job, what happens when a worker dies, how retries avoid duplicating side
+effects. Jobyard is a systems-design answer to that problem.
+
+WHAT WAS PRODUCED
+A submission package containing architecture documentation, design
+documentation and implementation. It evidences distributed-systems competency
+alongside the AI work.
+
+INTERVIEW TALKING POINTS
+  - Useful when an AI role touches infrastructure: training pipelines, batch
+    inference, and embedding refresh jobs are all schedulers in disguise.
+  - Be ready to discuss the classic concerns: job leasing, worker failure
+    detection, at-least-once vs at-most-once delivery, idempotency keys, and
+    backoff strategy.
+
+HONEST LIMITATIONS
+  - Inspect the original submission package before quoting exact stack,
+    responsibilities or benchmark outcomes.
+
+================================================================================
+#10  ENHANCED HAND GESTURE RECOGNITION (OpenCV + Flask)
+================================================================================
+
+ONE-LINE PITCH
+A real-time hand gesture recognition system built on classical computer vision
+that controls a Flappy Bird game through a webcam.
+
+WHY IT EXISTS
+A deliberate, dependency-light CV project: no deep learning, no GPU — the
+pipeline has to work with colour, contours and geometry, which forces you to
+understand what a neural network would otherwise hide.
+
+STACK + WHERE IT LIVES
+Repo: ~/dip_project
+  Hand_Gesture.py, Live_Hand_Gesture.py, server.py, web/, requirements.txt
+  Dependencies: NumPy, OpenCV (cv2), Flask, threading, math
+
+HOW IT WORKS
+  - Flask backend processes video frames and detects gestures.
+  - Adaptive skin detection auto-adjusts to different lighting conditions.
+  - Improved contour detection with optimised morphological operations for hand
+    segmentation.
+  - History-based gesture STABILISATION to reduce flicker and false detections.
+  - Confidence thresholds so a gesture is only reported when confidence is high.
+  - Enhanced preprocessing for noise reduction and feature extraction.
+  - A web interface provides real-time visual feedback.
+
+INTERVIEW TALKING POINTS
+  - The temporal-stabilisation idea is the best part: a frame-by-frame detector
+    flickers, so requiring consistency across a short history turns a jittery
+    signal into a usable one. The same idea appears in production ML systems as
+    smoothing, hysteresis, or a confirmation window.
+  - Good grounding for questions like "why is classical CV still useful?" —
+    it is fast, tiny, explainable, and runs anywhere.
+
+HONEST LIMITATIONS
+  - Classical CV on skin colour is sensitive to background and lighting; it is
+    a controlled-environment solution, not a general-purpose one.
+
+================================================================================
+#11  ATLAS SMART LEARNING PLATFORM
+================================================================================
+
+ONE-LINE PITCH
+An AI-driven smart learning platform documented with a mission, technical
+architecture and stakeholder analysis.
+
+WHAT IT ACTUALLY IS — HONEST SCOPE
+  - This exists as academic project documentation (a project handbook with
+    mission, architecture and stakeholders).
+  - The available corpus does NOT establish a final implementation status.
+  - Present it as DESIGN and PRODUCT-THINKING work, never as a shipped system.
+
+INTERVIEW TALKING POINTS
+  - If asked about product sense or working with non-engineers, this is the
+    artifact: stakeholders, mission, technical architecture and delivery
+    documentation produced before code.
+  - Do not lead with it for an AI engineering role.
+
+================================================================================
+#12  ACADEMIC DELIVERY ARTIFACTS (process evidence appendix)
+================================================================================
+
+WHAT THIS COVERS
+Across the projects above, a substantial body of structured delivery
+documentation was produced:
+  - Project handbooks and vision documents
+  - Architecture documents and functional specifications
+  - User stories and sprint retrospectives
+  - RMMM plans (Risk Mitigation, Monitoring and Management) — e.g. for a
+    multi-tenant farm-surveillance SaaS platform
+  - Test cases and test reports
+  - IEEE-aligned paper drafts, reference collections, IEEE-standard graphs,
+    model-performance reporting, complexity analysis and dataset-bias analysis
+  - Plagiarism/originality declarations and plagiarism checks
+  - Conference presentation certificate material
+
+WHY IT MATTERS IN AN INTERVIEW
+  - It demonstrates that the engineering happened inside a PROCESS, not as
+    isolated hacking.
+  - Dataset-bias analysis and complexity analysis show awareness of the failure
+    modes that matter in applied ML: biased data and cost at inference time.
+  - Related academic work includes a multi-tenant SaaS thread (secure, scalable
+    multi-tenant products with health/fitness and farm-surveillance domains) —
+    useful if asked about multi-tenancy, isolation or compliance.
+
+HONEST LIMITATIONS
+  - Documentation-heavy artifacts are not deployed software. Label them as
+    coursework/submission deliverables.
+
+================================================================================
+CROSS-CUTTING SECTION A — SKILLS → PROJECT EVIDENCE MAP
+================================================================================
+Use this when a job description lists a skill and you need the right project.
+Do not say "I know X, trust me." Say "here is the project where X was the
+blocking problem."
+
+  LLM / GenAI application engineering
+    -> Rexy (llama.cpp on-device inference, ChatML prompt assembly, RAG loop)
+    -> Multicloud Dashboard (Gemini API integration, server-side key handling)
+
+  Retrieval-Augmented Generation (RAG)
+    -> Rexy (chunking, embeddings, hybrid retrieval, fusion, context budgeting)
+    -> Semantic Search & Evaluation (MiniLM embeddings + retrieval evaluation)
+
+  Vector search / embeddings
+    -> Rexy (sqlite-vec vec0 FLOAT[384], all-MiniLM-L6-v2, L2-normalised)
+    -> Semantic Search & Evaluation (MiniLM-L6-v2)
+
+  Hybrid / lexical retrieval
+    -> Rexy (FTS5 BM25 with porter unicode61, RRF-style weighted fusion)
+
+  Prompt engineering
+    -> Rexy (PromptBuilder: sectioned prompt, [DEVICE CONTEXT] grounding,
+             420-token budget, top-2 chunks, last-8 memories)
+
+  Computer vision
+    -> Multimodal Traffic (YOLOv8 detection + 4-class classification)
+    -> Accident Hotspot (YOLOv8 + HDFS)
+    -> Hand Gesture Recognition (classical CV: skin detection, contours,
+       morphology, temporal stabilisation)
+
+  Classical ML
+    -> Avionics (PCA reconstruction, One-Class SVM with RBF kernel, MLP)
+    -> Traffic (XGBoost, RandomForest, DBSCAN, class-imbalance handling)
+
+  Deep learning
+    -> Avionics (MLP 12->128->64->32->1, 120 epochs, early stopping)
+    -> Traffic (YOLOv8 CNN detection and classification)
+    -> Anon (CRNN + CTC for CAPTCHA recognition, exported to ONNX)
+
+  Model deployment / serving
+    -> Anon (ONNX Runtime in production, export-parity gate, SHA-pinned model,
+             single-thread CPU session, double-checked-locking singleton)
+    -> Rexy (ONNX Runtime Mobile with NNAPI/XNNPACK on Android; llama.cpp JNI)
+
+  MLOps / evaluation discipline
+    -> Anon (export parity 512/512, max logit diff 3.815e-05, retry policy,
+             bounded client error logging with retention limits)
+    -> Traffic (per-class AP vs macro-average trap, accuracy-vs-threshold
+                calibration study, documented overfitting)
+    -> Semantic Search & Evaluation (retrieval evaluation)
+    -> Avionics (precision/recall framing, dataset-bias analysis, complexity
+                 analysis)
+
+  Production backend engineering
+    -> Anon (FastAPI, Go stdlib service, session store, refresh queue,
+             admission control, background workers, HMAC bridge, scrypt)
+
+  Reliability / incident response
+    -> Anon (postmortem: proved not-an-attack, diagnose memory thrashing,
+             fixed restart-induced tunnel regression, added memory caps and
+             admission control, built a bounded ops dashboard)
+
+  Security engineering
+    -> Anon (CSRF + exact origin, HttpOnly/SameSite=Strict host-only cookies,
+             no credential persistence, per-source + global login limits,
+             HMAC-SHA256 signed bridge with nonces, narrow sudo allowlist,
+             scrypt password hash, consent-gated analytics)
+
+  Concurrency / performance
+    -> Anon (bounded FIFO queues, per-session locks, cancellation-safe OCR
+             permits, 5.5x session-store speedup, measured p95/p99 and RSS)
+    -> Rexy (parallel async vector + FTS retrieval, mutex-guarded inference)
+
+  Distributed systems / big data
+    -> Jobyard (distributed job scheduler)
+    -> Accident Hotspot (WebHDFS integration, append-heavy storage design)
+    -> Multicloud Dashboard (BigQuery + Azure Blob + Express API)
+
+  Frontend / product engineering
+    -> Anon (vanilla JS + hand-written CSS, service worker offline cache,
+             accessibility and SEO hardening, 320-1440 px verification)
+    -> MedInv (Next.js, Tailwind, WCAG 2.1 touch targets, command menu)
+
+  Data engineering
+    -> Traffic (ingestion, cleaning, feature engineering, 40 GB+ datasets)
+    -> Rexy (ADB extraction, OCR, chunking, index construction pipeline)
+
+================================================================================
+CROSS-CUTTING SECTION B — PRIORITISED TOP-TEN INTERVIEW QUESTIONS + ANSWERS
+================================================================================
+Each answer is written as something you could actually say out loud. Keep them
+short in delivery; the depth here is so you never get caught out.
+
+Q1. "Walk me through the most technically complex thing you've built."
+  A: "Rexy — an on-device RAG system for Android. The hard constraint is that
+     nothing leaves the phone. So I had to solve retrieval AND generation inside
+     a phone's memory budget. Range: a chunker that splits on sentence
+     boundaries without breaking abbreviations, a MiniLM embedding pipeline that
+     runs on an M1 Mac because the phone can't afford to embed a whole device,
+     a hybrid retriever that fuses sqlite-vec vector search with SQLite FTS5
+     BM25 at a 0.7/0.3 weight, and then llama.cpp bound through hand-written
+     JNI with a top_k->top_p->temperature->dist sampler chain. The index is a
+     single SQLite file so it can be pushed over ADB atomically."
+
+Q2. "How do you evaluate a RAG system?"
+  A: "Three layers. Retrieval: a labelled query/relevance set, reporting
+     recall@k, MRR and nDCG, compared against a BM25 baseline — hybrid only
+     matters if it beats pure BM25 on exact identifiers. Generation: groundedness
+     and answer-correctness against the retrieved context. And operations:
+     p95 retrieval latency broken down by stage. Honestly, in Rexy I
+     instrumented latency and per-retriever scores but I have not yet built the
+     labelled retrieval benchmark — that is the next thing I would add, and I
+     have a smaller semantic-search project where the evaluation discipline was
+     the point."
+
+Q3. "Tell me about a time your model failed."
+  A: "My multimodal traffic fusion model scored 0.995 on training and 0.125 on
+     test — 1,000 samples, 9 features, and a model complicated enough to
+     memorise the rows. I also caught a subtler mistake in the same project:
+     a macro F1 of 1.0 that was meaningless because two of my four classes had
+     ZERO test samples. Macro over an empty class is not a real average, and the
+     artifact now records the corrected over-4-class figure of 0.5. Since then
+     I always check per-class support and the confusion matrix before I quote a
+     macro number."
+
+Q4. "How do you handle a model in a safety-critical system?"
+  A: "In my avionics project the ML never authorises anything. The three models
+     detect and localise; a deterministic safety gate decides. If the gate
+     doesn't recognise the anomaly, the default is REVIEW — human in the loop —
+     never an automatic action. The thresholds are hard numbers like 10,000 ft
+     and 200 kts that a human can audit and certify. That separation is the
+     whole design: ML where being probabilistic is acceptable, rules where it
+     isn't."
+
+Q5. "You have a trained model. How do you ship it?"
+  A: "In production I run a CRNN CAPTCHA model through ONNX Runtime on CPU with
+     exactly one intra-op thread, behind a double-checked-locking singleton so
+     the session is created once under concurrency. I locked the preprocessing
+     to the upstream's exact 175x45 grayscale, [-1,1] normalisation, and
+     greedy CTC with blank index 0 — because silently changing any of those
+     breaks the model without any error message. And I built an export parity
+     gate: I verified the ONNX export against PyTorch on 512 images with a
+     maximum logit difference of 3.8e-05, and I pinned both the checkpoint and
+     ONNX SHA256 hashes."
+
+Q6. "How do you keep inference cheap at scale?"
+  A: "I benchmarked it and then chose fewer workers than the hardware allowed.
+     My CRNN ran at 323 inferences/sec with one worker and 354 with two, then
+     flattened at ~356 with four and six. So I shipped two — extra workers cost
+     memory and bought nothing. On-device in Rexy, the provider ladder is NNAPI
+     (Qualcomm Hexagon NPU) then XNNPACK (ARM NEON) then CPU, with 4 intra-op
+     threads."
+
+Q7. "Tell me about a production incident."
+  A: "My Azure VM hit 95% CPU and 477 GB of disk reads per hour while network
+     traffic was only ~3.5 MB in and 2.4 MB out. The instinct was 'we're being
+     attacked', but that traffic ratio proved it was the machine reading its own
+     disk — classic memory thrashing on a VM with 892 MiB of RAM. Then
+     restarting surfaced a second, independent bug: the temporary tunnel address
+     changed, so my frontend was calling a dead hostname while the backend was
+     perfectly healthy. I fixed the tunnel with a permanent hostname, removed
+     the suspected firmware-refresh trigger, freed memory from ~164 to ~329 MiB,
+     and capped the app at 384 MiB so no single process can take the VM down."
+
+Q8. "Design me a system that answers questions over a private corpus."
+  A: This is where you combine Rexy + Anon + Semantic Search: chunk with
+     overlap at sentence boundaries; embed with a small sentence transformer;
+     store vectors AND a lexical index so exact identifiers are findable;
+     retrieve in parallel and fuse; budget the context explicitly; generate with
+     grounding markers; then MEASURE recall@k, nDCG and p95 latency. Mention
+     both the privacy architecture from Rexy and the bounded-queue admission
+     control from Anon.
+
+Q9. "What's the difference between accuracy and usefulness in ML?"
+  A: "My avionics MLP hit 99.05% validation accuracy, and that number would be
+     worthless on its own — because the model still doesn't get to act. The
+     useful metric is whether the DETECTION plus the SAFETY GATE produces a
+     decision a human can trust. In the traffic project the reverse happened:
+     a 0.9857 macro AP looked great while the fused decision system was
+     effectively ignoring vision. Usefulness is measured at the system level,
+     not the model level."
+
+Q10. "Why should we hire you for an applied AI role?"
+  A: "Because I've built the whole path, not just the notebook. I've trained
+     and exported a model that runs in production where a wrong answer costs a
+     real user a login. I've built RAG end to end including on-device inference.
+     I've built safety-gated ML where the model isn't allowed to act. And I've
+     run the incident, written the postmortem, and capped the blast radius.
+     I know where my numbers are measured and where they're assumptions, and
+     I say which is which."
+
+================================================================================
+CROSS-CUTTING SECTION C — HOW TO PRESENT THE WHOLE PORTFOLIO
+================================================================================
+
+THE 60-SECOND VERSION
+"I build applied AI systems that have to survive contact with reality. My
+flagship is Rexy, a fully on-device RAG system for Android — embeddings, hybrid
+vector plus BM25 retrieval, and local LLM inference through llama.cpp, all
+without sending data off the phone. In production I run Anon, a student portal
+companion where a CRNN CAPTCHA model I deploy reads the challenge locally, and
+where I've done the capacity measurement, the incident postmortem, and the
+security hardening. On the research side I've built a safety-gated avionics
+anomaly detector that combines PCA reconstruction, one-class SVM and an MLP
+ensemble — and where the ML is deliberately never allowed to authorise an
+action."
+
+THE THROUGH-LINE (use this if asked "what connects your projects?")
+  1. Privacy and locality: Rexy keeps everything on-device; Anon never forwards
+     images to a third-party OCR service and never persists credentials.
+  2. Bounded resources: Rexy runs a 3B model on a phone; Anon runs on a VM with
+     under 900 MiB of RAM behind explicit admission control. Neither project
+     assumes infinite hardware.
+  3. Measured over claimed: both projects publish their own benchmarks AND their
+     own caveats, and both explicitly refuse to present synthetic results as
+     real-world capacity.
+  4. Determinism where it matters: Anon's retry policy and Rexy's intent router
+     are deterministic before any model is consulted; the avionics safety gate
+     is deterministic after the model. This is a consistent design principle.
+
+THINGS TO ALWAYS VOLUNTEER BEFORE BEING ASKED
+  - Rexy is an active prototype, not a published app, and has no retrieval
+    quality benchmark yet.
+  - Anon's automatic CAPTCHA login is a verified milestone, not a reliability
+    guarantee, and its capacity numbers are synthetic.
+  - The avionics ensemble is documented design plus a lighter IsolationForest
+    demo in the shipped repo; it has never been near an aircraft.
+  - The traffic fusion model overfits (0.995 train / 0.125 test) and one macro
+    metric was inflated by zero-support classes.
+  - The avionics 99.05% is a reported validation accuracy for the MLP, not an
+    end-to-end system number.
+
+NUMBER QUICK-REFERENCE (memorise these five, get them right under pressure)
+  - Rexy: alpha 0.7 vector / 0.3 keyword; top-K 5; candidate pool 20;
+    MiniLM 384-d; CHUNK 512 tokens with 50 overlap; on-device n_ctx 4096,
+    n_batch 128; llama.cpp sampler top_k 32 -> top_p -> temp -> dist.
+  - Anon OCR: 175x45 grayscale, (pixel/255-0.5)/0.5, greedy CTC blank=0;
+    ~354 inferences/sec at 2 workers, p95 270 ms, peak RSS 63 MiB;
+    export parity max logit diff 3.815e-05.
+  - Anon store: 552 ms -> 100 ms median save (about 5.5x).
+  - Anon burst: 1,000 users / 2,000 requests accepted in 1.667 s; p95
+    1,497 ms; 1,000 jobs drained in 33.666 s with 20 ms simulated upstream.
+  - Traffic vision: macro AP 0.9857 (accident 0.9883, dense 0.9872,
+    fire 0.9964, sparse 0.9708); detection 94% at ~37 ms/image.
+  - Avionics: MLP 12->128->64->32->1; 99.05% validation; safety thresholds
+    10,000 ft and 200 kts.
+
+WHAT THIS DOCUMENT DELIBERATELY DOES NOT DO
+  It does not claim deployment you cannot evidence, it does not present
+  coursework as a product, it does not quote a metric without its caveat, and
+  it does not hide the three real failures (traffic overfitting, the
+  zero-support macro average, and the fact that the avionics repo's runnable
+  demo is lighter than the documented ensemble). In an interview, that honesty
+  is an advantage — most candidates cannot say "here is exactly where my number
+  stops being trustworthy."
+
+================================================================================
+END OF DOCUMENT
+================================================================================

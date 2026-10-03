@@ -1,0 +1,205 @@
+/* C · Score tiles: a compact course panel with individual assessment wells. */
+.app[data-variant="strips"] .course-list {
+  gap: 16px;
+}
+
+.app[data-variant="strips"] .course {
+  min-width: 0;
+  padding: 14px 12px 11px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 2px 4px #0002, 0 8px 18px #0001;
+}
+
+.app[data-variant="strips"] .course-header {
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 0;
+  margin: 0 0 12px;
+}
+
+.app[data-variant="strips"] .course-identity {
+  padding-top: 2px;
+}
+
+.app[data-variant="strips"] .course h2 {
+  font-size: 18px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant="strips"] .course-code {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant="strips"] .course-total {
+  justify-content: center;
+  min-height: 44px;
+  max-width: 45%;
+  padding: 8px;
+  border: 1px solid #c7d5af26;
+  border-radius: 10px;
+  background: #c7d5af0d;
+}
+
+.app[data-variant="strips"] .course-total .score {
+  flex-wrap: wrap;
+  gap: 3px;
+  white-space: normal;
+}
+
+.app[data-variant="strips"] .course-total .score strong {
+  font-size: 23px;
+  line-height: 1.15;
+  color: var(--sage);
+}
+
+.app[data-variant="strips"] .course-total .out-of {
+  font-size: 12px;
+}
+
+.app[data-variant="strips"] .course-total:has(.no-total) {
+  border-style: dashed;
+  background: transparent;
+}
+
+.app[data-variant="strips"] .no-total {
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant="strips"] .assessments {
+  min-width: 0;
+  padding: 0;
+}
+
+.app[data-variant="strips"] .assessments dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr));
+  align-items: start;
+  gap: 8px;
+}
+
+.app[data-variant="strips"] .assessments dl > div {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  min-width: 0;
+  min-height: 62px;
+  max-width: 100%;
+  padding: 6px 9px;
+  border: 1px solid #465042;
+  border-radius: 9px;
+  background: var(--page);
+}
+
+.app[data-variant="strips"] .assessments dt {
+  flex: none;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 17px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant="strips"] .assessments dd {
+  flex: none;
+  width: 100%;
+  margin-top: auto;
+}
+
+.app[data-variant="strips"] .assessment-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.app[data-variant="strips"] .assessments .score {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0 4px;
+  min-width: 0;
+  white-space: normal;
+  line-height: 22px;
+}
+
+.app[data-variant="strips"] .assessments .score strong {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant="strips"] .assessments .score .out-of {
+  font-size: 12px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant="strips"] .assessment-rail {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin: 0;
+  background: #3b4437;
+  border-radius: 2px;
+}
+
+.app[data-variant="strips"] .assessment-rail::after {
+  width: clamp(0%, var(--score-progress, 0%), 100%);
+  background: var(--sage);
+}
+
+.app[data-variant="strips"] .assessments dl > div:has([data-pending="true"]) {
+  border-style: dashed;
+  border-color: #65715d;
+  background: transparent;
+}
+
+.app[data-variant="strips"] .pending-word {
+  font-size: 13px;
+  line-height: 22px;
+}
+
+.app[data-variant="strips"] .assessment-visual[data-pending="true"] .assessment-rail {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dashed #7f8b74;
+  border-radius: 0;
+}
+
+.app[data-variant="strips"] .assessment-visual[data-pending="true"] .assessment-rail::after {
+  display: none;
+}
+
+.app[data-variant="strips"] .course-status {
+  display: block;
+  margin: 10px 1px 0;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+@media (forced-colors: active) {
+  .app[data-variant="strips"] .course,
+  .app[data-variant="strips"] .course-total,
+  .app[data-variant="strips"] .assessments dl > div {
+    border-color: CanvasText;
+  }
+
+  .app[data-variant="strips"] .assessment-rail {
+    outline: 1px solid CanvasText;
+  }
+
+  .app[data-variant="strips"] .assessment-rail::after {
+    background: CanvasText;
+    forced-color-adjust: none;
+  }
+}

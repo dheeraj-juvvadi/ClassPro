@@ -1,0 +1,190 @@
+/* Gradebook: one ruled register per course, with a shared score column. */
+.app[data-variant="ledger"] .course-list {
+  gap: 26px;
+  margin-top: 26px;
+}
+.app[data-variant="ledger"] .course {
+  min-width: 0;
+}
+.app[data-variant="ledger"] .course-header {
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 0;
+  margin: 0 1px 11px;
+}
+.app[data-variant="ledger"] .course h2 {
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 610;
+  letter-spacing: -.35px;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+.app[data-variant="ledger"] .course-code {
+  margin-top: 4px;
+  font-size: 10.5px;
+  letter-spacing: .45px;
+  overflow-wrap: anywhere;
+}
+.app[data-variant="ledger"] .course-total {
+  gap: 3px;
+  padding-top: 1px;
+}
+.app[data-variant="ledger"] .course-total::after {
+  content: "Released total";
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.app[data-variant="ledger"] .course-total .score strong {
+  color: var(--sage);
+  font-size: 23px;
+  font-weight: 580;
+  letter-spacing: -.8px;
+}
+.app[data-variant="ledger"] .course-total .score .out-of {
+  font-size: 12px;
+}
+.app[data-variant="ledger"] .no-total {
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.4;
+}
+.app[data-variant="ledger"] .assessments {
+  padding: 0;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  background: #20251f;
+  overflow: visible;
+}
+.app[data-variant="ledger"] .assessments > div {
+  padding: 0;
+}
+.app[data-variant="ledger"] .assessments dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+}
+.app[data-variant="ledger"] .assessments dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108px;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.app[data-variant="ledger"] .assessments dl > div + div {
+  border-top: 1px solid var(--line);
+}
+.app[data-variant="ledger"] .assessments dt {
+  align-self: center;
+  padding: 10px 12px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 480;
+  letter-spacing: -.1px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.app[data-variant="ledger"] .assessments dd {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  padding: 8px 12px;
+  border-left: 1px solid var(--line);
+  text-align: right;
+}
+.app[data-variant="ledger"] .assessment-visual {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+}
+.app[data-variant="ledger"] .assessments .score {
+  justify-content: flex-end;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.app[data-variant="ledger"] .assessments .score strong {
+  font-size: 16px;
+  font-weight: 570;
+  line-height: 1.2;
+  letter-spacing: -.25px;
+}
+.app[data-variant="ledger"] .assessments .score .out-of {
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.app[data-variant="ledger"] .pending-word {
+  color: var(--peach);
+  font-size: 11px;
+  line-height: 1.5;
+  font-weight: 480;
+}
+.app[data-variant="ledger"] .assessment-rail {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: var(--line);
+  pointer-events: none;
+}
+.app[data-variant="ledger"] .assessment-rail::before {
+  content: "";
+  display: block;
+  width: clamp(0%, var(--score-progress, 0%), 100%);
+  height: 100%;
+  background: var(--sage);
+}
+.app[data-variant="ledger"] .assessment-visual[data-pending="true"] .assessment-rail {
+  height: 3px;
+  border-bottom: 1px dashed #72786a;
+  background: none;
+}
+.app[data-variant="ledger"] .assessment-visual[data-pending="true"] .assessment-rail::before {
+  display: none;
+}
+.app[data-variant="ledger"] .course-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 0 0 7px 7px;
+  background: #1d211c;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.app[data-variant="ledger"] .course-status::before {
+  content: "";
+  flex: 0 0 4px;
+  height: 4px;
+  background: var(--muted);
+  pointer-events: none;
+}
+.app[data-variant="ledger"] .page-note {
+  margin-top: 24px;
+}
+@media (max-width: 350px) {
+  .app[data-variant="ledger"] .course-header { gap: 12px; }
+  .app[data-variant="ledger"] .assessments dl > div {
+    grid-template-columns: minmax(0, 1fr) 100px;
+  }
+  .app[data-variant="ledger"] .assessments dt,
+  .app[data-variant="ledger"] .assessments dd,
+  .app[data-variant="ledger"] .course-status { padding-inline: 10px; }
+}
+@media (forced-colors: active) {
+  .app[data-variant="ledger"] .assessment-rail { border-bottom: 1px solid CanvasText; }
+  .app[data-variant="ledger"] .assessment-rail::before { border-bottom: 3px solid Highlight; }
+}

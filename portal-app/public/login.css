@@ -5,90 +5,106 @@
   font-weight: 100 900;
   font-display: swap;
 }
-
 .garden-login { font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
-.garden-login .brand { background: transparent; border-radius: 0; font-weight: 750; text-shadow: 0 0 5px #f1efe622, 0 0 14px #d5dda914; }
-.garden-login .login-layout { max-width: 336px; }
-.garden-login .login-card { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.garden-login .login-card h1 { font-family: inherit; font-size: 2.5rem; font-weight: 500; line-height: 1.15; letter-spacing: -.055em; color: #f1eee3; }
-.garden-login .login-card h1 span { color: #a5b58c; }
-.garden-login .login-card > .quiet { margin: .65rem 0 2.1rem; font-size: .8125rem; line-height: 1.5; color: #aeb2a6; }
-.garden-login label { margin-bottom: .5rem; font-size: .75rem; font-weight: 500; letter-spacing: 0; }
-.garden-login input { min-height: 48px; padding: .75rem .875rem; border-color: #45483e; border-radius: 5px; background: #191b18e8; font-size: 1rem; }
-.garden-login input::placeholder { color: #969e8f; font-size: .8125rem; }
-.garden-login input + label { margin-top: 1.2rem; }
-.garden-login .login-options { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .55rem; }
-.garden-login .remember-choice { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; margin: 0; color: #b9c0ad; font-size: .6875rem; font-weight: 400; cursor: pointer; }
-.garden-login #remember { appearance: none; flex: 0 0 14px; width: 14px; height: 14px; min-height: 14px; padding: 0; margin: 0; border-radius: 3px; cursor: pointer; }
-.garden-login #remember:checked { background: #d5dda9; border-color: #d5dda9; }
-.garden-login #remember:checked::after { content: ''; display: block; width: 4px; height: 7px; margin: 1px 0 0 4px; border: solid #252b1c; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
-.garden-login .login-options a { display: inline-flex; align-items: center; min-height: 44px; color: #b9c0ad; font-size: .6875rem; text-decoration: none; white-space: nowrap; }
-.garden-login .login-options a:hover { color: #e5ead8; text-decoration: underline; text-underline-offset: 3px; }
-.garden-login #sign-in { display: flex; align-items: center; gap: 1rem; width: fit-content; min-height: 44px; margin: 1.1rem 0 1.35rem; padding: 0; background: transparent; color: #f1eee3; border: 0; border-radius: 24px; font-size: .9375rem; font-weight: 500; }
-.garden-login #sign-in:hover:not(:disabled) { background: transparent; color: #d5dda9; }
-.garden-login #sign-in { margin-left: auto; margin-right: auto; }
+.garden-login .brand { background: transparent; border-radius: 0; font-weight: 750; text-shadow: none; }
+.garden-login .site-header { position: relative; z-index: 1; pointer-events: none; }
+.garden-login main { display: block; min-height: 0; padding: 0; }
+.garden-login .login-layout {
+  position: fixed; inset-inline: 0; top: var(--login-viewport-top, 0px);
+  width: 100%; max-width: none; height: var(--login-viewport-height, 100dvh);
+  display: flex; align-items: center; justify-content: center; margin: 0;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding-bottom: max(16px, env(safe-area-inset-bottom), var(--login-consent-clearance, 0px));
+  pointer-events: none;
+}
+.garden-login .login-card {
+  width: 100%; max-width: 380px; min-width: 0; max-height: 100%;
+  padding: 24px; border: 1px solid #454a393d; border-radius: 28px;
+  background: #22261f; box-shadow: none; pointer-events: auto;
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain;
+  scrollbar-width: thin; scrollbar-color: #59644f transparent; scroll-padding-block: 24px;
+}
+.garden-login .login-card h1 {
+  margin: 0 0 7px; font-family: inherit; font-size: 27px; font-weight: 550;
+  line-height: 1.15; letter-spacing: -1px; color: #f1efe6; text-wrap: balance;
+}
+.garden-login #login-description { margin: 0 0 20px; color: #b7bfad; font-size: 13px; line-height: 1.5; text-wrap: pretty; }
+.garden-login #login-form { display: grid; gap: 10px; }
+.garden-login #login-password-stage { display: grid; gap: 10px; }
+.garden-login .login-field {
+  position: relative; margin: 0; padding: 7px 14px 0; min-width: 0; min-height: 72px;
+  background: #2d322a; border-radius: 12px 12px 4px 4px; border-bottom: 1px solid #59644f;
+}
+.garden-login .login-field:focus-within { border-color: #c5d4a7; box-shadow: inset 0 -1px #c5d4a7; }
+.garden-login .login-field > label { display: block; margin: 0; color: #d3dcc7; font-size: 12px; line-height: 17px; letter-spacing: 0; }
+.garden-login .login-field > input, .garden-login .password-field > input {
+  display: block; width: 100%; height: 44px; min-height: 44px; min-width: 0; margin: 0;
+  padding: 0; outline: none; border: 0; border-radius: 0; background: transparent;
+  color: #f1efe6; font: inherit; font-size: 16px; line-height: 24px; box-shadow: none;
+}
+.garden-login .login-field input::placeholder { color: #adb7a0; opacity: 1; font-size: 16px; }
+.garden-login .login-field input:focus { outline: none; box-shadow: none; }
+.garden-login .password-field { position: static; }
+.garden-login .login-secret { padding-right: 70px; }
+.garden-login .password-field > button {
+  position: absolute; inset: 20px 7px auto auto; transform: none;
+  display: grid; place-items: center; width: 52px; min-height: 44px; height: 44px;
+  padding: 0; border: 0; border-radius: 10px; background: transparent;
+  color: #d8e2ca; font: 550 12px/1 Inter, sans-serif;
+}
+.garden-login .password-field > button:hover:not(:disabled) { background: #3b4434; }
+.garden-login .login-field-note { display: block; margin: 3px 0 8px; color: #f8b59d; font-size: 12px; line-height: 1.5; }
+.garden-login .login-field:has(input[aria-invalid="true"]) { border-color: #f8b59d; }
+.garden-login .login-field-note[hidden] { display: none; }
+.garden-login #password-help { margin: 0; color: #b7bfad; font-size: 11px; line-height: 1.5; text-wrap: pretty; }
+.garden-login .login-account-row { display: flex; align-items: center; gap: 6px; border-top: 1px solid #3b4434; padding: 3px 0 9px; margin-top: -6px; min-height: 56px; }
+.garden-login #login-account-summary { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #d5ddca; font-size: 13px; line-height: 1.5; }
+.garden-login #login-change-account { min-height: 44px; min-width: 44px; padding: 10px 6px; border: 0; border-radius: 8px; background: transparent; color: #cbd8b5; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+.garden-login .login-options { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0 8px; margin: 0; }
+.garden-login .remember-choice { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; margin: 0; color: #c5ccba; font-size: 12px; font-weight: 400; cursor: pointer; }
+.garden-login #remember { appearance: auto; width: 18px; height: 18px; min-height: 18px; margin: 0; padding: 0; accent-color: #c5d4a7; }
+.garden-login .login-options a { display: inline-flex; align-items: center; min-height: 44px; color: #c5ccba; font-size: 11px; text-underline-offset: 3px; }
 .garden-login #sign-in {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 100%;
-  min-height: 58px;
-  padding: 9px 12px 9px 20px;
-  border-radius: 28px;
-  background: #1b211b;
-  transition: none;
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 54px; margin: 4px 0 0; padding: 12px 44px;
+  background: #c5d4a7; color: #273320; border: 0; border-radius: 27px;
+  font-size: 16px; font-weight: 650; transition: none;
 }
-.garden-login #sign-in:hover:not(:disabled) { background: #222a20; color: #f1eee3; }
-.garden-login #sign-in:active:not(:disabled) { background: #293225; }
+.garden-login #sign-in:hover:not(:disabled) { background: #d1dfb7; }
+.garden-login #sign-in:active:not(:disabled) { background: #b8c799; }
 .garden-login #sign-in[data-loading] { opacity: 1; cursor: progress; }
-#sign-in-label { position: relative; font-size: .8125rem; font-weight: 600; }
+.garden-login .sign-in-arrow { position: absolute; right: 18px; font-size: 22px; line-height: 1; }
+.garden-login :is(button, input, select, a):focus-visible { outline: 2px solid #c5d4a7; outline-offset: 3px; }
+.garden-login .login-field input:focus-visible { outline: none; }
+.garden-login #login-title:focus { outline: none; }
 .sign-in-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.sign-in-status:not(:empty) { position: static; display: block; width: auto; height: auto; margin: -.75rem 0 .875rem; clip-path: none; white-space: normal; text-align: center; color: #c4cfb3; font-size: .75rem; line-height: 1.5; }
-.garden-login #sign-in[data-loading] .sign-in-arrow { background: #c0ce9c; }
-@media (prefers-reduced-motion: reduce) {
-  .garden-login #sign-in { transition: none; }
-}
-.sign-in-arrow { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #d5dda9; color: #252b1c; font-size: 1.125rem; line-height: 1; }
-.garden-login #sign-in:hover:not(:disabled) .sign-in-arrow { background: #e6edc2; }
+.sign-in-status:not(:empty) { position: static; display: block; width: auto; height: auto; margin: 0; clip-path: none; white-space: normal; text-align: center; color: #c4cfb3; font-size: 12px; line-height: 1.5; }
 .garden-login .test-diagnostics { margin: 0; }
-.garden-login .test-diagnostics summary { width: fit-content; min-height: 36px; padding: .5rem 0; font-size: .6875rem; color: #aeb6a0; cursor: pointer; list-style: none; }
+.garden-login #login-form[data-step="email"] .test-diagnostics { display: none; }
+.garden-login .test-diagnostics summary { display: inline-flex; align-items: center; gap: 4px; width: fit-content; min-height: 44px; padding: 0; font-size: 11px; color: #adb7a2; cursor: pointer; list-style: none; }
 .garden-login .test-diagnostics summary::-webkit-details-marker { display: none; }
-.garden-login #login-message { margin: .65rem 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; font-size: .75rem; line-height: 1.65; white-space: pre-line; }
-.garden-login #login-message.error { color: #e2aa96; }
-.garden-login #request-trace { overflow-wrap: anywhere; font-size: .6875rem; }
-.garden-login #manual-captcha-refresh { min-height: 44px; padding: .5rem 0; border: 0; background: transparent; color: #b9c0ad; font: inherit; font-size: .75rem; text-align: left; cursor: pointer; }
-.garden-login .captcha-image-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+.garden-login #login-message { margin: 0; padding: 0; border: 0; background: transparent; font-size: 12px; line-height: 1.6; white-space: pre-line; }
+.garden-login #login-message.error { color: #f8b59d; }
+.garden-login #request-trace { overflow-wrap: anywhere; font-size: 11px; }
+.garden-login .captcha-image-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .garden-login #manual-captcha-image { max-width: 65%; height: auto; border-radius: 3px; }
-.garden-login #manual-captcha-status { margin: .5rem 0 0; font-size: .75rem; line-height: 1.5; }
+.garden-login #manual-captcha-refresh { min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: #c5ccba; font: inherit; font-size: 12px; text-align: left; }
+.garden-login #manual-captcha-answer { font-size: 16px; width: 100%; }
+.garden-login #manual-captcha-status { margin: 8px 0 0; font-size: 12px; line-height: 1.5; }
+.garden-login .login-issue-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 11px; color: #bac5aa; text-underline-offset: 3px; }
 .garden-login .site-footer { visibility: hidden; }
-.login-issue-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 11px; color: #bac5aa; text-underline-offset: 3px; }
-
-@media (max-width: 700px) {
-  .garden-login .login-layout { max-width: 290px; }
-  .garden-login .login-card { padding: 0; border-radius: 0; background: transparent; }
-  .garden-login .login-card h1 { font-size: 2.125rem; }
-  .garden-login .login-card > .quiet { margin: .6rem 0 1.65rem; font-size: .75rem; }
-  .garden-login input { min-height: 46px; }
-  .garden-login #sign-in { margin-top: .85rem; margin-bottom: .9rem; }
-  .garden-login:not(:has(.consent-banner:not([hidden]))) #sign-in {
-    position: sticky; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 2;
-    box-shadow: 0 0 0 6px #191b19;
-  }
-  .garden-login:has(#login-form input:focus, #login-form select:focus) #sign-in { position: relative; bottom: auto; box-shadow: none; }
-}
-
-@media (max-width: 360px) {
-  .garden-login .login-card h1 { font-size: 1.9rem; }
-  .garden-login .login-options { gap: .5rem; }
-  .garden-login .remember-choice, .garden-login .login-options a { font-size: .625rem; }
-}
-#provider-choice { margin-bottom: 18px; }
-#provider-choice select {
-  width: 100%; min-height: 44px; padding: 10px 12px;
-  color: #eeeae2; background: #1b201b; border: 1px solid #3b443b;
-  border-radius: 6px; font: inherit;
-}
-#provider-choice select:focus-visible { outline: 2px solid #b4c59c; outline-offset: 3px; }
+#provider-choice select { width: 100%; min-height: 44px; color: #f1efe6; background: #2d322a; font: inherit; }
 #provider-help { margin-top: 8px; font-size: 12px; }
+@media (max-width: 350px) {
+  .garden-login .login-layout { padding-inline: 12px; }
+  .garden-login .login-card { padding: 22px 20px; }
+  .garden-login .login-card h1 { font-size: 26px; }
+}
+@media (max-height: 580px) {
+  .garden-login .site-header { min-height: 56px; padding: 12px 20px; }
+  .garden-login .login-layout { padding-block: 56px; padding-bottom: max(56px, var(--login-consent-clearance, 0px)); }
+}
+.garden-login .login-layout[data-short-viewport] { padding-top: max(56px, env(safe-area-inset-top)); padding-bottom: max(56px, env(safe-area-inset-bottom), var(--login-consent-clearance, 0px)); }
+@media (prefers-reduced-motion: reduce) {
+  .garden-login .login-layout *, .garden-login .login-layout *::before, .garden-login .login-layout *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

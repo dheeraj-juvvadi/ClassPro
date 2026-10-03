@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191b19">
+  <title>Plan attendance · Anon design review</title>
+  <link rel="stylesheet" href="./page.css">
+  <script src="../../portal-app/public/home-model.js" defer></script>
+  <script src="../../portal-app/public/schedule-model.js" defer></script>
+  <script src="../schedule/page.js" defer></script>
+  <script src="./page.js" type="module"></script>
+</head>
+<body data-layout="month">
+  <main>
+    <header class="page-heading">
+      <div class="brand"><img src="../assets/logo.svg" width="24" height="24" alt="">anon<span>DESIGN PREVIEW</span></div>
+      <h1>Plan attendance</h1>
+    </header>
+    <div class="planner">
+      <section class="calendar-panel" aria-label="Choose attendance dates">
+        <div class="mode-switch" role="group" aria-label="Plan action">
+          <button type="button" data-mode="leave" aria-pressed="true">Leave</button>
+          <button type="button" data-mode="attend" aria-pressed="false">Attend</button>
+          <button type="button" data-mode="od" aria-pressed="false">OD correction</button>
+        </div>
+        <div class="calendar-intro"><div class="range-strip" aria-label="Selected date range"><strong id="range-from">Start date</strong><span aria-hidden="true">—</span><strong id="range-through">End date</strong><small id="range-status">Click two dates</small></div><button type="button" id="new-range">New range</button></div>
+        <p id="selection-hint" role="status">Pick your first day, then your last.</p>
+        <calendar-multi id="calendar" locale="en-GB" first-day-of-week="1" format-weekday="narrow" aria-label="Academic calendar date selection">
+          <span slot="previous" aria-label="Previous month">‹</span>
+          <span slot="next" aria-label="Next month">›</span>
+          <calendar-month></calendar-month>
+        </calendar-multi>
+        <div class="calendar-foot"><div class="legend"><span>DO = Day order</span><span class="excluded-key">Excluded</span><span>? Unknown</span></div><button type="button" id="reset-month">Today</button></div>
+        <div id="date-detail" role="status" aria-atomic="true"></div>
+        <details class="month-notes">
+          <summary id="notes-title">Academic dates this month</summary>
+          <div id="month-events"></div>
+        </details>
+      </section>
+      <aside class="summary-panel" aria-labelledby="summary-title">
+        <div class="summary-head"><h2 id="summary-title">Your leave plan</h2><button type="button" id="clear">Clear</button></div>
+        <div class="date-fields">
+          <label>From<input type="date" id="from" aria-label="From"></label>
+          <label>Through<input type="date" id="through" aria-label="Through"></label>
+        </div>
+        <p id="plan-description" role="status"></p>
+        <div id="selected-days" aria-label="Excluded dates"></div>
+        <button class="review-button" id="review" type="button">Calculate<span aria-hidden="true">→</span></button>
+        <section id="calculation" aria-labelledby="calculation-title" hidden>
+          <h3 id="calculation-title">Missed hours</h3>
+          <p id="calculation-range"></p>
+          <p id="calculation-context" role="status"></p>
+          <div id="subject-hours"></div>
+          <p id="unconfirmed-note" hidden></p>
+        </section>
+        <p class="source-note" id="source-note"></p>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

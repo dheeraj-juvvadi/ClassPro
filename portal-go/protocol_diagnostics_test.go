@@ -27,7 +27,7 @@ func TestProtocolEvidenceClassifications(t *testing.T) {
 
 func TestRequestRecognizesEncryptedSession(t *testing.T) {
 	request := httptest.NewRequest("GET", "/api/session", nil)
-	request.AddCookie(&http.Cookie{Name: "__Host-classpro_state_0", Value: "sealed"})
+	request.AddCookie(&http.Cookie{Name: "__Host-anon_state_0", Value: "sealed"})
 	if !requestHasSessionCookie(request) {
 		t.Fatal("encrypted session cookie not recognized")
 	}

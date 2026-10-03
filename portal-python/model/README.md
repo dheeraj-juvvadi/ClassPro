@@ -21,4 +21,4 @@ filenames was 494/512; this is not a production login acceptance measurement.
 
 Production uses native 175x45 images, no resizing, PIL grayscale,
 normalization `(pixel / 255 - 0.5) / 0.5`, and greedy CTC with blank index 0.
-The checkpoint is byte-identical to Ratio-D's pinned copy.
+The checkpoint is byte-identical to the upstream client's pinned copy.

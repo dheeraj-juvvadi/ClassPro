@@ -74,6 +74,7 @@ function syncControls() {
   $('manual-captcha-refresh').disabled = busy;
   $('manual-captcha-answer').disabled = busy;
   $('login-form').setAttribute('aria-busy', String(busy));
+  anonLoginFlow.sync(busy);
 }
 
 async function run(action) {
@@ -94,6 +95,7 @@ async function run(action) {
     $('sign-in').removeAttribute('data-loading');
     $('logout').textContent = 'Sign out';
     $('report-content').setAttribute('aria-busy', 'false');
+    anonLoginFlow.sync(busy);
   }
 }
 
@@ -123,12 +125,15 @@ function showLogin(text = '', error = false) {
   $('logout').hidden = true;
   $('login-form').reset();
   anonAuth.reset();
+  anonLoginFlow.sync(busy);
   manualChallengeAt = 0;
   $('manual-captcha-image').hidden = true;
   $('manual-captcha-answer').value = '';
   $('manual-captcha-status').textContent = 'Select New code, enter the CAPTCHA, then sign in.';
   $('attendance-content').replaceChildren();
   $('marks-content').replaceChildren();
+  $('grades-content').replaceChildren();
+  $('grades-empty').hidden = true;
   $('attendance-count').textContent = '';
   $('marks-count').textContent = '';
   $('updated-at').textContent = 'Your attendance and marks.';
@@ -252,44 +257,58 @@ function renderMarks(report, courses = {}) {
   const active = document.activeElement;
   const focusedPlan = active?.closest('.mark-plan');
   const focusedCourse = focusedPlan?.dataset.course;
-  const expanded = new Set([...$('marks-content').querySelectorAll('.mark-course')]
-    .filter(row => row.querySelector('.course-details')?.open).map(row => row.dataset.course));
   const { container, data: rows } = reportState('marks', report);
   const data = rows.map(course => ({ ...course,
     credits: course.credits ?? courses[course.code]?.credits ?? courses[course.code]?.credit,
   }));
   anonMarksTarget.update(data);
   const list = node('div', 'marks-list');
+  const plans = node('div', 'grade-course-list');
+  const scoreParts = item => {
+    const output = node('span', 'mini-score');
+    if (item.scoreLabel) { output.textContent = String(item.scoreLabel); return output; }
+    const pending = item.scored === null || item.scored === undefined || item.scored === '';
+    output.append(node('strong', '', pending ? 'Pending' : String(item.scored)));
+    if (item.total !== null && item.total !== undefined && item.total !== '') {
+      output.append(node('small', '', ` / ${item.total}`));
+    }
+    output.dataset.pending = String(pending);
+    return output;
+  };
   for (const course of data) {
     const id = String(course.code || course.title);
     const card = node('article', 'mark-course'); card.dataset.course = id;
     const header = node('header', 'mark-course-header');
-    const details = node('details', 'course-details');
-    details.open = expanded.has(id);
-    const summary = node('summary', '', 'Assessments');
     const scoreBlock = node('span', 'marks-score-block');
-    scoreBlock.append(node('span', 'course-score', score(course)), node('span', 'marks-score-caption', 'Recorded'));
+    scoreBlock.setAttribute('aria-label', `Recorded total: ${score(course)}`);
+    scoreBlock.append(scoreParts(course));
     header.append(courseHeading(course), scoreBlock);
     const content = node('div', 'assessments');
     if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
     const components = Array.isArray(course.components) ? course.components : [];
-    const metadata = node('span', 'course-result-count', String(components.length));
-    summary.append(metadata);
     if (!components.length && !course.detailsError) content.append(node('p', 'quiet', 'No assessment details are available yet.'));
     for (const component of components) {
       const row = node('div', 'assessment-row');
       const info = node('div');
       info.append(node('div', 'assessment-name', component.name || 'Assessment'));
-      if (component.enteredOn) info.append(node('div', 'quiet assessment-date', `Entered ${component.enteredOn}`));
-      row.append(info, node('span', 'assessment-score', score(component)));
+      if (component.enteredOn) row.title = `Entered ${component.enteredOn}`;
+      row.append(info, scoreParts(component));
       content.append(row);
     }
-    details.append(summary, content);
-    card.append(header, details, anonMarksTarget.create(course));
+    card.append(header, content);
     list.append(card);
+    const planning = node('article', 'grade-course'); planning.dataset.course = id;
+    planning.append(courseHeading(course), anonMarksTarget.create(course));
+    plans.append(planning);
   }
   if (data.length) container.append(list);
-  if (focusedCourse && active.isConnected) active.focus({ preventScroll: true });
+  $('grades-content').replaceChildren(plans);
+  $('grades-empty').hidden = data.length > 0;
+  $('grades-empty').textContent = report?.error?.message || 'No course marks are available for grade planning yet.';
+  if (focusedCourse && active.isConnected) {
+    const focusTarget = active.checkVisibility() ? active : active.closest('.mark-plan')?.querySelector('[data-field="grade"]');
+    focusTarget?.focus({ preventScroll: true });
+  }
 }
 
 function loadReports(options = {}) {
@@ -401,6 +420,7 @@ async function submitCredentials(credentials, answer) {
 
 $('login-form').addEventListener('submit', (event) => {
   event.preventDefault();
+  if (!anonLoginFlow.beforeSubmit()) return;
   if (!$('login-form').reportValidity()) return;
   const credentials = { account: $('account').value.trim(), password: $('password').value, portalPassword: $('portal-password').value, remember: $('remember').checked };
   run(async () => {

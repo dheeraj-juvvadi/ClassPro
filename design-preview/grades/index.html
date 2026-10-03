@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#191b19">
+  <title>Grade planning · Anon</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="./page.css">
+  <script src="../navigation.js" defer></script>
+  <script src="./marks-target-math.js" defer></script>
+  <script src="./page.js" defer></script>
+</head>
+<body data-page="grades">
+  <div class="app">
+    <a class="grades-skip" href="#grades-content">Skip to grade planning</a>
+    <header class="masthead"></header>
+    <main id="grades-content" tabindex="-1">
+      <div class="page-heading grades-heading">
+        <h1>Grade planning</h1>
+        <p>A little clarity for what comes next.</p>
+      </div>
+      <div class="tool-tabs" role="tablist" aria-label="Grade planning tools">
+        <button type="button" role="tab" id="predict-tab" aria-selected="true" aria-controls="predict-panel">Predict your grade</button>
+        <button type="button" role="tab" id="cgpa-tab" aria-selected="false" aria-controls="cgpa-panel" tabindex="-1">CGPA</button>
+      </div>
+      <section id="predict-panel" role="tabpanel" aria-labelledby="predict-tab">
+        <p class="tool-intro">Choose a target to see the final-exam marks you would need.</p>
+        <form id="predict-form" class="planning-form" novalidate>
+          <div class="field">
+            <label for="course">Theory sample</label>
+            <select id="course" name="course" required aria-describedby="course-summary course-error"></select>
+            <p id="course-summary" class="field-note"></p>
+            <p id="course-error" class="field-error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="target">Target grade</label>
+            <select id="target" name="target" required aria-describedby="scheme-note target-error"></select>
+            <p id="target-error" class="field-error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="expected">Expected remaining internal marks</label>
+            <input id="expected" name="expected" type="number" min="0" max="10" step="any" inputmode="decimal" placeholder="e.g. 8" required aria-describedby="expected-hint expected-error">
+            <p id="expected-hint" class="field-note"></p>
+            <p id="expected-error" class="field-error" hidden></p>
+          </div>
+          <button class="calculate-button" type="submit">Estimate final marks</button>
+        </form>
+        <div class="planning-result" id="predict-result" role="status" aria-live="polite" aria-atomic="true">
+          <p class="result-label">Needed in final · estimate</p>
+          <output id="final-value" for="course target expected">—</output>
+          <p id="final-note" class="result-note">Enter expected marks to see an estimate.</p>
+        </div>
+        <p class="scheme-note" id="scheme-note">Sample scheme: 60 internal + 40 final. A final exam out of 75 is scaled to 40. Grade thresholds are planning examples, not institutional rules.</p>
+      </section>
+      <section id="cgpa-panel" role="tabpanel" aria-labelledby="cgpa-tab" hidden>
+        <p class="tool-intro">Combine your current record with a semester you’re planning.</p>
+        <form id="cgpa-form" class="planning-form" novalidate>
+          <div class="field-grid">
+            <div class="field">
+              <label for="current">Current CGPA</label>
+              <input id="current" name="current" type="number" min="0" max="10" step="any" inputmode="decimal" placeholder="e.g. 8.2" required aria-describedby="cgpa-scale current-error">
+              <p id="current-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="completed">Completed credits</label>
+              <input id="completed" name="completed" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 60" required aria-describedby="completed-error">
+              <p id="completed-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="semester">Projected semester GPA</label>
+              <input id="semester" name="semester" type="number" min="0" max="10" step="any" inputmode="decimal" placeholder="e.g. 8.8" required aria-describedby="cgpa-scale semester-error">
+              <p id="semester-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="credits">Semester credits</label>
+              <input id="credits" name="credits" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 20" required aria-describedby="credits-hint credits-error">
+              <p id="credits-error" class="field-error" hidden></p>
+            </div>
+          </div>
+          <p class="field-note" id="cgpa-scale">CGPA and GPA use a 0–10 scale. Completed credits may be 0.</p>
+          <p class="field-note" id="credits-hint">Semester credits must be greater than 0.</p>
+          <button class="calculate-button" type="submit">Estimate CGPA</button>
+        </form>
+        <div class="planning-result" id="cgpa-result" role="status" aria-live="polite" aria-atomic="true">
+          <p class="result-label">Projected CGPA · estimate</p>
+          <output id="cgpa-value" for="current completed semester credits">—</output>
+          <p id="cgpa-note" class="result-note">Enter all four values to see an estimate.</p>
+        </div>
+        <p class="scheme-note">Weighted by completed and semester credits. This estimate assumes all entered credits count toward CGPA.</p>
+      </section>
+      <p class="sample-note">Sample planning tools. No account connected; values stay on this page.</p>
+      <noscript><p class="sample-note">Enable JavaScript to switch tools and calculate estimates.</p></noscript>
+    </main>
+    <nav class="bottom-nav"></nav>
+  </div>
+</body>
+</html>

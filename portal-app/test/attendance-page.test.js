@@ -4,7 +4,7 @@ import express from 'express';
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
 
-test('attendance prioritizes hours, keeps details on refresh, and home uses only today', { timeout: 30000 }, async context => {
+test('compact attendance keeps signed hours, recent deltas, keyboard details and planner integration', { timeout: 30000 }, async context => {
   const app = express(); app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
@@ -19,9 +19,13 @@ test('attendance prioritizes hours, keeps details on refresh, and home uses only
   await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#attendance`);
   const report = { data: [
     { code: 'DS', title: 'Data Structures', present: 18, conducted: 22, credits: 4, faculty: 'Dr. Test', room: 'R1', change24h: { points: -1.2 } },
-    { code: 'CN', title: 'Computer Networks', present: 13, conducted: 19, absent: 6 },
-    { code: 'ZERO', title: 'A long course title that wraps naturally across several lines on a narrow screen', present: 3, conducted: 4 },
+    { code: 'CN', title: 'Computer Networks', present: 13, conducted: 19, absent: 6, change24h: { points: 1.82 } },
+    { code: 'ZERO', title: 'A long course title that wraps naturally across several lines on a narrow screen', present: 3, conducted: 4, change24h: { points: 0 } },
     { code: 'NEW', title: 'New subject', present: 0, conducted: 0 },
+    { code: 'UNKNOWN', title: 'Unavailable record', present: null, conducted: null, change24h: { points: 2 } },
+    { code: 'ROUND', title: 'Rounded change', present: 9, conducted: 12, change24h: { points: -0.04 } },
+    { code: 'NOHISTORY', title: 'No previous record', present: 5, conducted: 6 },
+    { code: 'BADHISTORY', title: 'Unconfirmed history', present: 5, conducted: 6, change24h: { points: '2' } },
   ] };
   await page.evaluate(report => renderAttendance(report), report);
   const ds = page.locator('.attendance-row[data-course="DS"]');
@@ -29,18 +33,50 @@ test('attendance prioritizes hours, keeps details on refresh, and home uses only
   assert.equal(await ds.locator('.attendance-main-metric').getAttribute('aria-label'), 'Margin: 2 hours');
   assert.equal(await ds.locator('.attendance-margin-value strong').innerText(), '2');
   assert.equal(await cn.locator('.attendance-main-metric').getAttribute('aria-label'), 'Required: 5 hours');
-  assert.equal(await cn.locator('.attendance-margin-value strong').innerText(), '5');
-  assert.equal(await page.locator('.attendance-metric-label').count(), 0);
-  assert.match(await ds.locator('.attendance-record').innerText(), /4 missed/);
+  assert.equal(await cn.locator('.attendance-margin-value strong').innerText(), '−5');
+  assert.equal(await cn.locator('.attendance-margin-value').evaluate(el => getComputedStyle(el).color), 'rgb(237, 166, 143)');
+  assert.equal(await page.locator('.attendance-metric-label, .attendance-margin-action').count(), 0);
+  assert.equal(await ds.locator('.attendance-recorded-hours').innerText(), '18 / 22h attended');
   assert.equal(await ds.locator('.attendance-percent').isVisible(), true);
   assert.equal(await cn.locator('.attendance-percent').innerText(), '68.4%');
+  assert.equal(await ds.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '−1.2pp');
+  assert.equal(await cn.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '+1.8pp');
+  assert.match(await ds.locator('.attendance-change .sr-only').textContent(), /-1.2 percentage points · past 24 hours/);
+  for (const code of ['ZERO', 'ROUND']) {
+    const row = page.locator(`.attendance-row[data-course="${code}"]`);
+    assert.equal(await row.locator('.attendance-change.unchanged .attendance-change-value').textContent(), '0.0pp');
+    assert.equal(await row.locator('.attendance-change').evaluate(el => getComputedStyle(el).color), 'rgb(173, 180, 164)');
+  }
+  for (const code of ['NEW', 'UNKNOWN', 'NOHISTORY', 'BADHISTORY']) {
+    assert.equal(await page.locator(`.attendance-row[data-course="${code}"] .attendance-change`).count(), 0);
+  }
+  for (const code of ['NEW', 'UNKNOWN']) {
+    const row = page.locator(`.attendance-row[data-course="${code}"]`);
+    assert.equal(await row.locator('.attendance-percent').innerText(), '—');
+    assert.equal(await row.locator('.attendance-rail, .attendance-recorded-hours').count(), 0);
+  }
+  assert.equal(await ds.getByRole('meter').getAttribute('aria-valuenow'), '81.82');
+  assert.equal(await ds.getByRole('meter').getAttribute('aria-valuetext'), '81.8% attendance; target 75%.');
+  assert.equal(await ds.locator('.attendance-rail-fill').evaluate(el => el.style.width), '81.82%');
+  assert.equal(await page.locator('.attendance-target-key').count(), 0);
+  assert.equal(await page.locator('#attendance-panel > .section-heading').isVisible(), false);
   await ds.locator('summary').focus(); await page.keyboard.press('Enter');
   assert.equal(await ds.locator('.attendance-percent').innerText(), '81.8%');
   assert.match(await ds.locator('.attendance-course-meta').innerText(), /Dr. Test/);
-  assert.match(await ds.locator('.attendance-change').innerText(), /-1.2 percentage points/);
+  assert.match(await ds.locator('.attendance-course-meta').innerText(), /Hours missed\s+4/);
+  assert.match(await ds.locator('.attendance-course-meta').innerText(), /Course code\s+DS/);
+  assert.equal(await page.locator('.attendance-explanation:not(.sr-only), .recovery-date:not(.sr-only), .recovery-assumption:not(.sr-only)').count(), 0);
   await page.evaluate(report => renderAttendance(report), report);
   assert.equal(await ds.locator('details').getAttribute('open'), '');
   assert.equal(await ds.locator('summary').evaluate(el => el === document.activeElement), true);
+  assert.equal(await ds.locator('summary').evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+  await page.keyboard.press('Space');
+  assert.equal(await ds.locator('details').getAttribute('open'), null);
+  await page.keyboard.press('Space');
+  assert.equal(await ds.locator('details').getAttribute('open'), '');
+  assert.equal(await page.locator('.attendance-rows').evaluate(el => getComputedStyle(el).borderRadius), '22px');
+  assert.equal(await ds.evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
+  assert.equal(await cn.evaluate(el => getComputedStyle(el).borderTopWidth), '1px');
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `overflow at ${width}`);
@@ -48,16 +84,31 @@ test('attendance prioritizes hours, keeps details on refresh, and home uses only
     const alignment = await page.locator('.attendance-summary').evaluateAll(rows => rows.every(row => {
       const amount = row.querySelector('.attendance-margin-value').getBoundingClientRect();
       const heading = row.querySelector('.attendance-course-heading').getBoundingClientRect();
+      const record = row.querySelector('.attendance-record').getBoundingClientRect();
       const bounds = row.getBoundingClientRect();
-      return Math.abs(bounds.right - amount.right - 8) < 1 && heading.right < amount.left;
+      const rate = row.querySelector('.attendance-recorded-rate');
+      const change = rate.querySelector('.attendance-change-value');
+      const alignedRate = !change || Math.abs(change.getBoundingClientRect().top - rate.querySelector('.attendance-percent').getBoundingClientRect().top) < 3;
+      return Math.abs(bounds.right - amount.right) < 1 && heading.right < amount.left && record.right < amount.left && alignedRate;
     }));
     assert.equal(alignment, true, `hours aligned at right without overlap at ${width}`);
+    const railAlignment = await page.locator('.attendance-rail').evaluateAll(rails => rails.every(rail => {
+      const bounds = rail.getBoundingClientRect();
+      const target = rail.querySelector('.attendance-rail-target').getBoundingClientRect();
+      return Math.abs((target.left + target.width / 2 - bounds.left) / bounds.width - 0.75) < 0.001;
+    }));
+    assert.equal(railAlignment, true, `target remains at 75% at ${width}`);
+    if (width >= 390) {
+      const height = await ds.locator('summary').evaluate(el => el.getBoundingClientRect().height);
+      assert.ok(height >= 100 && height < 120, `comfortable row at ${width}: ${height}`);
+    }
   }
   assert.equal(await page.locator('#attendance-panel button').count(), 0);
   assert.equal(await ds.locator('summary').evaluate(el => getComputedStyle(el, '::after').content), 'none');
   await page.locator('#calculate-attendance').click();
   assert.equal(await page.locator('#projection-dialog').isVisible(), true);
   await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#calculate-attendance').evaluate(el => el === document.activeElement), true);
   assert.equal(await page.locator('.attendance-row[data-course="ZERO"] .attendance-margin-value strong').innerText(), '0');
   assert.equal(await page.locator('.attendance-row[data-course="NEW"] .attendance-margin-value strong').innerText(), '—');
   await page.evaluate(() => { location.hash = 'home'; });

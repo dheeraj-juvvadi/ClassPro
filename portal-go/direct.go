@@ -110,7 +110,7 @@ func (entry *directSession) request(ctx context.Context, method, target string, 
 		if err != nil {
 			return nil, nil, err
 		}
-		request.Header.Set("User-Agent", "ClassPro/1.0 (Student Portal HTTP client)")
+		request.Header.Set("User-Agent", "Anon/1.0 (Student Portal HTTP client)")
 		request.Header.Set("Accept", "text/html,application/xhtml+xml")
 		request.Header.Set("Referer", entry.base+portalLoginPath)
 		if entry.compatibility {

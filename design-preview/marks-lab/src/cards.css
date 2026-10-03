@@ -1,0 +1,212 @@
+/* A · Cards: warm course groups with compact, wrapping assessment pills. */
+.app[data-variant=cards] .course-list {
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.app[data-variant=cards] .course {
+  padding: 16px;
+  background: #232720;
+  border: 1px solid #373e31;
+  border-radius: 18px;
+}
+
+.app[data-variant=cards] .course-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  min-height: 0;
+  margin: 0 0 14px;
+}
+
+.app[data-variant=cards] .course h2 {
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 590;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant=cards] .course-code {
+  margin-top: 5px;
+  color: #acb4a3;
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant=cards] .course-total {
+  justify-content: center;
+  min-height: 40px;
+  padding: 5px 8px;
+  border: 1px solid #434e37;
+  border-radius: 10px;
+  background: #30392a;
+  color: var(--sage);
+}
+
+.app[data-variant=cards] .course-total .score {
+  gap: 4px;
+}
+
+.app[data-variant=cards] .course-total .score strong {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.app[data-variant=cards] .course-total .score .out-of {
+  color: #bdc7b1;
+  font-size: 12px;
+}
+
+.app[data-variant=cards] .no-total {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.app[data-variant=cards] .course-total:has(.no-total) {
+  background: #292e25;
+  border-color: #3d4436;
+}
+
+.app[data-variant=cards] .assessments {
+  padding: 0;
+}
+
+.app[data-variant=cards] .assessments dl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* Intrinsic widths let long names take a full row before wrapping. */
+.app[data-variant=cards] .assessments dl > div {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: max-content;
+  min-width: calc(50% - 4px);
+  max-width: 100%;
+  min-height: 40px;
+  padding: 8px 10px 10px;
+  border: 1px solid #343c2e;
+  border-radius: 10px;
+  background: #1d211b;
+}
+
+.app[data-variant=cards] .assessments dt {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #c5ccbc;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 480;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant=cards] .assessments dd {
+  flex: 0 0 auto;
+  align-self: center;
+  text-align: right;
+}
+
+.app[data-variant=cards] .assessments .score {
+  gap: 3px;
+}
+
+.app[data-variant=cards] .assessments .score strong {
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 580;
+}
+
+.app[data-variant=cards] .assessments .out-of {
+  color: #aeb9a3;
+  font-size: 11px;
+}
+
+.app[data-variant=cards] .assessments .pending-word {
+  color: #b8c0ae;
+  font-size: 11px;
+  font-weight: 480;
+}
+
+.app[data-variant=cards] .assessment-visual {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.app[data-variant=cards] .assessment-rail {
+  position: absolute;
+  inset: auto 10px 4px;
+  display: block;
+  height: 2px;
+  background: #394231;
+  border-radius: 2px;
+}
+
+.app[data-variant=cards] .assessment-rail::after {
+  width: clamp(0%, var(--score-progress, 0%), 100%);
+  background: #9dab88;
+}
+
+.app[data-variant=cards] .assessment-visual[data-pending=true] .assessment-rail {
+  height: 1px;
+  background: transparent;
+  border-bottom: 1px dashed #69755c;
+  border-radius: 0;
+}
+
+.app[data-variant=cards] .assessment-visual[data-pending=true] .assessment-rail::after {
+  display: none;
+}
+
+.app[data-variant=cards] .course-status {
+  display: block;
+  margin: 11px 1px 0;
+  color: #aeb8a1;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.app[data-variant=cards] .page-note {
+  margin-top: 24px;
+}
+
+@media (max-width: 350px) {
+  .app[data-variant=cards] .course {
+    padding: 14px;
+  }
+
+  .app[data-variant=cards] .course-header {
+    gap: 10px;
+  }
+
+  .app[data-variant=cards] .course h2 {
+    font-size: 16px;
+  }
+
+  .app[data-variant=cards] .course-total .score strong {
+    font-size: 22px;
+  }
+}
+
+@media (forced-colors: active) {
+  .app[data-variant=cards] .course,
+  .app[data-variant=cards] .course-total,
+  .app[data-variant=cards] .assessments dl > div {
+    border-color: CanvasText;
+  }
+
+  .app[data-variant=cards] .assessment-rail {
+    display: none;
+  }
+}

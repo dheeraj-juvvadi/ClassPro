@@ -115,7 +115,7 @@ func (entry *directSession) login(ctx context.Context, payload json.RawMessage) 
 	}
 	fields.Set(entry.domainField, base64.StdEncoding.EncodeToString([]byte(string(host))))
 	fields.Set(entry.interactionField, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d%s0", int(time.Since(entry.loaded).Seconds()), entry.delimiter))))
-	telemetry, _ := json.Marshal(map[string]any{"startTime": entry.loaded.UnixMilli(), "submitTime": time.Now().UnixMilli(), "timeOnPageMs": time.Since(entry.loaded).Milliseconds(), "currentDomain": base.Hostname(), "platform": runtime.GOOS, "userAgent": "ClassPro/1.0 (Student Portal HTTP client)", "webdriver": true, "keystrokeCount": 0, "mouseClicks": 0, "mouseMovements": 0, "typingSpeedMs": 0, "canvasHash": "no-canvas"})
+	telemetry, _ := json.Marshal(map[string]any{"startTime": entry.loaded.UnixMilli(), "submitTime": time.Now().UnixMilli(), "timeOnPageMs": time.Since(entry.loaded).Milliseconds(), "currentDomain": base.Hostname(), "platform": runtime.GOOS, "userAgent": "Anon/1.0 (Student Portal HTTP client)", "webdriver": true, "keystrokeCount": 0, "mouseClicks": 0, "mouseMovements": 0, "typingSpeedMs": 0, "canvasHash": "no-canvas"})
 	fields.Set("telemetryPayload", base64.StdEncoding.EncodeToString(telemetry))
 	data, response, err := entry.request(ctx, "POST", portalSubmitPath, fields, nil)
 	if err != nil {

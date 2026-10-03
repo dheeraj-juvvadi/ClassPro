@@ -6,7 +6,7 @@ directory `portal-app/public`. Validated pushes through remote `revamp` deploy
 Vercel and trigger the Azure workflow. See docs/releasing.md.
 The Python backend runs separately in the Azure `classpro-test` VM.
 
-Academia uses Ratio-D's `/login` and `/refresh`; Portal uses `/portal/login`
+Academia uses the upstream client's `/login` and `/refresh`; Portal uses `/portal/login`
 and `/portal/refresh`. The public compatibility endpoints select these based
 on the requested provider. Settings offers account connections without
 discarding the other connection. Accounts must match by registration number
@@ -28,7 +28,7 @@ Academia builds its schedule from `My_Time_Table_2023_24` course allocation and
 the appropriate batch of `Unified_Time_Table_2025`. Portal attendance takes
 priority while Academia supplies the timetable if Portal has no entries.
 
-The Ratio-D portal client uses these paths under
+The the upstream client portal client uses these paths under
 `https://sp.srmist.edu.in/srmiststudentportal`:
 
 - Attendance and monthly totals: `/students/report/studentAttendanceDetails.jsp`
@@ -42,14 +42,14 @@ schedule and course metadata when a refresh omits them. Portal cookies stay on
 the server. The UI displays course faculty, room, credits, monthly totals and
 per-course attendance margins when supplied.
 
-Day orders come from Ratio-D's bundled `src/data/calendar_data.json`, copied
-to `ratio-diagnostic/data/calendar_data.json`, under the retained AGPL license
-in `ratio-diagnostic/upstream/LICENSE`. This is a 2026 calendar, not a live SRM
+Day orders come from the upstream client's bundled `src/data/calendar_data.json`, copied
+to `portal-backend/data/calendar_data.json`, under the retained AGPL license
+in `portal-backend/upstream/LICENSE`. This is a 2026 calendar, not a live SRM
 calendar endpoint. Missing dates remain unknown; years are never substituted.
 Campus time is Asia/Kolkata. Afternoon timetable hours below 7 are interpreted
-as PM, matching Ratio-D. Counted hours use its 50-minute period convention.
+as PM, matching the upstream client. Counted hours use its 50-minute period convention.
 
-Date projections follow Ratio-D: Leave adds absent hours; Attend and future OD
+Date projections follow the upstream client: Leave adds absent hours; Attend and future OD
 add present hours; past OD corrects existing absences, capped at the recorded
 absence total. Unselected teaching days through the last leave date count as
 attended. Unknown calendar dates are disclosed and excluded. Each course has

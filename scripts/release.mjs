@@ -17,7 +17,8 @@ const message = process.argv.slice(2).join(' ');
 if (!message) throw new Error('Usage: node scripts/release.mjs "Commit message" (stage intended files first)');
 if (output('git', ['branch', '--show-current']) !== 'main') throw new Error('Release from main only.');
 const remote = output('git', ['remote', 'get-url', 'revamp']);
-if (!/github\.com[/:]dheeraj-juvvadi\/revamp-tracker(?:\.git)?$/.test(remote)) throw new Error('Unexpected deployment remote.');
+const expected = process.env.DEPLOY_REPOSITORY || output('git', ['config', 'anon.deployRepository']);
+if (!expected || remote !== expected) throw new Error('Deployment remote differs from the configured repository.');
 run('git', ['diff', '--cached', '--check']);
 if (!output('git', ['diff', '--cached', '--name-only'])) throw new Error('Stage the completed agenda first.');
 run('git', ['fetch', 'revamp', 'main']);
@@ -34,7 +35,7 @@ try {
   run('npm', ['run', 'build'], { cwd: frontend });
   run('npm', ['run', 'test:release'], { cwd: frontend });
   const python = process.env.RELEASE_PYTHON || 'python3.11';
-  run(python, ['-m', 'unittest', 'discover'], { cwd: join(directory, 'ratio-diagnostic') });
+  run(python, ['-m', 'unittest', 'discover'], { cwd: join(directory, 'portal-backend') });
   if (output('git', ['write-tree']) !== tree) throw new Error('Staged files changed during validation; retry.');
   run('git', ['commit', '-m', message]);
   run('git', ['push', 'revamp', 'HEAD:main']);

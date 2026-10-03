@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#191b19">
+  <title>Calendar · Anon</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="./page.css">
+  <script src="../navigation.js" defer></script>
+  <script src="../schedule/page.js" defer></script>
+  <script src="./page.js" defer></script>
+</head>
+<body data-page="calendar">
+  <div class="app">
+    <a class="calendar-skip" href="#calendar-content">Skip to calendar</a>
+    <header class="masthead"></header>
+    <main id="calendar-content" tabindex="-1">
+      <div class="page-heading">
+        <h1>Calendar</h1>
+        <p>A little space to plan ahead.</p>
+      </div>
+      <p class="calendar-context"><span>Synthetic events</span> · October 2026 sample</p>
+      <section id="month-section" aria-labelledby="month-title" hidden>
+        <div class="month-toolbar">
+          <h2 id="month-title">October 2026</h2>
+          <div class="month-controls">
+            <button type="button" id="previous-month" aria-label="Previous month, September 2026" aria-controls="month-grid day-details">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+            </button>
+            <button type="button" id="next-month" aria-label="Next month, November 2026" aria-controls="month-grid day-details">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="calendar-grid-wrap">
+          <table id="month-grid" class="month-grid">
+            <caption id="month-caption" class="sr-only">October 2026. Choose a date to see synthetic events.</caption>
+            <thead><tr>
+              <th scope="col"><abbr title="Monday">M</abbr></th>
+              <th scope="col"><abbr title="Tuesday">T</abbr></th>
+              <th scope="col"><abbr title="Wednesday">W</abbr></th>
+              <th scope="col"><abbr title="Thursday">T</abbr></th>
+              <th scope="col"><abbr title="Friday">F</abbr></th>
+              <th scope="col"><abbr title="Saturday">S</abbr></th>
+              <th scope="col"><abbr title="Sunday">S</abbr></th>
+            </tr></thead>
+            <tbody id="month-days"></tbody>
+          </table>
+        </div>
+        <div class="calendar-legend" aria-label="Event markers">
+          <span><i class="event-marker" aria-hidden="true"></i>Class / lab</span>
+          <span><i class="event-marker exam-marker" aria-hidden="true"></i>Practice exam</span>
+        </div>
+        <button type="button" id="reset-month" class="reset-month" hidden>Back to October sample <span aria-hidden="true">↗</span></button>
+      </section>
+      <section id="day-details" aria-labelledby="selected-date" hidden>
+        <div class="calendar-section-head">
+          <h2 id="selected-date">Friday, 2 October</h2>
+          <span id="event-count"></span>
+        </div>
+        <ol class="event-list" id="day-events"></ol>
+        <div class="calendar-empty" id="empty-day" hidden>
+          <p id="empty-message">No sample events on this date.</p>
+          <button type="button" id="find-event">Find next sample class <span aria-hidden="true">→</span></button>
+        </div>
+      </section>
+      <nav class="calendar-links" aria-label="Planning links">
+        <a id="schedule-link" href="../schedule/?day=friday"><span>View Friday schedule</span><span aria-hidden="true">→</span></a>
+        <a href="../home/"><span>Back to home</span><span aria-hidden="true">→</span></a>
+      </nav>
+      <p class="sample-note">Invented classes, rooms and practice exams, shown only in October. No institutional dates or holidays are represented. All times use a 24-hour clock.</p>
+      <noscript><p class="sample-note">October 2026 starts on Thursday and has 31 days. Enable JavaScript to browse dates and their sample events.</p></noscript>
+      <p id="calendar-status" class="sr-only" role="status" aria-atomic="true"></p>
+    </main>
+    <nav class="bottom-nav"></nav>
+  </div>
+</body>
+</html>

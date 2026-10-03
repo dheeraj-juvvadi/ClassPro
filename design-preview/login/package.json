@@ -1,0 +1,1 @@
+{"name":"anon-centered-login-v7","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1 --port 8181 --strictPort","build":"vite build"},"dependencies":{"react":"19.2.4","react-dom":"19.2.4","motion":"12.40.0","react-use-measure":"^2.1.7"},"devDependencies":{"vite":"^7.3.0","typescript":"^5.9.0"}}

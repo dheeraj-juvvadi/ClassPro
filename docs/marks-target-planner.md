@@ -1,36 +1,33 @@
-# Marks target planner
+# Marks and GPA planning
 
-Each course in Marks contains an inline grade planner. A native slider and
-grade stops sit beside the expected remaining internals and exam target.
-Assessment rows expand underneath; grade planning does not open a dialog.
-The planner uses reported scored/maximum totals, a student-selected marking
-scheme, expected remaining internals, and a target out of 100.
+Marks shows an overall grade slider above bordered subject cards. It starts at
+Max possible and caps each included subject at its highest attainable grade.
+Individual subject sliders default to that same ceiling. There is no Custom
+scheme or numeric grade-target form.
 
-Ratio-D's target workflow and 60/40 examples informed this feature, reviewed at
-reference commit 413b7f0. Grade buttons now match ClassPro GradeX:
-O = 91, A+ = 81, A = 71, B+ = 61, B = 56, C = 50. Verified against
-frontend/types/Grade.ts and GradeCard.tsx in ClassPro commit
-1c4ee678f4e5cafa976c7119b98f35f1d3dc819f. These are planning presets;
-course grading rules can differ. Custom retains arbitrary numeric targets.
-New plans default to A+; each course retains its own inputs for the visit.
+Codes ending in P (case-insensitive, ignoring surrounding spaces) use 100 internal
+marks with no final exam. Other subjects use 60 internal + 40 final, with the
+exam marked out of 75 and weighted to 40. Remaining internal marks default to
+full marks; a simple slider adjusts this assumption. Final-exam requirements
+appear in a full-width result area.
 
-Anon still requires an explicit marking scheme:
-60 internal + 40 final (exam out of 75 or 40), 100 internal, or custom.
+Planning thresholds: O 91, A+ 81, A 71, B+ 61, B 56, C 50, F below 50.
+Grade points: O 10, A+ 9, A 8, B+ 7, B 6, C 5, F 0.
+Semester GPA = sum(grade points × course credits) / included credits.
+Zero-credit and excluded subjects do not contribute. Course codes identify
+subjects; credits come from course metadata, never guessed. Missing credits
+show an unavailable estimate rather than a fabricated number.
 
-With I internal points available, S scored, E expected from remaining internals,
-target T, and final exam maximum M, the raw exam score needed is
-`max(0, T - S - E) × M / (100 - I)`. Displayed scores round upward to hundredths.
-Internal-only courses show the projected total without dividing by zero.
-Impossible targets, absent totals and mismatched schemes have separate states.
-The planner does not calculate an official grade or waive an exam pass minimum.
+Projected cumulative CGPA = (current CGPA × completed credits + semester GPA ×
+semester credits) / (completed credits + semester credits). Current CGPA and
+completed credits are optional inputs; semester GPA works without them. All
+inputs are local to the current visit and clear on sign-out. No scenario is
+sent to the server or written into academic records.
 
-No network, localStorage or telemetry writes are added. Scenarios are kept
-in memory per course for this visit and cleared on sign-out. Report refreshes
-update calculations while preserving input controls, focus, and expanded
-assessment rows. Removed courses discard their plans.
+Defaults use the highest attainable total (scored + unrecorded internals +
+final weight). User-edited targets and exclusions survive a report refresh.
+These are projections, subject to actual course grading and exam pass rules.
 
-Validation covers theory/practical/custom/internal-only calculations, limits,
-missing inputs, grade/custom switching, slider keyboard selection, focus retention, scheme
-changes, session clearing, mark updates, and overflow at 320, 390, 768 and 1280
-pixels. Grade buttons use native controls with 44px minimum touch targets;
-no additional library or network requests are introduced.
+Verification covers credit weighting, F/zero-credit/exclusion handling,
+cumulative weighting, P suffixes, attainable defaults, the overall slider,
+keyboard control, report refresh, missing metadata, sign-out, and mobile overflow.

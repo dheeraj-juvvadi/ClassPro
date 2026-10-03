@@ -70,7 +70,7 @@ func TestBridgeNeverFollowsRedirectOrLeaksWorkerErrors(t *testing.T) {
 }
 
 func TestConfigFailsClosed(t *testing.T) {
-	t.Setenv("APP_ORIGIN", "https://classpro.example")
+	t.Setenv("APP_ORIGIN", "https://anon.example")
 	t.Setenv("WORKER_TOKEN", strings.Repeat("x", 32))
 	t.Setenv("WORKER_URL", "http://127.0.0.1:3101")
 	t.Setenv("TRUSTED_PROXY_CIDRS", "")
@@ -80,13 +80,13 @@ func TestConfigFailsClosed(t *testing.T) {
 	if _, err := configFromEnv(); err != nil {
 		t.Fatal(err)
 	}
-	for _, origin := range []string{"http://classpro.example", "https://classpro.example/", "https://user@classpro.example", "https://classpro.example?x=1"} {
+	for _, origin := range []string{"http://anon.example", "https://anon.example/", "https://user@anon.example", "https://anon.example?x=1"} {
 		t.Setenv("APP_ORIGIN", origin)
 		if _, err := configFromEnv(); err == nil {
 			t.Fatalf("accepted origin %s", origin)
 		}
 	}
-	t.Setenv("APP_ORIGIN", "https://classpro.example")
+	t.Setenv("APP_ORIGIN", "https://anon.example")
 	t.Setenv("WORKER_URL", "http://worker.example")
 	if _, err := configFromEnv(); err == nil {
 		t.Fatal("accepted plaintext remote worker")

@@ -47,7 +47,18 @@ test('compact journey, keyboard expansion, auto-fill, safe text, refresh and mob
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
   await page.route('**/api/**', route => { calls++; return route.fulfill({ json: {} }); });
-  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#marks`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#grades`);
+  assert.equal(await page.locator('#grades-view #academic-history').count(), 1);
+  assert.equal(await page.locator('#marks-panel #academic-history').count(), 0);
+  await page.evaluate(() => { location.hash = 'marks'; });
+  await page.waitForFunction(() => document.body.dataset.page === 'marks');
+  assert.equal(await page.locator('#grades-view').isHidden(), true);
+  await page.locator('#planner-menu > summary').click();
+  await page.getByRole('button', { name: 'Grade planning', exact: true }).click();
+  assert.equal(new URL(page.url()).hash, '#grades');
+  assert.equal(await page.title(), 'Grade planning · Anon');
+  assert.equal(await page.locator('#grades-title').evaluate(el => el === document.activeElement), true);
+  assert.equal(await page.locator('#planner-menu').getAttribute('open'), null);
   await page.evaluate(() => anonSettings.update({ connections: { portal: { connected: true } }, academicHistory: { status: 'unavailable' } }));
   assert.match(await page.locator('#academic-history').innerText(), /Student Portal is connected/);
   assert.doesNotMatch(await page.locator('#academic-history').innerText(), /Connect Student Portal/);
@@ -55,6 +66,7 @@ test('compact journey, keyboard expansion, auto-fill, safe text, refresh and mob
   const journey = page.locator('#academic-history');
   assert.match(await journey.innerText(), /8.25/);
   assert.match(await journey.innerText(), /40% of credits earned/);
+  assert.equal(await journey.isVisible(), true);
   assert.equal(await journey.locator('.journey-details').getAttribute('open'), null);
   assert.ok(await journey.evaluate(el => el.getBoundingClientRect().height < 320));
   assert.equal(await page.locator('#marks-current-cgpa').inputValue(), '8.25');

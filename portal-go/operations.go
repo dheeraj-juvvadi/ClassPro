@@ -81,10 +81,33 @@ func (server *Server) reports(writer http.ResponseWriter, request *http.Request,
 		send(writer, failure(409, "BUSY", "A request is already in progress."))
 		return
 	}
-	if !server.acquire() {
-		server.mu.Unlock()
+	// Queue for a slot with server.mu released: acquireContext may wait, and holding
+	// the lock across that wait would block every other request.
+	server.mu.Unlock()
+	if !server.acquireContext(request.Context()) {
 		writer.Header().Set("Retry-After", "2")
-		send(writer, failure(503, "SERVER_BUSY", "ClassPro is processing another request. Please retry shortly."))
+		send(writer, failure(503, "SERVER_BUSY", "Anon is processing another request. Please retry shortly."))
+		return
+	}
+	defer func() { <-server.slots }()
+	// Re-validate: the session may have gone or another request may have started
+	// while this one waited in the queue.
+	server.mu.Lock()
+	if server.sessions[entry.token] != entry {
+		server.mu.Unlock()
+		send(writer, failure(401, "SESSION_EXPIRED", "Sign in with your NetID and password."))
+		return
+	}
+	if entry.busy {
+		server.mu.Unlock()
+		send(writer, failure(409, "BUSY", "A request is already in progress."))
+		return
+	}
+	if entry.cache != nil && time.Since(entry.cachedAt) < server.config.CacheTTL {
+		response := *entry.cache
+		server.cookie(writer, entry)
+		server.mu.Unlock()
+		send(writer, response)
 		return
 	}
 	pending := &flight{done: make(chan struct{})}
@@ -106,8 +129,7 @@ func (server *Server) reports(writer http.ResponseWriter, request *http.Request,
 	pending.result = response
 	close(pending.done)
 	server.mu.Unlock()
-	<-server.slots
-	if server.ratio && response.Status == 401 {
+	if server.portalAdapter && response.Status == 401 {
 		_ = server.call("close", entry, nil)
 	}
 	send(writer, response)

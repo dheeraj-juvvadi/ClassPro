@@ -14,7 +14,7 @@ test('documentation and inactive adapters do not deploy production services', ()
 test('Vercel skips only when the last successful deployment proves app inputs unchanged', () => {
   assert.equal(shouldBuild(null), true);
   assert.equal(shouldBuild([]), false);
-  assert.equal(shouldBuild(['docs/releasing.md', 'ratio-diagnostic/server.py']), false);
+  assert.equal(shouldBuild(['docs/releasing.md', 'portal-backend/server.py']), false);
   assert.equal(shouldBuild(['portal-app/public/index.html']), true);
   assert.equal(shouldBuild(['portal-app/package-lock.json']), true);
   assert.equal(shouldBuild(['scripts/vercel-ignore.mjs']), true);
@@ -24,7 +24,7 @@ test('runtime, dependency, test and shared deployment inputs select the right ch
   for (const path of ['portal-app/public/app.js', 'portal-app/package-lock.json', 'portal-app/test/cache-boot.test.js']) {
     assert.deepEqual(scopeFor([path]), { frontend: true, backend: false }, path);
   }
-  for (const path of ['ratio-diagnostic/server.py', 'ratio-diagnostic/requirements.txt', 'portal-python/ocr.py', 'portal-python/model/model.onnx']) {
+  for (const path of ['portal-backend/server.py', 'portal-backend/requirements.txt', 'portal-python/ocr.py', 'portal-python/model/model.onnx']) {
     assert.deepEqual(scopeFor([path]), { frontend: false, backend: true }, path);
   }
   for (const path of ['scripts/ci-scope.mjs', '.github/workflows/production.yml', '.dockerignore', '.gitignore']) {

@@ -40,7 +40,7 @@ jobs:
       - run: npm run build && npm run test:release
         if: steps.scope.outputs.frontend == 'true'
         working-directory: portal-app
-      - run: docker build -f ratio-diagnostic/Dockerfile -t anon-test .
+      - run: docker build -f portal-backend/Dockerfile -t anon-test .
         if: steps.scope.outputs.backend == 'true'
       - run: docker run --rm --network none -e APP_ORIGIN=http://localhost:8089 anon-test python -m unittest discover
         if: steps.scope.outputs.backend == 'true'
@@ -63,7 +63,7 @@ jobs:
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/anon_deploy
           chmod 600 ~/.ssh/anon_deploy
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          git archive --format=tar.gz HEAD ratio-diagnostic portal-python/ocr.py portal-python/model |
+          git archive --format=tar.gz HEAD portal-backend portal-python/ocr.py portal-python/model |
             ssh -i ~/.ssh/anon_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "azureuser@$DEPLOY_HOST" "$GITHUB_SHA"
           rm -f ~/.ssh/anon_deploy
       - name: Verify public service

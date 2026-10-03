@@ -10,7 +10,7 @@ export function scopeFor(paths) {
     if (path === '.github/workflows/production.yml' || /^scripts\//.test(path)) {
       scope.frontend = scope.backend = true;
     } else if (/^portal-app\//.test(path)) scope.frontend = true;
-    else if (/^ratio-diagnostic\//.test(path) || path === 'portal-python/ocr.py' || /^portal-python\/model\//.test(path)) scope.backend = true;
+    else if (/^portal-backend\//.test(path) || path === 'portal-python/ocr.py' || /^portal-python\/model\//.test(path)) scope.backend = true;
     else if (path === '.dockerignore' || path === '.gitignore') scope.frontend = scope.backend = true;
   }
   return scope;

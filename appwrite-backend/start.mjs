@@ -3,15 +3,15 @@ import { fileURLToPath } from 'node:url';
 import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { randomBytes } from 'node:crypto';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 process.chdir(root);
 process.env.PORTAL_GO_BINARY = resolve(root, 'portal-go-binary');
-process.env.PORTAL_BROWSER_PATH = resolve(root, 'chromium.sh');
-process.env.SSL_CERT_FILE = resolve(root, 'system/etc/ssl/cert.pem');
+process.env.SSL_CERT_FILE = resolve(root, 'ca-certificates.crt');
 process.env.APP_ORIGIN = process.env.APP_ORIGIN || 'https://revamp-tracker.vercel.app';
-process.env.PORTAL_SUBMISSION_TRANSPORT = 'browser';
-process.env.PORTAL_FINGERPRINT_HANDSHAKE = '1';
+process.env.AUTH_MODE = 'http';
+process.env.WORKER_TOKEN ||= randomBytes(32).toString('hex');
 process.env.MAX_SESSIONS = '2';
 process.env.MAX_CONCURRENT = '1';
 delete process.env.STATIC_DIR;
@@ -21,13 +21,13 @@ const diagnostics = [];
 async function ensureBackend() {
   if (starting) return starting;
   starting = (async () => {
-    backend = spawn(process.execPath, ['portal-go/start.mjs'], {
+    backend = spawn(process.env.PORTAL_GO_BINARY, [], {
       cwd: root, env: { ...process.env, PORT: '8080', NODE_OPTIONS: '' }, stdio: ['ignore', 'pipe', 'pipe'],
     });
     for (const stream of [backend.stdout, backend.stderr]) createInterface({ input: stream }).on('line', line => {
       try {
         const entry = JSON.parse(line);
-        if (['portal_browser_launch_failed', 'portal_browser_started', 'worker_error', 'api_started'].includes(entry.event || entry.msg)) {
+        if (['http_request', 'request_panic', 'api_started'].includes(entry.event || entry.msg)) {
           diagnostics.push(entry);
           if (diagnostics.length > 10) diagnostics.shift();
         }

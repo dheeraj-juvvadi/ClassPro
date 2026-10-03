@@ -1,4 +1,4 @@
-module classpro/portal-go
+module anon/portal-go
 
 go 1.23
 

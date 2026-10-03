@@ -11,7 +11,7 @@ import (
 
 func testCodec(tb testing.TB) *stateCodec {
 	tb.Helper()
-	codec, err := newStateCodec(base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32))), "https://classpro.example", true)
+	codec, err := newStateCodec(base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32))), "https://anon.example", true)
 	if err != nil {
 		tb.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func sealedRequest(tb testing.TB, codec *stateCodec) *http.Request {
 	if err := codec.write(writer, state); err != nil {
 		tb.Fatal(err)
 	}
-	request := httptest.NewRequest("GET", "https://classpro.example/api/reports", nil)
+	request := httptest.NewRequest("GET", "https://anon.example/api/reports", nil)
 	for _, cookie := range writer.Result().Cookies() {
 		if cookie.MaxAge < 0 {
 			continue

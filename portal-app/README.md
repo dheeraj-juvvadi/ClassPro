@@ -1,8 +1,8 @@
 # Anon frontend
 
 The current app is served from `portal-app/public` on Vercel and uses the
-FastAPI service in `ratio-diagnostic` on Azure. See [releasing](../docs/releasing.md),
-[backend runtime](../ratio-diagnostic/README.md), and [offline cache](../docs/offline-app.md).
+FastAPI service in `portal-backend` on Azure. See [releasing](../docs/releasing.md),
+[backend runtime](../portal-backend/README.md), and [offline cache](../docs/offline-app.md).
 Current remembered sessions and credential storage follow that backend's
 documentation and the deployed Privacy page.
 

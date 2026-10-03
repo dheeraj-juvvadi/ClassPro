@@ -1,5 +1,5 @@
 {
-  "name": "classpro-portal-worker",
+  "name": "anon-portal-worker",
   "private": true,
   "type": "module",
   "dependencies": {
