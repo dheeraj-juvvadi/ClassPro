@@ -107,7 +107,6 @@ function showLogin(text = '', error = false) {
   $('planner-nav').hidden = true;
   $('planner-menu').hidden = true;
   anonHome.clear();
-  anonExamDates.clear();
   academicUI.clear();
   anonMarksTarget.clear();
   anonAcademicHistory.clear();
@@ -341,8 +340,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     };
     changed('attendance', [reports.attendance, reports.schedule], () => renderAttendance(reports.attendance, reports.schedule));
     changed('marks', [reports.marks, reports.courses], () => renderMarks(reports.marks, reports.courses));
-    changed('exams', [reports.exams, reports.connections], () => anonExamDates.update(reports.exams, reports.connections));
-    changed('home', [reports.attendance, reports.schedule, reports.exams], () => anonHome.update(reports.attendance, reports.schedule));
+    changed('home', [reports.attendance, reports.schedule], () => anonHome.update(reports.attendance, reports.schedule));
     anonSettings.update(reports);
     changed('connections', [reports.connections, reports.warnings], () => providerConnections.update(reports));
     $('refresh').title = 'Sync attendance and marks';
@@ -492,14 +490,12 @@ function paintCachedReports() {
   showReports();
   renderAttendance(cached.attendance, cached.schedule);
   renderMarks(cached.marks, cached.courses);
-  anonExamDates.update(cached.exams, cached.connections);
   anonHome.update(cached.attendance, cached.schedule);
   anonSettings.update(cached);
   providerConnections.update(cached);
   reportFingerprint.attendance = JSON.stringify([cached.attendance, cached.schedule]);
   reportFingerprint.marks = JSON.stringify([cached.marks, cached.courses]);
-  reportFingerprint.home = JSON.stringify([cached.attendance, cached.schedule, cached.exams]);
-  reportFingerprint.exams = JSON.stringify([cached.exams, cached.connections]);
+  reportFingerprint.home = JSON.stringify([cached.attendance, cached.schedule]);
   reportFingerprint.connections = JSON.stringify([cached.connections, cached.warnings]);
   const cachedNextAt = Number(cached.sync?.nextAt);
   nextAutoSync = cached.sync?.due && !cached.sync?.pending ? 0
@@ -515,7 +511,6 @@ if (designPreview) {
   showReports();
   renderAttendance(reports.attendance, reports.schedule);
   renderMarks(reports.marks, reports.courses);
-  anonExamDates.update(reports.exams, reports.connections);
   anonHome.update(reports.attendance, reports.schedule);
   anonSettings.update(reports);
   $('updated-at').textContent = 'Design preview · sample data';
