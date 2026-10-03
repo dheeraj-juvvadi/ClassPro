@@ -36,7 +36,7 @@ globalThis.anonLoginFlow = (() => {
     form.dataset.step = step;
     account.type = dual ? 'email' : 'text';
     account.inputMode = dual ? 'email' : 'text';
-    account.placeholder = dual ? 'you@srmist.edu.in' : 'NetID or SRM email';
+    account.placeholder = 'NetID or SRM email';
     account.readOnly = expanded;
     account.disabled = busy;
     el('login-account-field').hidden = expanded;
@@ -44,7 +44,7 @@ globalThis.anonLoginFlow = (() => {
     el('login-account-summary').textContent = account.value;
     el('login-password-stage').hidden = !expanded;
     el('login-change-account').disabled = busy;
-    el('login-account-field').querySelector('label').textContent = dual ? 'Email address' : 'Your SRM ID';
+    el('login-account-field').querySelector('label').textContent = 'Your SRM ID';
     el('login-title').textContent = expanded ? (dual ? 'Both passwords.' : 'Your password.') : 'Sign in.';
     el('login-description').textContent = expanded
       ? (dual ? 'Enter your Academia and Student Portal passwords to use the complete app.' : 'Use your password and the verification code to sign in.')
