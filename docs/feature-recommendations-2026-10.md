@@ -38,7 +38,7 @@ existing reports, without new polling, storage services or upstream requests.
 
 **1. Calendar export:** Add one Schedule action for a bounded date range and
 download a static `.ics` file. [schedule-model.js](../portal-app/public/schedule-model.js)
-and [the schedule contract](schedule-contract.md) already resolve dated periods;
+and [the schedule contract](../portal-app/public/schedule-contract.md) already resolve dated periods;
 the inspected UI has no calendar-file export. Acceptance: respect exclusions,
 holidays and timezone; report skipped unknown dates; export no invented rotation.
 Use stable event IDs and verify import into Apple and Google Calendar. Explain

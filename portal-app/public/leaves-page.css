@@ -1,0 +1,17 @@
+body.planner[data-page="leaves"] main { padding-inline: 16px; }
+body.planner #leaves-view { max-width: 960px; margin-inline: auto; }
+#leaves-view .page-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+#leaves-view #leaves-title { margin: 0; font-size: 32px; font-weight: 500; line-height: 1.2; letter-spacing: -.03em; }
+#leaves-view .leaves-projected { margin: 8px 0 0; color: #adb4a4; font-size: 12px; }
+#leaves-view button { min-width: 44px; min-height: 44px; padding: 8px 0; color: #c5d4a7; background: transparent; border: 0; font: 500 13px/1.5 Inter, sans-serif; }
+#leaves-view button:focus-visible { outline: 2px solid #c5d4a7; outline-offset: 4px; }
+#leaves-back { margin-bottom: 12px; }
+#leaves-range { margin: 0 0 6px; font-size: 13px; }
+#leaves-meta, #leaves-empty { margin: 0 0 16px; color: #adb4a4; font-size: 11px; }
+#leaves-rows { padding: 0 16px; border-radius: 22px; background: #232720; }
+#leaves-rows .leaves-row { display: grid; grid-template-columns: minmax(0, 1fr) max-content; grid-template-rows: auto auto; gap: 6px 10px; min-height: 100px; padding: 16px 0 12px; border: 0; border-radius: 0; background: transparent; --attendance-value: #f1eee3; }
+#leaves-rows .leaves-row + .leaves-row { border-top: 1px solid #3b4235; }
+#leaves-rows .attendance-course-heading h3 { margin: 0; font-size: 13px; line-height: 1.45; font-weight: 450; color: #bbc1b4; overflow-wrap: anywhere; }
+#leaves-rows .attendance-percent { color: #f1eee3; font-size: 11px; }
+@media (min-width: 1000px) { body.planner[data-page="leaves"] main { padding-inline: 48px; } }
+@media (max-width: 380px) { #leaves-rows { padding-inline: 13px; } }

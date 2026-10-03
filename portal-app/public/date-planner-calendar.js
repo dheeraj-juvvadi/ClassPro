@@ -5,8 +5,29 @@ globalThis.createDatePlannerCalendar = ({ onToggle, onFocus }) => {
   const loading = document.getElementById('projection-calendar-loading');
   const retry = document.getElementById('projection-calendar-retry');
   const model = anonScheduleModel;
-  let ready = false, pending = null, snapshot = null;
+  let ready = false, pending = null, snapshot = null, shownMonth = '', animation;
   const key = date => date.toISOString().slice(0, 10);
+  function decorate() {
+    const month = calendar.querySelector('calendar-month');
+    if (!snapshot || !month.shadowRoot) return;
+    let prefix = '';
+    for (const button of month.shadowRoot.querySelectorAll('button[part]')) {
+      const value = button.getAttribute('part').match(/date-(\d{4}-\d{2}-\d{2})/)?.[1];
+      if (!value) continue;
+      prefix ||= value.slice(0, 7);
+      const date = model.parse(value), day = model.dayState(snapshot.source, date);
+      const kind = day.kind === 'teaching' ? `Day order ${day.dayOrder || 'unconfirmed'}` : day.kind === 'holiday' ? 'Holiday' : 'Unconfirmed';
+      const label = `${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, ${kind}${day.label ? ', ' + day.label : ''}${snapshot.selected[value] ? ', selected ' + snapshot.selected[value] : ''}`;
+      button.setAttribute('aria-label', label); button.title = label;
+    }
+    if (prefix && prefix !== shownMonth) {
+      if (shownMonth && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        animation?.cancel();
+        animation = month.animate([{ opacity: .5, transform: `translateX(${prefix > shownMonth ? 5 : -5}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 150, easing: 'ease-out' });
+      }
+      shownMonth = prefix;
+    }
+  }
   function apply() {
     if (!ready || !snapshot) return;
     const state = snapshot;
@@ -14,17 +35,16 @@ globalThis.createDatePlannerCalendar = ({ onToggle, onFocus }) => {
     calendar.value = Object.keys(state.selected).sort().join(' ');
     calendar.isDateDisallowed = date => {
       const value = key(date);
-      return model.dayState(state.source, model.parse(value)).kind !== 'teaching'
-        || value < model.key(state.today) && state.action !== 'od'
-        || state.pastOnly && value >= model.key(state.today);
+      return state.action === 'od' ? value >= model.key(state.today) : value < model.key(state.today);
     };
     calendar.getDayParts = date => {
       const value = key(date), action = state.selected[value];
-      const known = model.dayState(state.source, model.parse(value)).kind === 'teaching';
+      const day = model.dayState(state.source, model.parse(value));
       const previous = new Date(date); previous.setUTCDate(previous.getUTCDate() - 1);
       const next = new Date(date); next.setUTCDate(next.getUTCDate() + 1);
-      const start = action && !state.selected[key(previous)], end = action && !state.selected[key(next)];
-      return `date-${value} ${action ? 'plan-' + action + ' plan-selected' : ''} ${start ? 'plan-start' : ''} ${end ? 'plan-end' : ''} ${known ? 'teaching' : 'unverified'}`;
+      const start = action && (date.getUTCDay() === 1 || date.getUTCDate() === 1 || !state.selected[key(previous)]);
+      const end = action && (date.getUTCDay() === 0 || next.getUTCMonth() !== date.getUTCMonth() || !state.selected[key(next)]);
+      return `date-${value} ${action ? 'plan-' + action + ' plan-selected' : ''} ${start ? 'plan-start' : ''} ${end ? 'plan-end' : ''} ${day.kind} ${day.dayOrder ? 'do-' + day.dayOrder : ''}`;
     };
     // Include action/year in the component's date labels without replacing its
     // keyboard navigation or focus handling.
@@ -32,14 +52,7 @@ globalThis.createDatePlannerCalendar = ({ onToggle, onFocus }) => {
       const month = calendar.querySelector('calendar-month');
       await month.updated;
       if (snapshot !== state) return;
-      for (const day of month.shadowRoot.querySelectorAll('button[part]')) {
-        const value = day.getAttribute('part').match(/date-(\d{4}-\d{2}-\d{2})/)?.[1];
-        if (!value) continue;
-        const date = model.parse(value), action = state.selected[value];
-        const dayState = model.dayState(state.source, date);
-        const label = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-        day.setAttribute('aria-label', `${label}${dayState.dayOrder ? ', day order ' + dayState.dayOrder : ''}${action ? ', ' + (action === 'od' ? 'OD' : action) : ''}`);
-      }
+      decorate();
     });
   }
   async function load() {
@@ -55,6 +68,8 @@ globalThis.createDatePlannerCalendar = ({ onToggle, onFocus }) => {
         if (!snapshot) calendar.isDateDisallowed = () => true;
         apply();
         await calendar.updated;
+        const month = calendar.querySelector('calendar-month'); await month.updated;
+        new MutationObserver(decorate).observe(month.shadowRoot, { childList: true, subtree: true, attributes: true, attributeFilter: ['part'] });
         calendar.hidden = false; loading.hidden = true;
       } catch {
         loading.textContent = 'Your calendar couldn’t load. Check your connection and try again.';

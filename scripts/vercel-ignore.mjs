@@ -4,7 +4,7 @@ import { changedPaths } from './ci-scope.mjs';
 
 export function shouldBuild(paths) {
   if (paths === null) return true;
-  return paths.some(path => /^portal-app\//.test(path) || /^scripts\/(?:ci-scope|vercel-ignore)/.test(path)
+  return paths.some(path => (/^portal-app\//.test(path) && path !== 'portal-app/README.md') || /^scripts\/(?:ci-scope|vercel-ignore)/.test(path)
     || path === '.gitignore' || path === '.vercelignore' || path === 'vercel.json');
 }
 

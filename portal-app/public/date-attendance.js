@@ -7,6 +7,7 @@ globalThis.dateAttendance = (() => {
   let today = model.clock('Asia/Kolkata'), filters = {};
   let removedCount = 0, editedDay = '', changedClasses = 0, rangeAnchor = '', rangeStart = '', rangeEnd = '';
   let step = 'dates', requestedRange = null, opener = null, excludedDates = new Set();
+  let rangeComplete = false;
   const shortDate = key => key ? model.parse(key)?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) || '' : '';
   function showStep(value, focus = false) {
     step = value;
@@ -22,7 +23,7 @@ globalThis.dateAttendance = (() => {
       od: ['Correcting an OD?', 'Pick past dates to estimate your correction.', 'After your OD correction.'],
     }[activeMode];
     get('projection-dialog').dataset.mode = activeMode;
-    get('projection-title').textContent = copy[value === 'results' ? 2 : 0];
+    get('projection-title').textContent = 'Plan attendance';
     get('projection-intro').textContent = value === 'results' ? 'Your estimated attendance.' : copy[1];
     if (focus) {
       get('projection-title').focus({ preventScroll: true });
@@ -69,8 +70,9 @@ globalThis.dateAttendance = (() => {
   const node = (tag, text) => { const item = document.createElement(tag); item.textContent = text; return item; };
   function syncBounds() {
     const dates = Object.keys(selected).sort();
-    rangeStart = requestedRange?.start || dates[0] || '';
-    rangeEnd = requestedRange?.end || dates.at(-1) || '';
+    rangeStart = dates[0] || '';
+    rangeEnd = dates.at(-1) || '';
+    requestedRange = dates.length ? { start: rangeStart, end: rangeEnd, action: mode } : null;
   }
   function removeDate(key) {
     delete selected[key]; excludedDates.add(key); removedCount = 0; rangeAnchor = '';
@@ -78,25 +80,23 @@ globalThis.dateAttendance = (() => {
   }
   const calendar = createDatePlannerCalendar({
     onToggle(key) {
-      if (requestedRange?.action === 'od' && key >= model.key(today)) return;
-      if (selected[key]) {
-        removeDate(key);
-      } else if (requestedRange && key >= requestedRange.start && key <= requestedRange.end) {
-        selected[key] = action; excludedDates.delete(key); rangeAnchor = '';
+      if (action === 'od' ? key >= model.key(today) : key < model.key(today)) return;
+      if (rangeComplete) {
+        if (selected[key]) removeDate(key);
+        else { selected[key] = action; excludedDates.delete(key); }
       } else if (!rangeAnchor) {
-        rangeAnchor = key; selected[key] = action; excludedDates.delete(key);
+        rangeAnchor = key; selected = { [key]: action }; excludedDates.clear();
       } else {
         const [start, end] = [rangeAnchor, key].sort();
-        for (const day of source?.calendar || []) {
-          if (day.date < start || day.date > end || day.kind !== 'teaching' || day.date < model.key(today) && action !== 'od') continue;
-          if (!selected[day.date] || planAction(selected[day.date]) !== action) selected[day.date] = action;
-          excludedDates.delete(day.date);
+        if ((model.parse(end) - model.parse(start)) / 86400000 >= 400) {
+          rangeError('Choose a range of up to 400 days.'); calendar.update(calendarState()); return;
         }
-        rangeAnchor = '';
+        selected = {};
+        for (let date = model.parse(start); model.key(date) <= end; date.setDate(date.getDate() + 1)) selected[model.key(date)] = action;
+        rangeAnchor = ''; rangeComplete = true;
       }
-      if (requestedRange && (key > requestedRange.end || requestedRange.action === 'od' && key < requestedRange.start)) requestedRange = null;
       syncBounds();
-      removedCount = 0; syncRangeInputs(); render(); describeDate(key);
+      rangeError(); removedCount = 0; syncRangeInputs(); render(); describeDate(key);
     },
     onFocus: key => describeDate(key),
   });
@@ -126,7 +126,8 @@ globalThis.dateAttendance = (() => {
     const state = model.dayState(source, date);
     const label = date.toLocaleDateString('en', { month: 'short', day: 'numeric' });
     const hours = model.classes(source, date, filters).reduce((sum, entry) => sum + anonHomeModel.hours(entry), 0);
-    get('projection-date-detail').textContent = `${label} · ${state.kind === 'teaching' ? `${state.dayOrder ? 'Day order ' + state.dayOrder + ' · ' : ''}${hours} class hours` : state.kind === 'holiday' ? 'Holiday' : 'Calendar unverified'}`;
+    const event = state.label && !/^(instructional day|teaching day|holiday)$/i.test(state.label) ? ` · ${state.label}` : '';
+    get('projection-date-detail').textContent = `${label} · ${state.kind === 'teaching' ? `${state.dayOrder ? 'DO ' + state.dayOrder + ' · ' : ''}${hours}h` : state.kind === 'holiday' ? 'Holiday' : 'Unconfirmed'}${event}`;
   }
   function reconcileDates() {
     const expired = requestedRange && requestedRange.action !== 'od' && requestedRange.end < model.key(today);
@@ -134,22 +135,12 @@ globalThis.dateAttendance = (() => {
       requestedRange = null; excludedDates.clear(); rangeAnchor = ''; rangeStart = ''; rangeEnd = '';
       showStep('dates');
     }
-    if (requestedRange) {
-      for (const day of source?.calendar || []) {
-        const permitted = requestedRange.action === 'od' ? day.date < model.key(today) : day.date >= model.key(today);
-        if (day.kind === 'teaching' && day.date >= requestedRange.start && day.date <= requestedRange.end
-          && permitted && !excludedDates.has(day.date)) selected[day.date] ||= requestedRange.action;
-      }
-    }
     const previous = Object.keys(selected).length;
     changedClasses = 0;
     selected = Object.fromEntries(Object.entries(selected).filter(([key, value]) => {
       const date = model.parse(key);
       if (!date) return false;
-      if (model.dayState(source, date).kind !== 'teaching') {
-        return !!requestedRange && (requestedRange.action === 'od' ? key < model.key(today) : key >= model.key(today))
-          && key >= requestedRange.start && key <= requestedRange.end && !excludedDates.has(key);
-      }
+      if (model.dayState(source, date).kind !== 'teaching') return key >= model.key(today) || planAction(value) === 'od';
       if (value && typeof value === 'object') {
         const entries = model.classes(source, date, filters);
         const valid = new Set(entries.map(entry => dateProjection.entryKey(entry)));
@@ -179,8 +170,11 @@ globalThis.dateAttendance = (() => {
     mode = value; get('projection-mode').value = value;
     setAction(value); showStep(step);
   }
+  function calendarState() {
+    return { today, source, action, selected: Object.fromEntries(Object.entries(selected).map(([key, value]) => [key, planAction(value)])) };
+  }
   function render() {
-    calendar.update({ today, source, action, pastOnly: requestedRange?.action === 'od', selected: Object.fromEntries(Object.entries(selected).map(([key, value]) => [key, planAction(value)])) });
+    calendar.update(calendarState());
     get('projection-date-picker').hidden = !!editedDay;
     get('projection-day-editor').hidden = !editedDay;
     if (editedDay) dayEditor.render({ key: editedDay, plan: selected[editedDay], entries: model.classes(source, model.parse(editedDay), filters), past: editedDay < model.key(today) });
@@ -197,8 +191,8 @@ globalThis.dateAttendance = (() => {
       get('projection-intro').textContent = range ? `${shortDate(range.start)}–${shortDate(range.end)}${context}` : 'Your estimated attendance.';
       get('projection-result-date').textContent = range ? `On ${shortDate(range.end)}` : 'After changes';
     }
-    get('projection-range-start').textContent = shortDate(rangeAnchor && !requestedRange ? rangeAnchor : rangeStart);
-    get('projection-range-end').textContent = rangeAnchor && !requestedRange ? 'Choose end date' : shortDate(rangeEnd || rangeStart);
+    get('projection-range-start').textContent = shortDate(rangeStart) || 'Start date';
+    get('projection-range-end').textContent = rangeAnchor ? 'End date' : shortDate(rangeEnd || rangeStart) || 'End date';
     get('projection-range').dataset.selecting = rangeAnchor ? 'end' : 'start';
     get('projection-action-hint').textContent = rangeAnchor ? 'Select the end date. Teaching days in between are included.'
       : selectedCount ? 'Tap a selected date to remove it. Edit its classes below.' : 'Select a start date, then an end date. One day works too.';
@@ -209,6 +203,7 @@ globalThis.dateAttendance = (() => {
     selections.replaceChildren();
     if (!selectedCount) selections.append(node('p', 'Your selected days appear here.'));
     for (const [key, value] of Object.entries(selected).sort()) {
+      if (model.dayState(source, model.parse(key)).kind !== 'teaching') continue;
       const label = model.parse(key).toLocaleDateString('en', { month: 'short', day: 'numeric' });
       const group = node('div', ''); group.className = 'date-selected-item';
       const action = planAction(value);
@@ -233,6 +228,13 @@ globalThis.dateAttendance = (() => {
     if (removedCount) get('projection-period').textContent += ` Updated records cleared ${removedCount} unavailable ${removedCount === 1 ? 'date' : 'dates'}.`;
     if (changedClasses) get('projection-period').textContent += ` ${changedClasses} class edits were reset after the timetable changed.`;
     renderDatePlannerResults(result, focusCode, selectedCount);
+    anonLeaves.update({ result, selected, source, today, filters, mode });
+  }
+  function calculate() {
+    if (!Object.keys(selected).length) return;
+    rangeComplete = true; rangeAnchor = ''; syncBounds(); render();
+    if (dateProjection.calculate(courses, source, selected, today, filters, requestedRange).error) return;
+    opener = null; get('projection-dialog').close(); anonHome.navigate('leaves');
   }
   get('projection-range-form').addEventListener('submit', event => {
     event.preventDefault();
@@ -248,7 +250,7 @@ globalThis.dateAttendance = (() => {
     if (changed) {
       const first = model.parse(start), last = model.parse(end);
       if (first && last) for (let date = first, count = 0; date <= last && count < 400; date.setDate(date.getDate() + 1), count++) {
-        if (model.dayState(source, date).kind === 'teaching') proposed[model.key(date)] = mode;
+        proposed[model.key(date)] = mode;
       }
     }
     const range = { start, end, action: mode };
@@ -257,10 +259,11 @@ globalThis.dateAttendance = (() => {
     if (changed) excludedDates.clear();
     selected = proposed; requestedRange = range; rangeStart = start; rangeEnd = end;
     editedDay = ''; rangeAnchor = ''; removedCount = 0; changedClasses = 0;
-    rangeError(); setAction(mode); showStep('results', true); render();
+    rangeError(); setAction(mode); rangeComplete = true; calculate();
   });
   get('projection-mode').addEventListener('change', () => {
     selected = {}; requestedRange = null; excludedDates.clear();
+    rangeComplete = false;
     rangeStart = ''; rangeEnd = ''; rangeAnchor = ''; editedDay = ''; removedCount = 0; changedClasses = 0;
     setMode(get('projection-mode').value); rangeError(); syncRangeInputs(); render();
   });
@@ -272,18 +275,21 @@ globalThis.dateAttendance = (() => {
   });
   get('projection-review-custom').addEventListener('click', () => {
     if (!Object.keys(selected).length && !requestedRange) { rangeError('Choose a date or customize a day first.'); return; }
-    rangeError(); showStep('results', true); render();
+    rangeError(); calculate();
   });
   get('projection-dialog').addEventListener('close', () => {
     const target = opener; opener = null;
     if (target?.isConnected) target.focus({ preventScroll: true });
   });
   for (const button of get('date-actions').querySelectorAll('button')) button.addEventListener('click', () => {
-    setAction(button.dataset.action);
-    render();
+    if (mode === button.dataset.action) return;
+    selected = {}; requestedRange = null; excludedDates.clear(); rangeComplete = false;
+    rangeStart = ''; rangeEnd = ''; rangeAnchor = ''; editedDay = '';
+    setMode(button.dataset.action); syncRangeInputs(); rangeError(); render();
+    calendar.today(mode === 'od' ? model.parse(yesterdayKey()) : today);
   });
   get('projection-today').addEventListener('click', () => calendar.today(today));
-  get('projection-clear').addEventListener('click', () => { selected = {}; requestedRange = null; excludedDates.clear(); removedCount = 0; changedClasses = 0; editedDay = ''; rangeAnchor = ''; rangeStart = ''; rangeEnd = ''; rangeError(); syncRangeInputs(); render(); });
+  get('projection-clear').addEventListener('click', () => { selected = {}; requestedRange = null; excludedDates.clear(); rangeComplete = false; removedCount = 0; changedClasses = 0; editedDay = ''; rangeAnchor = ''; rangeStart = ''; rangeEnd = ''; rangeError(); syncRangeInputs(); render(); });
   get('close-projection').addEventListener('click', () => get('projection-dialog').close());
   get('projection-done').addEventListener('click', () => get('projection-dialog').close());
   return {
@@ -292,6 +298,7 @@ globalThis.dateAttendance = (() => {
       if (model.dayState(source, date).kind !== 'teaching') return;
       setMode(key < model.key(today) ? 'od' : 'attend');
       selected[key] ||= { action, classes: {} };
+      rangeComplete = true;
       requestedRange = null; excludedDates.delete(key);
       this.open('', date, true);
       get('projection-customize').open = true;
@@ -300,12 +307,12 @@ globalThis.dateAttendance = (() => {
     update(data, schedule, date, activeFilters) {
       courses = data; source = schedule; today = new Date(date); filters = activeFilters;
       reconcileDates();
-      if (get('projection-dialog').open) render();
+      if (get('projection-dialog').open || document.body.dataset.page === 'leaves') render();
     },
     clock(date) {
       if (model.key(date) === model.key(today)) return;
       today = new Date(date); reconcileDates();
-      if (get('projection-dialog').open) render();
+      if (get('projection-dialog').open || document.body.dataset.page === 'leaves') render();
     },
     open(code = '', date = null, preserve = false) {
       opener = document.activeElement;
@@ -315,13 +322,15 @@ globalThis.dateAttendance = (() => {
       }
       const dates = Object.keys(selected).sort();
       rangeStart = requestedRange?.start || dates[0] || ''; rangeEnd = requestedRange?.end || dates.at(-1) || '';
-      showStep('dates'); rangeError(); syncRangeInputs(); get('projection-customize').open = preserve;
+      rangeComplete = !!dates.length;
+      showStep('dates'); rangeError(); syncRangeInputs(); get('projection-customize').open = true;
       render(); get('projection-dialog').showModal();
-      if (preserve) calendar.open(date || today);
+      calendar.open(date || model.parse(rangeStart) || (mode === 'od' ? model.parse(yesterdayKey()) : today));
     },
     clear() {
       courses = []; source = null; selected = {}; removedCount = 0; changedClasses = 0; editedDay = ''; rangeAnchor = ''; rangeStart = ''; rangeEnd = ''; focusCode = ''; filters = {};
       requestedRange = null; excludedDates.clear(); opener = null; step = 'dates'; rangeError();
+      rangeComplete = false; anonLeaves.clear();
       today = model.clock('Asia/Kolkata');
       setMode('leave'); syncRangeInputs(); get('projection-dialog').close();
       get('projection-customize').open = false; get('projection-date-picker').hidden = false; get('projection-day-editor').hidden = true;

@@ -48,9 +48,13 @@ test('email-first login keeps the existing authentication lifecycle', { timeout:
     assert.equal(await page.locator('#password').isVisible(), false);
     assert.equal(await page.locator('#sign-in-label').innerText(), 'Continue');
     assert.notEqual(await page.evaluate(() => document.activeElement.id), 'account');
-    await page.locator('#account').fill('invalid');
+    await page.locator('#account').fill('bad@');
     await page.locator('#sign-in').click();
     assert.equal(await page.locator('#password').isVisible(), false);
+    await page.locator('#account').fill('dc5180');
+    await page.locator('#account').blur();
+    assert.equal(await page.locator('#account').inputValue(), 'dc5180@srmist.edu.in',
+      'a bare SRM ID is completed with @srmist.edu.in');
     await expand(page);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'password');
     assert.equal(await page.locator('#login-account-summary').innerText(), 'student@srmist.edu.in');

@@ -58,7 +58,7 @@ def same_student(states, provider, data, account):
     return True
 
 
-async def refresh(request, entry, invoke, report):
+async def refresh(request, entry, invoke, report, exam_refresh=None):
     states = providers(entry)
     warnings = []
     async def refresh_one(name):
@@ -74,8 +74,13 @@ async def refresh(request, entry, invoke, report):
             response, data = await invoke(request, "/portal/refresh" if name == "portal" else "/refresh", payload)
         if response.status_code != 200 or data.get("success") is not True:
             state["expired"] = response.status_code == 401
+            if name == "portal" and state.get("report", {}).get("exams"):
+                state["report"]["exams"] = {**state["report"]["exams"], "stale": True}
             warnings.append(f"{name.title()} could not refresh. Showing its last loaded data; reconnect if needed.")
             return False
+        if name == "portal" and exam_refresh:
+            data["exams"] = await exam_refresh(data.get("cookies", state["cookies"]),
+                                               state.get("report", {}).get("exams"))
         state.update({"cookies": data.get("cookies", state["cookies"]),
                       "report": report(data, state.get("report")), "expired": False})
         return True

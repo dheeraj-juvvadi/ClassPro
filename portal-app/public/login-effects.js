@@ -13,7 +13,7 @@
   account.addEventListener('invalid', () => {
     account.setAttribute('aria-invalid', 'true');
     accountError.textContent = account.type === 'email'
-      ? (account.validity.typeMismatch ? 'Enter a valid email address.' : 'Enter your SRM email.')
+      ? (account.validity.typeMismatch ? 'Enter a valid SRM ID or email.' : 'Enter your SRM ID or email.')
       : 'Enter your SRM ID or email.';
     accountError.hidden = false;
   });

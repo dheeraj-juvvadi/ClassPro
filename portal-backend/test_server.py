@@ -2,7 +2,7 @@ import os
 import unittest
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 os.environ["APP_ORIGIN"] = "http://localhost:8089"
 import httpx
@@ -52,6 +52,10 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn('synthetic-secret', next(Path(directory).glob('*.jsonl')).read_text())
 
     async def asyncSetUp(self):
+        self.exam_patch = patch("server.refresh_exams", new_callable=AsyncMock,
+                                return_value={"status": "pending", "entries": [], "stale": False})
+        self.exam_patch.start()
+        self.addCleanup(self.exam_patch.stop)
         server.sessions.clear()
         server.rates.clear()
         server.gate = server.asyncio.Semaphore(server.API_CONCURRENCY)

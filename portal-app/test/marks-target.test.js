@@ -73,7 +73,7 @@ test('grade route isolates plans and preserves projection inputs across report r
   await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
   await page.route('**/api/**', route => { calls++; return route.fulfill({ json: {} }); });
   await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#grades`);
-  assert.equal(await page.title(), 'Grade planning · Anon');
+  assert.equal(await page.title(), 'Grade calculator · Anon');
   assert.equal(await page.locator('#grades-title').evaluate(el => el === document.activeElement), true);
   assert.equal(await page.locator('#grades-view').isVisible(), true);
   assert.equal(await page.locator('#planner-nav > [data-page="grades"]').count(), 0);
