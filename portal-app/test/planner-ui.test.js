@@ -245,9 +245,9 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#projection-outlook').isHidden(), true);
   await page.locator('#projection-review-custom').click();
   assert.equal(await page.locator('#projection-day-editor').isVisible(), false);
-  assert.equal(await page.locator('#leaves-view').isVisible(), true);
-  assert.equal(await page.locator('#leaves-rows .attendance-row').count(), 4);
-  await page.locator('#leaves-back').click();
+  assert.equal(await page.locator('#attendance-panel').isVisible(), true);
+  assert.equal(await page.locator('#attendance-content .attendance-row').count(), 4);
+  assert.equal(await page.locator('#attendance-plan').isVisible(), true);
   await page.locator('[data-sidebar-action="open-accounts"]').click();
   assert.equal(await page.title(), 'Settings · Anon');
   assert.equal(await page.locator('dialog[open]').count(), 0);

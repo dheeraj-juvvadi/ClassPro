@@ -8,6 +8,7 @@ globalThis.dateAttendance = (() => {
   let removedCount = 0, editedDay = '', changedClasses = 0, rangeAnchor = '', rangeStart = '', rangeEnd = '';
   let step = 'dates', requestedRange = null, opener = null, excludedDates = new Set();
   let rangeComplete = false;
+  let applied = null;
   const shortDate = key => key ? model.parse(key)?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) || '' : '';
   function showStep(value, focus = false) {
     step = value;
@@ -233,8 +234,11 @@ globalThis.dateAttendance = (() => {
   function calculate() {
     if (!Object.keys(selected).length) return;
     rangeComplete = true; rangeAnchor = ''; syncBounds(); render();
-    if (dateProjection.calculate(courses, source, selected, today, filters, requestedRange).error) return;
-    opener = null; get('projection-dialog').close(); anonHome.navigate('leaves');
+    const result = dateProjection.calculate(courses, source, selected, today, filters, requestedRange);
+    if (result.error) { rangeError(result.error); return; }
+    applied = structuredClone({ selected, range: requestedRange, mode });
+    academicUI.refreshAttendance(courses);
+    opener = null; get('projection-dialog').close(); anonHome.navigate('attendance');
   }
   get('projection-range-form').addEventListener('submit', event => {
     event.preventDefault();
@@ -293,6 +297,18 @@ globalThis.dateAttendance = (() => {
   get('close-projection').addEventListener('click', () => get('projection-dialog').close());
   get('projection-done').addEventListener('click', () => get('projection-dialog').close());
   return {
+    projection(data) {
+      if (!applied) return null;
+      if (applied.mode !== 'od' && applied.range?.end < model.key(today)) {
+        applied = null; return null;
+      }
+      const result = dateProjection.calculate(data, source, applied.selected, today, filters, applied.range);
+      const range = applied.range;
+      const label = { leave: 'After planned leave', attend: 'After planned attendance', od: 'After OD correction' }[applied.mode];
+      const dates = range ? `${shortDate(range.start)}–${shortDate(range.end)}` : '';
+      return { result, summary: `${label}${dates ? ` · ${dates}` : ''}` };
+    },
+    resetProjection() { applied = null; academicUI.refreshAttendance(courses); },
     openDay(date) {
       const key = model.key(date);
       if (model.dayState(source, date).kind !== 'teaching') return;
@@ -307,11 +323,13 @@ globalThis.dateAttendance = (() => {
     update(data, schedule, date, activeFilters) {
       courses = data; source = schedule; today = new Date(date); filters = activeFilters;
       reconcileDates();
+      if (applied) academicUI.refreshAttendance(courses);
       if (get('projection-dialog').open || document.body.dataset.page === 'leaves') render();
     },
     clock(date) {
       if (model.key(date) === model.key(today)) return;
       today = new Date(date); reconcileDates();
+      if (applied) academicUI.refreshAttendance(courses);
       if (get('projection-dialog').open || document.body.dataset.page === 'leaves') render();
     },
     open(code = '', date = null, preserve = false) {
@@ -328,6 +346,7 @@ globalThis.dateAttendance = (() => {
       calendar.open(date || model.parse(rangeStart) || (mode === 'od' ? model.parse(yesterdayKey()) : today));
     },
     clear() {
+      applied = null; academicUI.refreshAttendance(courses);
       courses = []; source = null; selected = {}; removedCount = 0; changedClasses = 0; editedDay = ''; rangeAnchor = ''; rangeStart = ''; rangeEnd = ''; focusCode = ''; filters = {};
       requestedRange = null; excludedDates.clear(); opener = null; step = 'dates'; rangeError();
       rangeComplete = false; anonLeaves.clear();

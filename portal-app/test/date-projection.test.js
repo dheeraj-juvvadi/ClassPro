@@ -46,9 +46,9 @@ test('calendar plans preserve edits through refresh, holidays, rollover and sign
   assert.match(await page.locator('#projection-live-hours').innerText(), /4h/);
   const projection = async value => {
     await page.locator('#projection-review-custom').click();
-    await page.locator('#leaves-view').waitFor();
-    assert.equal(await page.locator('#leaves-rows .attendance-percent').innerText(), value);
-    await page.locator('#leaves-edit').click();
+    await page.locator('#attendance-panel').waitFor();
+    assert.equal(await page.locator('#attendance-content .attendance-percent').innerText(), value);
+    await page.locator('#calculate-attendance').click();
   };
   await projection('69.2%');
   await day(15).focus();
@@ -85,10 +85,10 @@ test('calendar plans preserve edits through refresh, holidays, rollover and sign
   await page.evaluate(() => dateAttendance.update(dateTestReport.data, null, new Date(2026,8,16), {}));
   assert.match(await page.locator('#projection-live-meta').innerText(), /unconfirmed/);
   await page.locator('#projection-review-custom').click();
-  assert.equal(await page.locator('#leaves-rows .attendance-percent').innerText(), '—');
+  assert.equal(await page.locator('#attendance-content .attendance-percent').innerText(), '—');
   await page.evaluate(() => showLogin());
-  assert.equal(await page.locator('#leaves-view').isVisible(), false);
-  assert.equal(await page.locator('#leaves-rows').innerText(), '');
+  assert.equal(await page.locator('#attendance-panel').isVisible(), false);
+  assert.equal(await page.locator('#attendance-content').innerText(), '');
   assert.deepEqual(errors, []);
 });
 test('past OD corrects absences without adding conducted hours', () => {

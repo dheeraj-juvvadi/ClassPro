@@ -31,7 +31,9 @@ globalThis.anonExamDates = (() => {
       return 'Connect Student Portal to check dates.';
     }
     if (report.stale) return report.checkedAt ? 'Cached dates · latest check unavailable.' : 'Dates unavailable. Try Sync.';
-    if (!report.entries.some(item => item.date)) return 'Dates not published yet.';
+    if (!report.entries.some(item => item.date)) return report.entries.length
+      ? 'Subjects loaded · Student Portal returned blank date and session fields.'
+      : 'Student Portal returned no exam subjects for this session.';
     return report.provisional ? 'Provisional dates' : 'Student Portal timetable';
   }
   function render() {
@@ -57,7 +59,7 @@ globalThis.anonExamDates = (() => {
         const date = model.parse(item.date), time = make('time', date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }));
         time.dateTime = item.date; time.title = date.toLocaleDateString('en', { dateStyle: 'full' });
         when.append(time, make('span', item.session || 'Session TBA'));
-      } else when.append(make('span', 'Not published', 'exam-pending'));
+      } else when.append(make('span', 'Date blank on SP', 'exam-pending'));
       if (item.stale) when.append(make('small', 'Cached'));
       row.append(info, when); root.append(row);
     }

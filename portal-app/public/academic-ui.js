@@ -3,6 +3,7 @@
 globalThis.academicUI = (() => {
   let courses = [];
   let selected = null;
+  let attendanceView = null;
   const get = identifier => document.getElementById(identifier);
   function create(tag, className, text) {
     const element = document.createElement(tag);
@@ -21,9 +22,10 @@ globalThis.academicUI = (() => {
       percentage: `${Number(prediction.percentage.toFixed(1))}%`,
       detail: required ? `Attend ${required} consecutive hours to reach 75%.` : `You can miss ${prediction.canMiss} hours and remain at 75%.` };
   }
-  function courseCard(course, status, schedule) {
+  function courseCard(course, status, schedule, projected = false) {
     const card = create('article', `attendance-row ${status.tone}`);
     card.dataset.course = course.code || course.title;
+    if (projected) card.dataset.projected = 'true';
     const heading = create('div', 'attendance-course-heading');
     heading.append(create('h3', '', course.title || course.code || 'Course'));
     const metric = create('div', 'attendance-main-metric');
@@ -33,6 +35,8 @@ globalThis.academicUI = (() => {
     amount.append(create('strong', '', status.hours === null ? '—' : `${status.tone === 'risk' ? '−' : ''}${status.hours}`));
     if (status.hours !== null) amount.append(create('span', '', 'h'));
     metric.append(amount);
+    if (projected) metric.append(create('span', 'attendance-margin-caption',
+      status.hours === null ? 'Unconfirmed' : status.tone === 'risk' ? 'to reach 75%' : 'can still miss'));
     const record = create('div', 'attendance-record');
     const absent = Number.isInteger(course.present) && Number.isInteger(course.conducted) && course.conducted >= course.present
       ? course.conducted - course.present : course.absent;
@@ -95,15 +99,32 @@ globalThis.academicUI = (() => {
   }
   function renderAttendance(data, container, schedule) {
     courses = data;
+    attendanceView = { container, schedule };
+    const projection = dateAttendance.projection(data);
+    get('attendance-plan').hidden = !projection;
+    get('attendance-plan-summary').textContent = projection ? `${projection.summary} · Estimated` : '';
+    get('calculate-attendance').textContent = projection ? 'Edit attendance plan ↗' : 'Plan attendance ↗';
     if (!data.length) { get('calculate-attendance').disabled = true; return; }
-    const statuses = data.map(course => margin(course.present, course.conducted));
+    const predictions = new Map((projection?.result.courses || []).map(course => [course.code, course]));
+    const unconfirmed = projection && (projection.result.error || projection.result.unknown.length);
+    if (unconfirmed) get('attendance-plan-summary').textContent += ' · Calendar incomplete';
     const list = create('div', 'attendance-rows');
-    data.forEach((course, index) => list.append(courseCard(course, statuses[index], schedule)));
+    data.forEach(course => {
+      let displayed = course;
+      if (projection) {
+        const planned = predictions.get(course.code), prediction = planned?.prediction;
+        displayed = { ...course, change24h: undefined,
+          present: !unconfirmed && prediction?.valid ? prediction.present + planned.impact.attend : null,
+          conducted: !unconfirmed && prediction?.valid ? prediction.conducted : null };
+      }
+      list.append(courseCard(displayed, margin(displayed.present, displayed.conducted), schedule, !!projection));
+    });
     container.append(list);
     get('calculate-attendance').disabled = !data.length;
   }
   function renderRecovery(course, card, schedule, filters = {}, date = anonScheduleModel.clock('Asia/Kolkata')) {
     for (const old of card.querySelectorAll('.recovery-date, .recovery-assumption')) old.remove();
+    if (card.dataset.projected === 'true') return;
     const recovery = courseDetails.recovery(course, schedule, date, filters);
     const target = card.querySelector('.attendance-detail-body') || card;
     if (recovery?.date) {
@@ -113,5 +134,20 @@ globalThis.academicUI = (() => {
   }
   get('calculate-attendance').addEventListener('click', () => dateAttendance.open());
   function plan(code, hours, date) { dateAttendance.open(code, date); }
-  return { renderAttendance, renderRecovery, margin, plan, clear() { courses = []; selected = null; get('projection-dialog').close(); } };
+  function refreshAttendance(data = courses) {
+    if (!attendanceView) return;
+    const { container, schedule } = attendanceView;
+    const opened = new Set([...container.querySelectorAll('.attendance-details[open]')].map(item => item.closest('[data-course]').dataset.course));
+    const focused = document.activeElement?.closest('.attendance-row')?.dataset.course;
+    container.replaceChildren(); renderAttendance(data, container, schedule);
+    for (const card of container.querySelectorAll('.attendance-row')) {
+      if (opened.has(card.dataset.course)) card.querySelector('details').open = true;
+      if (focused === card.dataset.course) card.querySelector('summary').focus({ preventScroll: true });
+    }
+  }
+  get('attendance-plan-reset').addEventListener('click', () => {
+    dateAttendance.resetProjection(); get('calculate-attendance').focus({ preventScroll: true });
+  });
+  return { renderAttendance, refreshAttendance, renderRecovery, margin, plan,
+    clear() { courses = []; selected = null; attendanceView = null; get('attendance-plan').hidden = true; get('projection-dialog').close(); } };
 })();

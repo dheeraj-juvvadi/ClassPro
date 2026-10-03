@@ -34,7 +34,7 @@ test('endsem dates handle new sessions, unpublished dates, cached fallback and c
     ] };
   await page.evaluate(data => anonExamDates.update(data), report);
   assert.equal(await page.locator('.exam-row').count(), 4);
-  assert.equal(await page.locator('.exam-pending').innerText(), 'Not published');
+  assert.equal(await page.locator('.exam-pending').innerText(), 'Date blank on SP');
   assert.equal(await page.locator('#exam-list img').count(), 0);
   assert.match(await page.locator('#exam-status').innerText(), /Provisional/);
   assert.equal(await page.locator('#exam-period option').count(), 5);
@@ -50,7 +50,10 @@ test('endsem dates handle new sessions, unpublished dates, cached fallback and c
   assert.equal(await page.locator('.exam-row').count(), 1);
   await page.evaluate(data => anonExamDates.update({ ...data, sessions: [], entries: [] }), report);
   assert.equal(await page.locator('#exam-period').inputValue(), '');
-  assert.match(await page.locator('#exam-status').innerText(), /not published/);
+  assert.match(await page.locator('#exam-status').innerText(), /no exam subjects/);
+  await page.evaluate(data => anonExamDates.update({ ...data,
+    entries: data.entries.map(row => ({ ...row, date: null, session: null })) }), report);
+  assert.match(await page.locator('#exam-status').innerText(), /Subjects loaded.*blank date and session/);
   await page.evaluate(data => anonExamDates.update(data), report);
   assert.equal(await page.evaluate(() => anonExamDates.forDate(new Date(2026,10,10,12)).length), 1);
   await page.setViewportSize({ width:390,height:844 });

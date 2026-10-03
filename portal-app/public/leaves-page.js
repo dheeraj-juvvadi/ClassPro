@@ -56,9 +56,16 @@ globalThis.anonLeaves = (() => {
       const heading = node('div', undefined, 'attendance-course-heading');
       heading.append(node('h3', course.title || course.code));
       const metric = node('div', undefined, 'attendance-main-metric');
-      metric.setAttribute('aria-label', `${state.hoursLabel}: ${course.hours}`);
+      const prediction = course.prediction;
+      const required = course.rate === null ? null : prediction.neededToTarget;
+      const hours = course.rate === null ? null : required || prediction.canMiss;
+      row.classList.toggle('risk', required > 0);
+      metric.setAttribute('aria-label', hours === null ? 'Projection unconfirmed'
+        : required ? `Attend ${hours} hours to reach 75%` : `Can still miss ${hours} hours`);
       const value = node('span', undefined, 'attendance-margin-value');
-      value.append(node('strong', String(course.hours)), node('span', 'h')); metric.append(value);
+      value.append(node('strong', hours === null ? '—' : `${required ? '−' : ''}${hours}`));
+      if (hours !== null) value.append(node('span', 'h'));
+      metric.append(value);
       const record = node('div', undefined, 'attendance-record');
       record.append(node('span', course.rate === null ? '—' : `${course.rate.toFixed(1)}%`, 'attendance-percent'));
       record.setAttribute('aria-label', course.rate === null ? 'Projection unconfirmed' : `Projected attendance ${course.rate.toFixed(1)} percent`);

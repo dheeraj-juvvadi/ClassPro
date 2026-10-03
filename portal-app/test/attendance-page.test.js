@@ -103,7 +103,7 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
       assert.ok(height >= 99.9 && height < 120, `comfortable row at ${width}: ${height}`);
     }
   }
-  assert.equal(await page.locator('#attendance-panel button').count(), 0);
+  assert.equal(await page.locator('#attendance-panel button:visible').count(), 0);
   assert.equal(await ds.locator('summary').evaluate(el => getComputedStyle(el, '::after').content), 'none');
   await page.locator('#calculate-attendance').click();
   assert.equal(await page.locator('#projection-dialog').isVisible(), true);

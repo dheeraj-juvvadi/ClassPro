@@ -116,15 +116,14 @@ test('installed shell reopens saved reports offline and never caches private API
   await page.locator(`calendar-month button[part~="date-${day}"]`).click();
   assert.match(await page.locator('#projection-live-hours').innerText(), /1h/);
   await page.locator('#projection-review-custom').click();
-  assert.equal(await page.locator('#leaves-view').isVisible(), true);
-  assert.equal(await page.locator('#leaves-rows .attendance-percent').textContent(), '81.8%');
-  await page.locator('#leaves-edit').click();
+  assert.equal(await page.locator('#attendance-panel').isVisible(), true);
+  assert.equal(await page.locator('#attendance-content .attendance-percent').textContent(), '81.8%');
+  await page.locator('#calculate-attendance').click();
   await page.locator('#projection-calendar').waitFor({ state: 'visible' });
   assert.equal(await page.locator('calendar-month button').count() > 27, true, 'calendar component lazy-loads offline');
   assert.equal(await page.locator('calendar-month button[aria-current="date"]').isDisabled(), false);
   assert.equal(await page.locator('calendar-month button[aria-current="date"]').getAttribute('aria-pressed'), 'true');
   await page.locator('#projection-review-custom').click();
-  await page.locator('#leaves-back').click();
   assert.equal(await page.evaluate(async () => { try { await fetch('/api/reports'); return false; } catch { return true; } }), true);
   await page.evaluate(() => { clearReportsCache(); showLogin('Signed out locally.'); });
   await page.reload();

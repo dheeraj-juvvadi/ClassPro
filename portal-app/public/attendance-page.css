@@ -6,6 +6,12 @@ body.planner[data-page="attendance"] #updated-at { font-size: 12px; line-height:
 body.planner[data-page="attendance"] .report-actions { width: auto; }
 body.planner[data-page="attendance"] #calculate-attendance { min-height: 44px; padding: 8px 0; font: 500 14px/1.5 Inter, sans-serif; color: #c5d4a7; border: 0; background: transparent; }
 body.planner[data-page="attendance"] #attendance-panel { margin-top: 0; }
+.attendance-plan { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 12px; }
+.attendance-plan[hidden] { display: none; }
+.attendance-plan p { margin: 0; color: #adb4a4; font-size: 12px; line-height: 1.5; }
+#attendance-plan-reset { min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: #c5d4a7; font: 500 12px/1.5 Inter, sans-serif; }
+#attendance-plan-reset:focus-visible { outline: 2px solid #c5d4a7; outline-offset: 4px; }
+.attendance-margin-caption { max-width: 110px; margin-top: 4px; color: var(--attendance-value); font-size: 10px; line-height: 1.4; text-align: right; }
 #attendance-panel .attendance-rows { display: block; padding: 0 16px; border: 0; border-radius: 22px; background: #232720; }
 #attendance-panel .attendance-row { min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: #f1eee3; --attendance-accent: #c5d4a7; --attendance-value: #f1eee3; }
 #attendance-panel .attendance-row + .attendance-row { border-top: 1px solid #3b4235; }
