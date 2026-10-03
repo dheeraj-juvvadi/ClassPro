@@ -18,9 +18,9 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "cheerio": "1.1.2",
-    "express": "5.1.0",
-    "playwright": "1.58.2",
+    "cheerio": "1.2.0",
+    "express": "5.2.1",
+    "playwright": "1.63.0",
     "sharp": "0.35.4"
   }
 }
