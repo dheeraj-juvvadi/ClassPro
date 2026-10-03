@@ -8,6 +8,7 @@ class Credentials(BaseModel):
     cookies: Optional[Dict[str, str]] = None
     captcha: Optional[str] = Field(default=None, max_length=20)
     cdigest: Optional[str] = Field(default=None, max_length=128)
+    reauthenticate: bool = False
 
 
 class LoginCredentials(BaseModel):
@@ -25,3 +26,4 @@ class PortalCredentials(BaseModel):
     captcha: Optional[str] = Field(default=None, max_length=20)
     cdigest: Optional[str] = Field(default=None, max_length=128)
     telemetry: Optional[str] = Field(default=None, max_length=2048)
+    reauthenticate: bool = False

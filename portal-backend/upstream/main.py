@@ -16,7 +16,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 from core.academia_client import AcademiaClient
 from core.client_lifecycle import client_scope, track, retain, close as close_client, gather_complete
-from core.portal_client import PortalClient, PortalSession, close_shared_transport
+from core.portal_client import PortalClient, PortalSession, close_shared_transport, fetch_portal_reports
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -308,7 +308,7 @@ async def refresh_data(creds: Credentials, request: Request):
             raise HTTPException(status_code=401, detail={"type": "SESSION_EXPIRED"})
 
         client = AcademiaClient(creds.username, creds.password, creds.cookies)
-        if not creds.cookies:
+        if not creds.cookies or (creds.reauthenticate and creds.password):
             await client.authenticate(creds.captcha, creds.cdigest)
 
         res_prof, res_g1, res_g2, res_att = await gather_complete(
@@ -324,7 +324,7 @@ async def refresh_data(creds: Credentials, request: Request):
 
         session_dead = (profile_html is None or profile_html == "CONCURRENT_ERROR") and (att_html is None or att_html == "CONCURRENT_ERROR")
 
-        if session_dead and creds.password:
+        if session_dead and creds.password and not creds.reauthenticate:
             print(f"{get_now()}\n  -> [AUTH] Session invalid or site glitch. Attempting re-auth...", flush=True)
             try:
                 await client.authenticate(creds.captcha, creds.cdigest)
@@ -525,13 +525,7 @@ async def portal_captcha(request: Request):
 async def portal_login(creds: PortalCredentials, request: Request):
     if creds.cookies:
         client = PortalClient(creds.cookies)
-        att_html, marks, tt_html, prof_html, academic = await gather_complete(
-            client.get_attendance_html(),
-            client.get_marks_data(),
-            client.get_timetable_html(),
-            client.get_profile_html(),
-            client.get_academic_history()
-        )
+        att_html, marks, tt_html, prof_html, academic = await fetch_portal_reports(client)
         if att_html is None:
             raise HTTPException(status_code=401, detail={"type": "SESSION_EXPIRED"})
         courses, monthly = await asyncio.to_thread(PortalAttendanceService.parse, att_html)
@@ -627,14 +621,9 @@ async def portal_login(creds: PortalCredentials, request: Request):
 
     await close_client(session.client)
     client = PortalClient(login_res["cookies"])
+    client.seed_attendance(getattr(session, "authenticated_attendance", None))
     try:
-        att_html, marks, tt_html, prof_html, academic = await gather_complete(
-            client.get_attendance_html(),
-            client.get_marks_data(),
-            client.get_timetable_html(),
-            client.get_profile_html(),
-            client.get_academic_history()
-        )
+        att_html, marks, tt_html, prof_html, academic = await fetch_portal_reports(client)
     except Exception as e:
         print(f"  -> [PORTAL] Connect error fetching details after login: {e}", flush=True)
         att_html, marks, tt_html, prof_html, academic = None, [], None, None, {"status": "unavailable"}
@@ -668,13 +657,10 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
         raise HTTPException(status_code=401, detail={"type": "SESSION_EXPIRED"})
     client = PortalClient(creds.cookies)
     # Academic history loads the signed-in shell alongside the other reports.
-    att_html, marks, tt_html, prof_html, academic = await gather_complete(
-        client.get_attendance_html(),
-        client.get_marks_data(),
-        client.get_timetable_html(),
-        client.get_profile_html(),
-        client.get_academic_history()
-    )
+    if creds.reauthenticate and creds.username and creds.password:
+        att_html, marks, tt_html, prof_html, academic = None, [], None, None, {"status": "unavailable"}
+    else:
+        att_html, marks, tt_html, prof_html, academic = await fetch_portal_reports(client)
     if att_html is None:
         if creds.username and creds.password:
             print("  -> [OCR] Portal session expired. Running background re-auth...", flush=True)
@@ -701,13 +687,8 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
                         reauth_success = True
                         await close_client(client.client)
                         client = PortalClient(res["cookies"])
-                        att_html, marks, tt_html, prof_html, academic = await gather_complete(
-                            client.get_attendance_html(),
-                            client.get_marks_data(),
-                            client.get_timetable_html(),
-                            client.get_profile_html(),
-                            client.get_academic_history()
-                        )
+                        client.seed_attendance(getattr(session, "authenticated_attendance", None))
+                        att_html, marks, tt_html, prof_html, academic = await fetch_portal_reports(client)
                         break
                     else:
                         print(f"  -> [OCR] Portal background re-auth attempt {ocr_attempts} failed. Reason: {res.get('reason')}", flush=True)

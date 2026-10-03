@@ -317,7 +317,7 @@ function loadReports(options = {}) {
   return reportLoad;
 }
 
-async function fetchReports({ cacheOnly = false, force = false, silent = false, followup = false } = {}) {
+async function fetchReports({ cacheOnly = false, force = false, silent = false, followup = false, waitForCompletion = false } = {}) {
   if (designPreview) return;
   clearTimeout(pendingSyncTimer);
   if (!followup) pendingSyncChecks = 0;
@@ -333,7 +333,9 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     }
   }
   try {
-    const reports = await api(`/api/reports${force ? '?force=1&wait=1' : cacheOnly ? '?cache=only' : '?wait=1'}`);
+    const query = force ? '?force=1&wait=1' : cacheOnly
+      ? `?cache=only${waitForCompletion ? '&wait=1' : ''}` : '?wait=1';
+    const reports = await api(`/api/reports${query}`);
     const changed = (key, data, update) => {
       const fingerprint = JSON.stringify(data);
       if (reportFingerprint[key] !== fingerprint) { update(); reportFingerprint[key] = fingerprint; }
@@ -351,14 +353,17 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     writeReportsCache(reports);
     anonSyncControl.complete(reports);
     if (reports.sync?.pending) {
-      // Follow the server's hint directly; the old 15-second clock timer added
-      // another full tick even when work finished just after the first reply.
+      // At low load, wait on the existing job so completion is returned as
+      // soon as it happens. Older/busy servers retain the bounded backoff.
       pendingSyncChecks++;
-      const delay = Math.max(pendingSyncChecks > 5 ? 5000 : 200, Math.min(30000, Number(reports.sync.nextAt) - Date.now() || 2000));
+      const waitForCompletion = reports.sync.waitForCompletion === true;
+      const delay = Math.max(pendingSyncChecks > 5 && !waitForCompletion ? 5000 : 200,
+        Math.min(30000, Number(reports.sync.nextAt) - Date.now() || 2000));
       pendingSyncTimer = setTimeout(() => {
         if (!authenticated || busy || document.hidden || !navigator.onLine || $('connect-dialog').open) return;
         const retryAdmission = reports.sync.state === 'busy';
-        loadReports({ cacheOnly: !retryAdmission, force: retryAdmission, silent: true, followup: true }).catch(() => {});
+        loadReports({ cacheOnly: !retryAdmission, force: retryAdmission, silent: true,
+          followup: true, waitForCompletion }).catch(() => {});
       }, delay);
     } else pendingSyncChecks = 0;
     return reports;

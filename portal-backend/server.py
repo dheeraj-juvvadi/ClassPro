@@ -14,7 +14,6 @@ from capacity import can_admit
 from refresh_queue import RefreshQueue
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from functools import partial
 from pathlib import Path
 
 import httpx
@@ -28,9 +27,9 @@ import main as upstream
 from academic_data import extras
 from provider_flow import providers, combined, same_student, normalize_account, refresh as refresh_providers
 from session_store import SessionStore, lifetime
+from report_response import ReportResponse
 import sync_schedule
 import attendance_trends
-from portal_exams import refresh_exams
 from client_logs import ClientLogStore
 from presence import Presence
 
@@ -66,6 +65,7 @@ MEMORY_RESERVE_MB = _positive("MEMORY_RESERVE_MB", 160)
 REFRESH_COOLDOWN = _positive("REFRESH_COOLDOWN", 60)
 REFRESH_QUEUE_WAIT = _positive("REFRESH_QUEUE_WAIT", 600)
 REFRESH_RESPONSE_WAIT = 1.5
+REFRESH_FOLLOWUP_WAIT = 5.0
 refresh_response_waiters = 0
 
 RATE_PER_MINUTE = _positive("RATE_PER_MINUTE", 30)           # per issued session
@@ -638,8 +638,6 @@ async def login(request: Request):
     states = providers(entry)
     if not same_student(states, provider, data, payload["account"]):
         return failure("ACCOUNT_MISMATCH", "Connect the same student's account for both providers.", 409)
-    if provider == "portal":
-        data["exams"] = await refresh_exams(data["cookies"])
     states[provider] = {"cookies": data["cookies"], "username": login_payload["username"],
                         "password": payload["password"], "report": report(data), "expired": False}
     entry["remember"] = payload.get("remember", entry.get("remember", True)) is not False
@@ -690,11 +688,8 @@ async def refresh_job(token, entry, request):
         started = time.monotonic()
         entry["sync_attempted_at"] = time.time()
         try:
-            force_exams = (getattr(state, "force_exams", False)
-                           or getattr(request, "query_params", {}).get("force") == "1")
-            exam_refresh = partial(refresh_exams, force=True) if force_exams else refresh_exams
             data, succeeded = await asyncio.wait_for(
-                refresh_providers(request, entry, invoke, report, exam_refresh), timeout=90)
+                refresh_providers(request, entry, invoke, report), timeout=90)
         except Exception as error:
             entry["sync_failed"] = True
             exception_type = type(error).__name__
@@ -732,7 +727,7 @@ async def refresh_job(token, entry, request):
                           "exception_type": exception_type}), flush=True)
 
 
-@app.get("/api/reports")
+@app.get("/api/reports", response_model=ReportResponse)
 async def reports(request: Request):
     global refresh_response_waiters
     token = session_token(request)
@@ -747,7 +742,7 @@ async def reports(request: Request):
     # Only a few requests may briefly await work. Large bursts still return
     # cached reports immediately and never occupy the login worker pool.
     wait_fast = (queue and request.query_params.get("wait") == "1"
-                 and len(queue.jobs) < REFRESH_CONCURRENCY
+                 and len(queue.jobs) <= REFRESH_CONCURRENCY
                  and refresh_response_waiters < REFRESH_CONCURRENCY)
     recent = now - entry.get("sync_attempted_at", 0) < REFRESH_COOLDOWN
     wanted = force or sync_schedule.due(entry, now)
@@ -755,7 +750,7 @@ async def reports(request: Request):
         if queue:
             context = SimpleNamespace(app=app, state=SimpleNamespace(
                 diagnostic_id=getattr(getattr(request, "state", None), "diagnostic_id", secrets.token_hex(12)),
-                queued_at=time.monotonic(), force_exams=force))
+                queued_at=time.monotonic()))
             pending = queue.submit(token, entry, context) is not None
         else:
             await refresh_job(token, entry, request)
@@ -766,10 +761,13 @@ async def reports(request: Request):
             try:
                 # asyncio.wait never cancels the shared job on timeout or when
                 # this browser disconnects. Other callers reuse the same work.
-                await asyncio.wait({job}, timeout=REFRESH_RESPONSE_WAIT)
+                timeout = REFRESH_FOLLOWUP_WAIT if cache_only else REFRESH_RESPONSE_WAIT
+                await asyncio.wait({job}, timeout=timeout)
             finally:
                 refresh_response_waiters -= 1
         pending = token in queue.jobs
+    if sessions.get(token) is not entry:
+        return failure("SESSION_EXPIRED", "Please sign in again.")
     result = sync_schedule.response(entry, time.time())
     if entry.get("sync_failed"):
         result["warnings"] = [*result.get("warnings", []), "Sync could not finish. Your last data is still available; try again shortly."]
@@ -777,6 +775,7 @@ async def reports(request: Request):
     if queue and (pending or (wanted and not recent and not cache_only)):
         light = len(queue.jobs) <= REFRESH_CONCURRENCY
         result["sync"].update({"pending": True, "state": "queued" if pending else "busy",
+                               "waitForCompletion": bool(pending and light and refresh_response_waiters < REFRESH_CONCURRENCY),
                                "nextAt": (time.time() + (0.2 + secrets.randbelow(100) / 1000 if light else 15 + secrets.randbelow(16))) * 1000})
     return result
 

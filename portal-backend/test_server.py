@@ -52,10 +52,6 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 self.assertNotIn('synthetic-secret', next(Path(directory).glob('*.jsonl')).read_text())
 
     async def asyncSetUp(self):
-        self.exam_patch = patch("server.refresh_exams", new_callable=AsyncMock,
-                                return_value={"status": "pending", "entries": [], "stale": False})
-        self.exam_patch.start()
-        self.addCleanup(self.exam_patch.stop)
         server.sessions.clear()
         server.rates.clear()
         server.gate = server.asyncio.Semaphore(server.API_CONCURRENCY)
@@ -126,9 +122,7 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(second.json()["sync"]["pending"])
                 self.assertTrue((await self.client.get("/api/session")).json()["authenticated"])
                 self.assertEqual(work.call_count, 1)
-                exam_refresh = work.call_args.args[4]
-                self.assertIs(exam_refresh.func, server.refresh_exams)
-                self.assertEqual(exam_refresh.keywords, {"force": True})
+                self.assertEqual(len(work.call_args.args), 4)
             finally:
                 finish.set()
                 await server.app.state.refresh_queue.queue.join()

@@ -70,7 +70,10 @@ async def refresh(request, entry, invoke, report, exam_refresh=None):
             payload["username"] = state["username"]
         response, data = await invoke(request, "/portal/refresh" if name == "portal" else "/refresh", payload)
         if response.status_code == 401 and state.get("password"):
-            payload.update({"username": state["username"], "password": state["password"]})
+            # This request already established expiry. Do not fetch the entire
+            # expired report set a second time before attempting recovery.
+            payload.update({"username": state["username"], "password": state["password"],
+                            "reauthenticate": True})
             response, data = await invoke(request, "/portal/refresh" if name == "portal" else "/refresh", payload)
         if response.status_code != 200 or data.get("success") is not True:
             state["expired"] = response.status_code == 401

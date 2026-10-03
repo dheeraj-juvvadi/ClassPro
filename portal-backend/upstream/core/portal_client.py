@@ -7,7 +7,7 @@ import time
 import httpx
 import asyncio
 from services.portal_marks_service import PortalMarksService
-from core.client_lifecycle import track
+from core.client_lifecycle import track, gather_complete
 
 LOGIN_URL = "https://sp.srmist.edu.in/srmiststudentportal/students/loginManager/youLogin.jsp"
 BASE_URL = "https://sp.srmist.edu.in/srmiststudentportal"
@@ -28,7 +28,8 @@ HEADERS = {
 
 _shared_transport = httpx.AsyncHTTPTransport(
     retries=1,
-    limits=httpx.Limits(max_keepalive_connections=50, max_connections=200)
+    limits=httpx.Limits(max_keepalive_connections=50, max_connections=200,
+                       keepalive_expiry=60.0)
 )
 
 
@@ -43,6 +44,27 @@ class _BorrowedTransport(httpx.AsyncBaseTransport):
 
 async def close_shared_transport():
     await _shared_transport.aclose()
+
+
+class _ExpiredPortalReport(Exception):
+    pass
+
+
+async def fetch_portal_reports(client):
+    """Fetch in parallel, but stop optional work once attendance proves expiry."""
+    async def attendance():
+        html = await client.get_attendance_html()
+        if html is None:
+            raise _ExpiredPortalReport()
+        return html
+
+    try:
+        return await gather_complete(attendance(), client.get_marks_data(),
+            client.get_timetable_html(), client.get_profile_html(), client.get_academic_history())
+    except _ExpiredPortalReport:
+        # gather_complete cancels/drains all siblings before the jar is closed
+        # or recovery starts. Do not wait for a slow optional report to time out.
+        return None, [], None, None, {"status": "unavailable"}
 
 
 def canvas_hash():
@@ -166,13 +188,18 @@ class PortalSession:
         fp_body[self.captcha_field_name] = cptoken
         resp = await self.client.post(LOGIN_SERVLET, data=fp_body)
         body = resp.text or ""
-        if "logout.jsp" in resp.url.path or "attendance" in resp.url.path.lower():
+        attendance_response = "attendance" in resp.url.path.lower()
+        if "logout.jsp" in resp.url.path or attendance_response:
             html = body
         else:
             html = await self.get_attendance_html()
+            attendance_response = True
         if html is None:
             reason = self.classify_failure(resp.url.path, body)
             return {"ok": False, "reason": reason}
+        # Login already fetched attendance to verify authentication. Reuse only
+        # that response in this same login operation, never across later syncs.
+        self.authenticated_attendance = html if attendance_response else None
         return {"ok": True, "cookies": {c.name: c.value for c in self.client.cookies.jar}}
 
     @staticmethod
@@ -207,6 +234,13 @@ class PortalClient:
         self.client = track(httpx.AsyncClient(transport=_BorrowedTransport(), headers=HEADERS, follow_redirects=True, timeout=30.0))
         if cookies:
             self.client.cookies.update(cookies)
+
+    def seed_attendance(self, html):
+        if isinstance(html, str) and html and len(html) <= 512 * 1024:
+            if "login_form" not in html and "theGR8LoginLoader" not in html:
+                result = asyncio.get_running_loop().create_future()
+                result.set_result(html)
+                self._attendance_task = result
 
     async def keepalive(self):
         try:
@@ -322,7 +356,7 @@ class PortalClient:
                 except Exception:
                     pass
 
-            await asyncio.gather(*[fetch_inner(s) for s in subjects])
+            await gather_complete(*[fetch_inner(s) for s in subjects])
 
             for s in subjects:
                 s.pop("subjectId", None)
