@@ -272,6 +272,7 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   assert.equal(await page.locator('#settings-name').innerText(), 'Test Person');
   await page.evaluate(() => {
     document.querySelector('button[data-page="attendance"]').click();
+    dateAttendance.resetProjection();
     renderAttendance({ data: [{ code: 'CS', title: 'Computing', present: 9, conducted: 11, absent: 2, change24h: { points: 1.82 } }] });
   });
   assert.match(await page.locator('.attendance-change.positive').textContent(), /\+1.8 percentage points/);
