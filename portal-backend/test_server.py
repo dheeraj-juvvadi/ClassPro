@@ -126,6 +126,9 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(second.json()["sync"]["pending"])
                 self.assertTrue((await self.client.get("/api/session")).json()["authenticated"])
                 self.assertEqual(work.call_count, 1)
+                exam_refresh = work.call_args.args[4]
+                self.assertIs(exam_refresh.func, server.refresh_exams)
+                self.assertEqual(exam_refresh.keywords, {"force": True})
             finally:
                 finish.set()
                 await server.app.state.refresh_queue.queue.join()

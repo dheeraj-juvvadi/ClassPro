@@ -14,6 +14,7 @@ from capacity import can_admit
 from refresh_queue import RefreshQueue
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 
 import httpx
@@ -689,8 +690,11 @@ async def refresh_job(token, entry, request):
         started = time.monotonic()
         entry["sync_attempted_at"] = time.time()
         try:
+            force_exams = (getattr(state, "force_exams", False)
+                           or getattr(request, "query_params", {}).get("force") == "1")
+            exam_refresh = partial(refresh_exams, force=True) if force_exams else refresh_exams
             data, succeeded = await asyncio.wait_for(
-                refresh_providers(request, entry, invoke, report, refresh_exams), timeout=90)
+                refresh_providers(request, entry, invoke, report, exam_refresh), timeout=90)
         except Exception as error:
             entry["sync_failed"] = True
             exception_type = type(error).__name__
@@ -751,7 +755,7 @@ async def reports(request: Request):
         if queue:
             context = SimpleNamespace(app=app, state=SimpleNamespace(
                 diagnostic_id=getattr(getattr(request, "state", None), "diagnostic_id", secrets.token_hex(12)),
-                queued_at=time.monotonic()))
+                queued_at=time.monotonic(), force_exams=force))
             pending = queue.submit(token, entry, context) is not None
         else:
             await refresh_job(token, entry, request)

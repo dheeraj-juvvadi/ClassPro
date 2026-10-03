@@ -14,6 +14,7 @@ SUBJECTS = BASE + "students/certificateRequest/ScribeInner.jsp"
 NOTICE = "Exam dates may change. Confirm with Student Portal or your hall ticket before each exam."
 CHECK_SECONDS = 6 * 3600
 RETRY_SECONDS = 15 * 60
+FETCH_VERSION = 2
 
 
 def stamp(now):
@@ -22,7 +23,7 @@ def stamp(now):
 
 def unavailable(previous, now):
     result = copy.deepcopy(previous) if isinstance(previous, dict) else {}
-    result.update({"lastAttemptAt": stamp(now), "nextCheckAt": (now + RETRY_SECONDS) * 1000,
+    result.update({"fetchVersion": FETCH_VERSION, "lastAttemptAt": stamp(now), "nextCheckAt": (now + RETRY_SECONDS) * 1000,
                    "stale": True, "notice": NOTICE})
     result["entries"] = [{**row, "stale": True} for row in result.get("entries", [])]
     if not result.get("checkedAt"):
@@ -32,7 +33,15 @@ def unavailable(previous, now):
 
 
 async def read(client, url, params=None):
-    async with client.stream("GET", url, params=params, timeout=10, follow_redirects=False) as response:
+    # Match funLoadSubject(): iden=1 only loads subjects; it does not apply for
+    # a scribe. The JSP expects form fields from the selector's AJAX POST.
+    if url == SUBJECTS:
+        request = {"method": "POST", "data": params,
+                   "headers": {"X-Requested-With": "XMLHttpRequest",
+                               "Referer": BASE + "students/template/HRDSystem.jsp"}}
+    else:
+        request = {"method": "GET", "params": params}
+    async with client.stream(url=url, timeout=10, follow_redirects=False, **request) as response:
         if response.status_code != 200:
             raise ValueError("Exam source unavailable")
         content = bytearray()
@@ -65,7 +74,7 @@ async def collect(client, previous, now):
     except ValueError:
         discovery_failed = True
         scribe_html = None
-    base = {"checkedAt": stamp(now), "lastAttemptAt": stamp(now), "stale": False,
+    base = {"fetchVersion": FETCH_VERSION, "checkedAt": stamp(now), "lastAttemptAt": stamp(now), "stale": False,
             "nextCheckAt": (now + CHECK_SECONDS) * 1000, "notice": NOTICE,
             "sessions": [{"value": item["value"], "label": item["label"]} for item in offered]}
     options = candidates(offered, today) if isinstance(scribe_html, str) else []
@@ -131,10 +140,11 @@ async def collect(client, previous, now):
             "sessionLabel": selected[0]["periodLabel"] if selected else "Upcoming exams"}
 
 
-async def refresh_exams(cookies, previous=None, now=None):
+async def refresh_exams(cookies, previous=None, now=None, *, force=False):
     import time
     now = time.time() if now is None else now
-    if isinstance(previous, dict) and isinstance(previous.get("nextCheckAt"), (int, float)):
+    if (not force and isinstance(previous, dict) and previous.get("fetchVersion") == FETCH_VERSION
+            and isinstance(previous.get("nextCheckAt"), (int, float))):
         if now * 1000 < previous["nextCheckAt"] <= (now + CHECK_SECONDS) * 1000:
             return copy.deepcopy(previous)
     portal = PortalClient(cookies)

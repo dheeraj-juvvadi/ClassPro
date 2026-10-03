@@ -12,7 +12,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).parent / "upstream"))
 from services.portal_exam_service import candidates, sessions, table_records
 from portal_exams import (
-    CHECK_SECONDS, RETRY_SECONDS, OFFICIAL, SCRIBE, SUBJECTS,
+    CHECK_SECONDS, RETRY_SECONDS, FETCH_VERSION, OFFICIAL, SCRIBE, SUBJECTS,
     collect, read, refresh_exams, stamp,
 )
 
@@ -71,7 +71,10 @@ class Sources:
         elif url == SCRIBE:
             body = self.selector_html
         elif url == SUBJECTS:
-            params = request.url.params
+            if request.method != 'POST':
+                self.unexpected.append('subject lookup must use POST')
+                return httpx.Response(405)
+            params = httpx.QueryParams(request.content.decode())
             value = params.get('hdnExamMonth', '') + '_' + params.get('hdnExamYear', '')
             if value not in self.responses:
                 self.unexpected.append(value)
@@ -87,16 +90,21 @@ class Sources:
     def assert_safe(self, case):
         case.assertEqual(self.unexpected, [], 'Missing fixtures or unexpected endpoint')
         for call in self.calls:
-            case.assertEqual(call.method, 'GET')
-            case.assertEqual(call.content, b'')
             url = str(call.url.copy_with(query=None))
             expected = ({'iden': '126', 'hdnFormDetails': '126', 'filter': ''}
                         if url == OFFICIAL else
                         {'iden': '49', 'hdnFormDetails': '49', 'filter': ''})
             if url == SUBJECTS:
-                case.assertEqual(set(call.url.params), {'iden', 'hdnExamMonth', 'hdnExamYear'})
-                case.assertEqual(call.url.params['iden'], '1')
+                case.assertEqual(call.method, 'POST')
+                case.assertFalse(call.url.params)
+                case.assertEqual(call.headers['content-type'], 'application/x-www-form-urlencoded')
+                case.assertEqual(call.headers['x-requested-with'], 'XMLHttpRequest')
+                params = httpx.QueryParams(call.content.decode())
+                case.assertEqual(set(params), {'iden', 'hdnExamMonth', 'hdnExamYear'})
+                case.assertEqual(params['iden'], '1')
             else:
+                case.assertEqual(call.method, 'GET')
+                case.assertEqual(call.content, b'')
                 case.assertEqual(dict(call.url.params), expected)
 
 
@@ -205,6 +213,18 @@ class CollectionTests(unittest.IsolatedAsyncioTestCase):
                             and row['provisional'] and row['sourceKind'] == 'scribe'
                             and not row['stale'] for row in result['entries']))
 
+    async def test_stale_november_selector_posts_current_year_and_returns_dates(self):
+        result, calls = await self.run_source(['5_2026', '11_2025'],
+                                             {'11_2026': scribe('12-11-2026')})
+        subject_calls = [call for call in calls if str(call.url) == SUBJECTS]
+        self.assertEqual(len(subject_calls), 1)
+        self.assertEqual(dict(httpx.QueryParams(subject_calls[0].content.decode())),
+                         {'iden': '1', 'hdnExamMonth': '11', 'hdnExamYear': '2026'})
+        self.assertEqual(result['status'], 'published')
+        self.assertEqual(result['entries'][0]['date'], '2026-11-12')
+        self.assertEqual(result['entries'][0]['period'], '11_2026')
+        self.assertFalse(result['stale'])
+
     async def test_added_december_option_is_collected_alongside_november(self):
         result,calls=await self.run_source(['11_2026','12_2026'],
                                          {'11_2026':scribe(), '12_2026':scribe('04-12-2026')})
@@ -237,7 +257,7 @@ class CollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(old,cached)
 
     async def test_bounded_cached_refresh_skips_network(self):
-        old={'nextCheckAt':(NOW+CHECK_SECONDS)*1000,'entries':[]}
+        old={'fetchVersion':FETCH_VERSION,'nextCheckAt':(NOW+CHECK_SECONDS)*1000,'entries':[]}
         with patch('portal_exams.PortalClient') as client:
             self.assertEqual(await refresh_exams({},old,NOW),old)
             client.assert_not_called()
@@ -422,12 +442,12 @@ class TestStream(httpx.AsyncByteStream):
 
 
 class RefreshTests(unittest.IsolatedAsyncioTestCase):
-    async def refresh_fixture(self, sources, previous=None, now=NOW):
+    async def refresh_fixture(self, sources, previous=None, now=NOW, *, force=False):
         client = httpx.AsyncClient(transport=httpx.MockTransport(sources.handle))
         close = AsyncMock(wraps=client.aclose)
         factory = patch('portal_exams.PortalClient', return_value=SimpleNamespace(client=client))
         with factory as constructor, patch.object(client, 'aclose', close):
-            result = await refresh_exams({}, previous, now)
+            result = await refresh_exams({}, previous, now, force=force)
         constructor.assert_called_once_with({})
         close.assert_awaited_once()
         self.assertTrue(client.is_closed)
@@ -444,7 +464,8 @@ class RefreshTests(unittest.IsolatedAsyncioTestCase):
     async def test_cache_ttl_bounds_and_copy_isolation(self):
         for offset in [1, CHECK_SECONDS * 1000]:
             with self.subTest(offset=offset):
-                old = {'nextCheckAt': NOW * 1000 + offset, 'entries': [{'date': None}]}
+                old = {'fetchVersion': FETCH_VERSION, 'nextCheckAt': NOW * 1000 + offset,
+                       'entries': [{'date': None}]}
                 with patch('portal_exams.PortalClient') as constructor:
                     result = await refresh_exams({}, old, NOW)
                 constructor.assert_not_called()
@@ -454,7 +475,7 @@ class RefreshTests(unittest.IsolatedAsyncioTestCase):
                        'tomorrow', None, float('nan'), float('inf')]:
             with self.subTest(expiry=expiry):
                 result = await self.refresh_fixture(Sources(['11_2026'], {'11_2026': scribe()}),
-                                                     {'nextCheckAt': expiry, 'entries': []})
+                                                     {'fetchVersion': FETCH_VERSION, 'nextCheckAt': expiry, 'entries': []})
                 self.assertEqual(result['status'], 'pending')
                 self.assertEqual(result['checkedAt'], stamp(NOW))
 
@@ -468,6 +489,23 @@ class RefreshTests(unittest.IsolatedAsyncioTestCase):
                                             failed, NOW + RETRY_SECONDS)
         self.assertEqual(fresh['status'], 'pending')
         self.assertFalse(fresh['stale'])
+
+    async def test_previous_get_cache_is_refetched_after_request_fix(self):
+        old = {'nextCheckAt': (NOW + CHECK_SECONDS) * 1000,
+               'status': 'pending', 'entries': []}
+        result = await self.refresh_fixture(
+            Sources(['11_2025'], {'11_2026': scribe('12-11-2026')}), old)
+        self.assertEqual(result['fetchVersion'], FETCH_VERSION)
+        self.assertEqual(result['status'], 'published')
+        self.assertEqual(old['entries'], [])
+
+    async def test_explicit_sync_refetches_current_cache(self):
+        old = {'fetchVersion': FETCH_VERSION, 'nextCheckAt': (NOW + CHECK_SECONDS) * 1000,
+               'status': 'pending', 'entries': []}
+        result = await self.refresh_fixture(
+            Sources(['11_2025'], {'11_2026': scribe('12-11-2026')}), old, force=True)
+        self.assertEqual(result['status'], 'published')
+        self.assertEqual(result['entries'][0]['date'], '2026-11-12')
 
     async def test_deadline_cancels_children_and_closes_client(self):
         started = asyncio.Event()
