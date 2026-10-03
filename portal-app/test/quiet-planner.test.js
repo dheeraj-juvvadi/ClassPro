@@ -111,9 +111,14 @@ test('Calculate applies recovery hours to attendance after date selection', { ti
   assert.equal(await hours(page), '22h');
   assert.equal(await projected.locator('.attendance-margin-value').textContent(), '−62h', 'draft edits do not change applied results');
   await page.keyboard.press('Escape');
-  await page.locator('#attendance-plan-reset').click();
+  await page.getByRole('button', { name: 'Reset plan', exact: true }).click();
   assert.equal(await projected.locator('.attendance-margin-value').textContent(), '0h');
   assert.equal(await page.locator('#attendance-plan').isVisible(), false);
+  await page.locator('#calculate-attendance').click();
+  assert.deepEqual(await selectedDates(page), []);
+  assert.equal(await page.locator('#projection-live-hours').textContent(), '');
+  assert.equal(await page.locator('#projection-review-custom').isDisabled(), true);
+  assert.equal(await page.locator('#projection-class-options').evaluate(node => node.open), false);
   assert.deepEqual(errors, []);
 });
 

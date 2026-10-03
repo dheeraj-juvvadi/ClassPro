@@ -308,7 +308,14 @@ globalThis.dateAttendance = (() => {
       const dates = range ? `${shortDate(range.start)}–${shortDate(range.end)}` : '';
       return { result, summary: `${label}${dates ? ` · ${dates}` : ''}` };
     },
-    resetProjection() { applied = null; academicUI.refreshAttendance(courses); },
+    resetProjection() {
+      applied = null; selected = {}; requestedRange = null; excludedDates.clear();
+      rangeComplete = false; removedCount = 0; changedClasses = 0;
+      editedDay = ''; rangeAnchor = ''; rangeStart = ''; rangeEnd = ''; focusCode = '';
+      step = 'dates'; setMode('leave'); rangeError(); syncRangeInputs();
+      get('projection-class-options').open = false;
+      render(); academicUI.refreshAttendance(courses);
+    },
     openDay(date) {
       const key = model.key(date);
       if (model.dayState(source, date).kind !== 'teaching') return;
