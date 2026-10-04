@@ -2,10 +2,12 @@
 globalThis.anonSyncControl = (() => {
   const notice = document.getElementById('sync-notice');
   const label = document.getElementById('sync-notice-label');
-  let active = 0, pending = false, notifying = false, started = 0;
+  const progress = document.getElementById('sync-progress');
+  let active = 0, pending = false, notifying = false;
   let lastSynced = 0, baseline = 0, outcome = null, settleTimer, hideTimer;
 
   function paint(running) {
+    progress.textContent = running ? 'Syncing reports…' : '';
     for (const id of ['refresh', 'settings-sync']) {
       const button = document.getElementById(id);
       button.classList.toggle('syncing', running);
@@ -77,18 +79,17 @@ globalThis.anonSyncControl = (() => {
     begin({ notify = true } = {}) {
       clearTimeout(settleTimer); clearTimeout(hideTimer);
       if (!active && !pending) {
-        started = performance.now(); baseline = lastSynced; notifying = notify;
+        baseline = lastSynced; notifying = notify;
       }
       active++; notifying ||= notify; outcome = null;
+      notice.hidden = true;
       paint(true);
-      if (notifying) show('running', 'Dilly-dallying…');
     },
     complete(reports) {
       observe(reports);
       pending = !!reports.sync?.pending;
       if (pending) {
         notifying = true;
-        show('running', 'Dilly-dallying…');
         return;
       }
       const partial = reports.attendance?.error || reports.marks?.error || reports.warnings?.length;

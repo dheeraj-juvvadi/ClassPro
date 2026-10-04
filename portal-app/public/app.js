@@ -349,7 +349,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     nextAutoSync = reports.sync?.pending ? reports.sync.nextAt : reports.sync?.due && cacheOnly ? 0 : reports.sync?.nextAt || reportSyncSchedule.next();
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
-    message('reports-message', reports.sync?.pending ? 'Sync queued. Your last data stays available while we refresh.' : reports.attendance?.error || reports.marks?.error ? 'Some reports could not be loaded. Try Sync.' : '');
+    message('reports-message', !reports.sync?.pending && (reports.attendance?.error || reports.marks?.error) ? 'Some reports could not be loaded. Try Sync.' : '');
     writeReportsCache(reports);
     anonSyncControl.complete(reports);
     if (reports.sync?.pending) {

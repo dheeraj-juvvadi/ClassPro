@@ -109,7 +109,7 @@ globalThis.anonSettings = (() => {
     const time = new Date(data.updatedAt);
     get('settings-last-sync').textContent = Number.isNaN(time.getTime()) ? 'Your cached data stays available.' : `Updated ${time.toLocaleString('en', { timeZone: 'Asia/Kolkata', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} IST`;
     if (!get('settings-view').hidden) {
-      tell(data.sync?.pending ? 'Sync queued. Your last data stays available while we refresh.'
+      tell(data.sync?.pending ? ''
         : data.warnings?.length || data.attendance?.error || data.marks?.error
           ? 'Some data could not refresh. Your last data is still available.' : 'Your data is up to date.');
     }
@@ -152,7 +152,7 @@ globalThis.anonSettings = (() => {
     if (get('settings-sync').disabled) return;
     tell('');
     try { const data = await loadReports({ force: true });
-      if (data?.sync?.pending) tell('Sync queued. Your last data stays available while we refresh.');
+      if (data?.sync?.pending) tell('');
       else if (data?.warnings?.length || data?.attendance?.error || data?.marks?.error) tell('Some data could not refresh. Your last data is still available.');
       else tell('Your data is up to date.');
     }
