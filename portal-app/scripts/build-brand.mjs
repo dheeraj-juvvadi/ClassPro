@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, readdir } from 'node:fs/promises';
 import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 
@@ -9,8 +9,19 @@ const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <rect width="128" height="128" fill="#191b19"/>
   <svg x="22" y="22" width="84" height="84" viewBox="0 0 64 64">${logo.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')}</svg>
 </svg>`;
-const favicon = icon.replace('x="22" y="22" width="84" height="84"', 'x="0" y="0" width="128" height="128"');
+// Browser favicons have transparent edges; only installed-app icons use a tile.
+const favicon = logo.replace('<svg ', '<svg width="64" height="64" ');
+async function faviconPng(size) {
+  const { data, info } = await sharp(Buffer.from(favicon.replace('width="64" height="64"',
+    `width="${size}" height="${size}"`))).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  // Discard near-transparent raster noise so Safari cannot expose a pale fringe.
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] <= 1) data.fill(0, i, i + 4);
+  }
+  return sharp(data, { raw: info }).png().toBuffer();
+}
 await writeFile(new URL('favicon.svg', publicDir), favicon);
+await writeFile(new URL('favicon.png', publicDir), await faviconPng(32));
 for (const size of [192, 512]) {
   const png = await sharp(Buffer.from(icon)).resize(size, size).png().toBuffer();
   for (const suffix of ['', '-maskable']) {
@@ -18,7 +29,7 @@ for (const size of [192, 512]) {
   }
 }
 await writeFile(new URL('icons/apple-touch-icon.png', publicDir), await sharp(Buffer.from(icon)).resize(180, 180).png().toBuffer());
-const pngs = await Promise.all([16, 32, 48].map(size => sharp(Buffer.from(favicon)).resize(size, size).png().toBuffer()));
+const pngs = await Promise.all([16, 32, 48].map(faviconPng));
 const header = Buffer.alloc(6 + pngs.length * 16);
 header.writeUInt16LE(1, 2);
 header.writeUInt16LE(pngs.length, 4);
@@ -33,15 +44,13 @@ pngs.forEach((png, index) => {
   offset += png.length;
 });
 await writeFile(new URL('favicon.ico', publicDir), Buffer.concat([header, ...pngs]));
-console.log('Generated favicon, touch icon, and four install icons from logo.svg');
+console.log('Generated transparent favicons, touch icon, and four install icons from logo.svg');
 const social = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#191b19"/>
   <path d="M84 526H1116" stroke="#3b4035"/>
   <svg x="890" y="164" width="230" height="230" viewBox="0 0 64 64">${logo.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')}</svg>
-  <text x="84" y="122" fill="#f1eee3" font-family="sans-serif" font-size="32" font-weight="700">Anon</text>
-  <text x="84" y="284" fill="#f1eee3" font-family="sans-serif" font-size="70">A little room</text>
-  <text x="84" y="370" fill="#c5d4a7" font-family="sans-serif" font-size="70">to grow.</text>
-  <text x="84" y="462" fill="#b3b8ab" font-family="sans-serif" font-size="25">Attendance. Marks. Your academic day.</text>
+  <text x="84" y="325" fill="#f1eee3" font-family="sans-serif" font-size="132" font-weight="700">Anon</text>
+  <text x="90" y="405" fill="#b3b8ab" font-family="sans-serif" font-size="28">Attendance. Marks. Timetable.</text>
   <text x="84" y="574" fill="#b3b8ab" font-family="sans-serif" font-size="20">anon-tracker.vercel.app</text>
 </svg>`;
 await writeFile(new URL('og-image.png', publicDir), await sharp(Buffer.from(social)).png({ compressionLevel: 9 }).toBuffer());
@@ -54,8 +63,18 @@ async function versioned(path) {
   await writeFile(new URL(name, publicDir), data);
   return `/${name}`;
 }
+const socialUrl = await versioned('og-image.png');
+for (const name of await readdir(publicDir)) {
+  if (!name.endsWith('.html')) continue;
+  const path = new URL(name, publicDir);
+  const html = await readFile(path, 'utf8');
+  const updated = html.replace(/\/og-image(?:\.[a-f0-9]{10})?\.png/g, socialUrl);
+  if (updated !== html) await writeFile(path, updated);
+}
+console.log(`Generated share image ${socialUrl}`);
 const iconUrl = await versioned('favicon.svg');
 const icoUrl = await versioned('favicon.ico');
+const pngUrl = await versioned('favicon.png');
 const touchUrl = await versioned('icons/apple-touch-icon.png');
 const manifestPath = new URL('manifest.webmanifest', publicDir);
 const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
@@ -73,4 +92,12 @@ html = html.replace(/(<link rel="icon" href=")[^"]+(" sizes=)/, `$1${icoUrl}$2`)
   .replace(/(<link rel="apple-touch-icon" href=")[^"]+/, `$1${touchUrl}`)
   .replace(/(<link rel="manifest" href=")[^"]+/, `$1/manifest.webmanifest?v=${manifestHash}`);
 await writeFile(indexPath, html);
+for (const name of await readdir(publicDir)) {
+  if (!name.endsWith('.html')) continue;
+  const path = new URL(name, publicDir);
+  const source = await readFile(path, 'utf8');
+  const links = `<link rel="icon" href="${icoUrl}" sizes="16x16 32x32 48x48">\n  <link rel="icon" href="${iconUrl}" type="image/svg+xml" sizes="any">\n  <link rel="icon" href="${pngUrl}" type="image/png" sizes="32x32">`;
+  const updated = source.replace(/\s*<link rel="icon"[^>]*>/g, '').replace('</head>', `  ${links}\n</head>`);
+  if (updated !== source) await writeFile(path, updated);
+}
 console.log('Versioned favicon and install icon URLs; stable manifest id /');
