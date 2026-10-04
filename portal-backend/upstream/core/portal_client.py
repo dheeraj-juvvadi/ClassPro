@@ -46,6 +46,15 @@ async def close_shared_transport():
     await _shared_transport.aclose()
 
 
+async def wait_for_verification(session):
+    """Keep the existing minimum challenge age without adding it twice."""
+    ready_at = getattr(session, "challenge_loaded_at", None)
+    elapsed = max(0.0, time.monotonic() - ready_at) if isinstance(ready_at, (int, float)) else 0.0
+    remaining = max(0.0, 2.0 - elapsed)
+    if remaining:
+        await asyncio.sleep(remaining)
+
+
 class _ExpiredPortalReport(Exception):
     pass
 
@@ -111,6 +120,7 @@ class PortalSession:
         self.captcha_field_name = None
         self.random_delimiter = None
         self.load_ms = None
+        self.challenge_loaded_at = None
 
     async def load_captcha(self):
         r = await self.client.get(LOGIN_URL)
@@ -153,6 +163,7 @@ class PortalSession:
                 self.captcha_bytes = cr.content
         self.captcha_page = text
         self.load_ms = int(time.time() * 1000)
+        self.challenge_loaded_at = time.monotonic()
         return {
             "captcha_image": f"data:image/png;base64,{img_b64}" if img_b64 else None,
             "captcha_text_exposed": self.exposed_captcha_text,

@@ -15,8 +15,9 @@ import uvicorn
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 from core.academia_client import AcademiaClient
-from core.client_lifecycle import client_scope, track, retain, close as close_client, gather_complete
-from core.portal_client import PortalClient, PortalSession, close_shared_transport, fetch_portal_reports
+from core.academia_reports import fetch_academia_reports
+from core.client_lifecycle import client_scope, track, retain, close as close_client
+from core.portal_client import PortalClient, PortalSession, close_shared_transport, fetch_portal_reports, wait_for_verification
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -311,12 +312,7 @@ async def refresh_data(creds: Credentials, request: Request):
         if not creds.cookies or (creds.reauthenticate and creds.password):
             await client.authenticate(creds.captcha, creds.cdigest)
 
-        res_prof, res_g1, res_g2, res_att = await gather_complete(
-            client.get_profile_html(),
-            client.get_grid_html("Batch_1"),
-            client.get_grid_html("batch_2"),
-            client.get_attendance_html()
-        )
+        res_prof, res_g1, res_g2, res_att = await fetch_academia_reports(client, creds.batch_hint)
         profile_html = res_prof if isinstance(res_prof, str) else None
         g1_html = res_g1 if isinstance(res_g1, str) else None
         g2_html = res_g2 if isinstance(res_g2, str) else None
@@ -328,12 +324,7 @@ async def refresh_data(creds: Credentials, request: Request):
             print(f"{get_now()}\n  -> [AUTH] Session invalid or site glitch. Attempting re-auth...", flush=True)
             try:
                 await client.authenticate(creds.captcha, creds.cdigest)
-                res_prof, res_g1, res_g2, res_att = await gather_complete(
-                    client.get_profile_html(),
-                    client.get_grid_html("Batch_1"),
-                    client.get_grid_html("batch_2"),
-                    client.get_attendance_html()
-                )
+                res_prof, res_g1, res_g2, res_att = await fetch_academia_reports(client, creds.batch_hint)
                 profile_html = res_prof if isinstance(res_prof, str) else None
                 g1_html = res_g1 if isinstance(res_g1, str) else None
                 g2_html = res_g2 if isinstance(res_g2, str) else None
@@ -412,12 +403,7 @@ async def login(creds: LoginCredentials, request: Request):
         if not creds.cookies:
             await client.authenticate(creds.captcha, creds.cdigest)
             
-        res_prof, res_g1, res_g2, res_att = await gather_complete(
-            client.get_profile_html(),
-            client.get_grid_html("Batch_1"),
-            client.get_grid_html("batch_2"),
-            client.get_attendance_html()
-        )
+        res_prof, res_g1, res_g2, res_att = await fetch_academia_reports(client, require_profile=True)
         profile_html = res_prof if isinstance(res_prof, str) else None
         g1_html = res_g1 if isinstance(res_g1, str) else None
         g2_html = res_g2 if isinstance(res_g2, str) else None
@@ -428,12 +414,7 @@ async def login(creds: LoginCredentials, request: Request):
         if session_dead:
             print(f"{get_now()}\n  -> [AUTH] Re-authenticating...", flush=True)
             await client.authenticate(creds.captcha, creds.cdigest)
-            res_prof, res_g1, res_g2, res_att = await gather_complete(
-                client.get_profile_html(),
-                client.get_grid_html("Batch_1"),
-                client.get_grid_html("batch_2"),
-                client.get_attendance_html()
-            )
+            res_prof, res_g1, res_g2, res_att = await fetch_academia_reports(client, require_profile=True)
             profile_html = res_prof if isinstance(res_prof, str) else None
             g1_html = res_g1 if isinstance(res_g1, str) else None
             g2_html = res_g2 if isinstance(res_g2, str) else None
@@ -572,7 +553,7 @@ async def portal_login(creds: PortalCredentials, request: Request):
                     print("  -> [OCR] Portal OCR solver failed to predict captcha", flush=True)
                     break
                 print(f"  -> [OCR] Predicted: '{solved}'", flush=True)
-                await asyncio.sleep(2)
+                await wait_for_verification(session)
                 res = await session.login(netid, password, solved, telemetry=creds.telemetry)
                 if res.get("ok"):
                     print(f"  -> [OCR] Portal login successful on attempt {ocr_attempts}!", flush=True)
@@ -680,7 +661,7 @@ async def portal_refresh(creds: PortalCredentials, request: Request):
                     if not ok or not solved:
                         break
                     print(f"  -> [OCR] Predicted: '{solved}'", flush=True)
-                    await asyncio.sleep(2)
+                    await wait_for_verification(session)
                     res = await session.login(netid, password, solved)
                     if res.get("ok"):
                         print(f"  -> [OCR] Portal background re-auth successful!", flush=True)

@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -9,6 +9,7 @@ class Credentials(BaseModel):
     captcha: Optional[str] = Field(default=None, max_length=20)
     cdigest: Optional[str] = Field(default=None, max_length=128)
     reauthenticate: bool = False
+    batch_hint: Optional[Literal["1", "2"]] = None
 
 
 class LoginCredentials(BaseModel):

@@ -15,9 +15,12 @@ from unittest.mock import patch
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--backend", type=Path, default=Path(__file__).resolve().parent)
 parser.add_argument("--latency-ms", type=int, default=250)
+parser.add_argument("--ocr-ms", type=int, default=0)
 args = parser.parse_args()
 if not 0 <= args.latency_ms <= 2000:
     parser.error("latency must be between 0 and 2000 ms")
+if not 0 <= args.ocr_ms <= 2000:
+    parser.error("OCR time must be between 0 and 2000 ms")
 for key in ("SESSION_STORE_DIR", "CLIENT_LOG_DIR", "BACKEND_TOKEN", "LEGACY_SESSION_COOKIE",
             "LEGACY_BACKEND_HEADER", "DIAGNOSTIC_STATIC_DIR"):
     os.environ.pop(key, None)
@@ -87,6 +90,7 @@ class RecoverySession:
 
     async def load_captcha(self):
         await asyncio.sleep(args.latency_ms / 1000)
+        self.challenge_loaded_at = time.monotonic()
 
     async def login(self, *credentials):
         await asyncio.sleep(args.latency_ms / 1000)
@@ -98,6 +102,7 @@ async def case(expired):
     with patch.object(portal_client, "_shared_transport", httpx.MockTransport(source.request)), \
          patch.object(server.upstream, "PortalSession", RecoverySession):
         async def solve(image):
+            await asyncio.sleep(args.ocr_ms / 1000)
             return True, "CODE", 200
 
         with patch.object(server.upstream, "solve_captcha_ocr_bytes", side_effect=solve):
@@ -127,7 +132,7 @@ async def main():
         with redirect_stdout(sys.stderr):
             results = [await case(False), await case(True)]
     print(json.dumps({"scope": "synthetic actual sync routes; no live SRM timing",
-        "backend": str(args.backend.resolve()), "per_request_latency_ms": args.latency_ms,
+        "backend": str(args.backend.resolve()), "per_request_latency_ms": args.latency_ms, "ocr_ms": args.ocr_ms,
         "dataset_sha256": hashlib.sha256(json.dumps(PAGES, sort_keys=True).encode()).hexdigest(),
         "results": results}, indent=2))
 

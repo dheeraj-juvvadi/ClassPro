@@ -68,6 +68,10 @@ async def refresh(request, entry, invoke, report, exam_refresh=None):
         payload = {"cookies": state["cookies"]}
         if name == "academia":
             payload["username"] = state["username"]
+            saved_batch = str(state.get("report", {}).get("profile", {}).get("batch", ""))
+            batch = saved_batch.rsplit("/", 1)[-1].strip()
+            if batch in {"1", "2"}:
+                payload["batch_hint"] = batch
         response, data = await invoke(request, "/portal/refresh" if name == "portal" else "/refresh", payload)
         if response.status_code == 401 and state.get("password"):
             # This request already established expiry. Do not fetch the entire

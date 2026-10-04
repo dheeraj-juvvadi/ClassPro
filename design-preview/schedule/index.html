@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./page.css">
   <script src="../navigation.js" defer></script>
   <script src="./page.js" defer></script>
+  <script src="./export.js" defer></script>
 </head>
 <body data-page="schedule">
   <div class="app">
@@ -20,6 +21,28 @@
         <p>Your week, one day at a time.</p>
       </div>
       <p class="schedule-context"><span>Sample timetable</span> · Weekly view</p>
+      <details class="calendar-export">
+        <summary><span>Add to your calendar</span><span class="export-toggle" aria-hidden="true">+</span></summary>
+        <form id="calendar-export-form">
+          <p class="export-eyebrow">Calendar export · Sample week</p>
+          <h2>Take your week with you.</h2>
+          <p class="export-intro">Keep class times and rooms close, even when Anon is closed.</p>
+          <div class="export-dates">
+            <label for="export-from">From<input id="export-from" name="from" type="date" value="2026-10-05" required></label>
+            <span aria-hidden="true">→</span>
+            <label for="export-through">Through<input id="export-through" name="through" type="date" value="2026-10-09" required></label>
+          </div>
+          <div class="export-count" role="status" aria-live="polite" aria-atomic="true">
+            <p><strong id="export-total">17</strong> <span>classes</span></p>
+            <span id="export-days">across 5 teaching days</span>
+          </div>
+          <p id="export-coverage" class="export-coverage">Class times and rooms · India Standard Time</p>
+          <div id="export-first" class="export-first"><span class="export-first-label">First up</span><span><strong>Data Structures</strong><small>Mon, 5 Oct · 08:00–08:50 · B-204</small></span></div>
+          <button id="export-download" class="export-download" type="submit">Download calendar <span aria-hidden="true">↓</span></button>
+          <p class="export-footnote">Open the .ics file in Apple Calendar, Google Calendar or Outlook. This is a snapshot; export again if your timetable changes.</p>
+          <p id="export-feedback" class="export-feedback" role="status" aria-live="polite"></p>
+        </form>
+      </details>
       <div class="weekday-switch" role="group" aria-label="Choose a weekday" hidden>
         <button type="button" data-day="monday" aria-label="Monday" aria-pressed="true" aria-controls="day-schedule">Mon</button>
         <button type="button" data-day="tuesday" aria-label="Tuesday" aria-pressed="false" aria-controls="day-schedule">Tue</button>

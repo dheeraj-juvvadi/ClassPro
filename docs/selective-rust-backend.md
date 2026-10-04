@@ -120,3 +120,40 @@ sync/proxy checks, static build and offline-shell consistency passed. Regression
 coverage includes cancelled optional report requests, one expiry check before
 recovery, login attendance reuse, bounded completion waits, logout during waits,
 and ensuring retired exam fetches cannot run during login or manual sync.
+
+## October 4 follow-up
+
+Academia now starts the saved batch's grid beside profile and attendance. The
+fresh profile verifies that hint; a changed batch starts the correct grid and
+cancels the unused one. Without a hint both start concurrently, then the unused
+request is cancelled once the batch is known. Unknown profile batch labels keep
+the existing two-grid fallback. Required-request failures and cancellation drain
+all outstanding requests before their cookie jar closes.
+
+Portal CAPTCHA verification still waits until the challenge is at least two
+seconds old. Its monotonic timestamp now counts time already spent doing OCR or
+waiting for submission, instead of always adding two more seconds. Reloading a
+challenge resets that timestamp. No provider wait minimum is shortened.
+
+Actual sync-route benchmarks against `37baa54`, with network disabled and the
+same synthetic HTML on each side:
+
+| Scenario | Before | After | Saved |
+| --- | --- | --- | --- |
+| Academia saved batch: relevant pages 500 ms, other grid 1500 ms | 1.522 s | 0.522 s | 1.000 s |
+| Academia no saved batch, same delays | 1.509 s | 0.513 s | 0.996 s |
+| Portal recovery: pages 250 ms, OCR 750 ms | 4.026 s | 3.280 s | 0.746 s |
+
+These single-run examples isolate the intended slow-grid and OCR cases; they are
+not live SRM percentiles. Saved-batch requests fall from four to three; initial
+discovery starts four and cancels one. When both grids take equally long, the
+request reduction alone does not imply a second saved. Portal warm sync remains
+approximately 0.53 seconds in both versions; the new wait change affects login
+and recovery. Provider refreshes overlap, so these savings cannot simply be added.
+
+Reproduce with `benchmark_academia_sync.py` (500/1500 ms defaults) and
+`benchmark_sync_path.py --latency-ms 250 --ocr-ms 750`. Pass `--backend` pointing
+at a separate `37baa54` checkout for the baseline. Both verify returned data and
+emit fixture hashes. Focused checks cover batch changes, missing labels, expired
+sessions, unrelated-grid failure, required-request failure and challenge age.
+All 197 backend tests pass locally with the production Python dependencies.

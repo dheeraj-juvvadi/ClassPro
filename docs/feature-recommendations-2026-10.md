@@ -76,3 +76,21 @@ offers semester expansion but no export. Acceptance: a local download preserves
 semester/period, course code/title, credits and grade, including retakes and
 unpublished values; escape CSV and neutralize formula cells. Include freshness
 and identify the file as a personal copy, not an official transcript.
+
+## October 4 design continuation
+
+Calendar export is now interactive in `design-preview/schedule/`. Open
+“Add to your calendar” to reveal an inline date range, class count, first class
+and download action. The panel uses the existing sage colors and open spacing;
+it is collapsed until needed and adds no navigation destination.
+
+The preview only knows the synthetic October 5–11 week. Unknown dates are
+explicitly skipped, empty/reversed ranges disable download, and exports use
+stable sample IDs and UTC times converted from India Standard Time. Every event
+is labeled Sample. This preview has no account data and makes no upstream calls.
+
+Checked in the collaborative browser at 320px and 390px: no horizontal overflow;
+single-day, weekend, unknown-date and reversed-date states work. The downloaded
+file contains 17 sample events, CRLF separators and the expected UTC timestamps.
+The production feature still needs real schedule/exclusion wiring and import
+verification in Apple and Google Calendar; it is not marked shipped.
