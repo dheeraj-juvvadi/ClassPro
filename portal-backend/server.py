@@ -649,7 +649,7 @@ async def login(request: Request):
     if previous_rate:
         rates["session:" + token] = previous_rate
     entry.update({"cookies": data["cookies"], "report": combined(entry), "cached": time.monotonic(), "synced_at": time.time()})
-    attendance_trends.observe(entry, time.time())
+    attendance_trends.observe(entry, entry["synced_at"])
     sessions[token] = entry
     request.state.session_token = token
     result = JSONResponse({"authenticated": True, "connections": entry["report"]["connections"]})

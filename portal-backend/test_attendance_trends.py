@@ -7,6 +7,30 @@ def reading(present, total):
 
 
 class AttendanceTrendTests(unittest.TestCase):
+    def test_recent_sync_fallback_keeps_real_signed_change(self):
+        entry = {"report": reading(8, 10), "synced_at": 1000000}
+        observe(entry, entry['synced_at'])
+        entry.update(report=reading(9, 11), synced_at=1000030)
+        observe(entry, entry['synced_at'])
+        row = decorate(entry, entry['synced_at'])['attendance']['data'][0]
+        self.assertNotIn('change24h', row)
+        self.assertEqual(row['changeSinceSync']['points'], 1.82)
+        self.assertEqual(row['changeSinceSync']['from'], 1000000000)
+        entry.update(report=reading(9, 12), synced_at=1004000)
+        observe(entry, entry['synced_at'])
+        self.assertEqual(decorate(entry, entry['synced_at'])['attendance']['data'][0]['changeSinceSync']['points'], -6.82)
+
+    def test_expired_and_failed_readings_do_not_gain_fallback(self):
+        entry = {"report": reading(8, 10), "synced_at": 1000000}
+        observe(entry, entry['synced_at'])
+        entry.update(report=reading(9, 11), synced_at=1000000 + 4 * DAY)
+        row = decorate(entry, entry['synced_at'])['attendance']['data'][0]
+        self.assertNotIn('changeSinceSync', row)
+        entry['synced_at'] = 1001000
+        entry['report']['warnings'] = ['Portal unavailable']
+        row = decorate(entry, entry['synced_at'])['attendance']['data'][0]
+        self.assertNotIn('changeSinceSync', row)
+
     def test_true_delta_and_no_comparison_without_baseline(self):
         entry = {"report": reading(8, 10), "synced_at": 1000000}
         observe(entry, 1000000)
@@ -16,6 +40,7 @@ class AttendanceTrendTests(unittest.TestCase):
         delta = decorate(entry, entry['synced_at'])['attendance']['data'][0]['change24h']
         self.assertEqual(delta['points'], 1.82)
         self.assertEqual(delta['from'], 1000000000)
+        self.assertNotIn('changeSinceSync', decorate(entry, entry['synced_at'])['attendance']['data'][0])
         entry.update(report=reading(7, 10), synced_at=1000000 + DAY)
         self.assertEqual(decorate(entry, entry['synced_at'])['attendance']['data'][0]['change24h']['points'], -10)
 

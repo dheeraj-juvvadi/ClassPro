@@ -4,7 +4,7 @@ globalThis.anonExamDates = (() => {
   const get = id => document.getElementById(id);
   const model = anonScheduleModel;
   let report = null, period = '', connection = null;
-  let loading = false, generation = 0;
+  let request = null, generation = 0;
   const openedKey = 'anon.exams.opened.v1';
   let opened = false;
   try { opened = localStorage.getItem(openedKey) === '1'; } catch {}
@@ -83,10 +83,15 @@ globalThis.anonExamDates = (() => {
     if (!entries.length) root.append(make('p', report?.entries.length ? 'No upcoming exams in this session.' : 'No subjects published yet.', 'exam-empty'));
   }
   get('exam-period').addEventListener('change', event => { period = event.target.value; render(); });
-  async function refresh(force = false) {
-    if (loading || new URLSearchParams(location.search).get('preview') === 'home') return;
+  function refresh(force = false) {
+    if (new URLSearchParams(location.search).get('preview') === 'home') return Promise.resolve();
+    if (request) return request;
     const current = generation;
-    loading = true;
+    request = fetchDates(force).finally(() => { if (current === generation) request = null; });
+    return request;
+  }
+  async function fetchDates(force) {
+    const current = generation;
     const button = get('exam-sync'); button.disabled = true;
     get('exam-status').textContent = 'Checking…';
     try {
@@ -96,12 +101,14 @@ globalThis.anonExamDates = (() => {
       render();
       const cached = readReportsCache();
       if (cached) writeReportsCache({ ...cached, exams: data.exams });
+      return { exams: data.exams, ok: !!report && !report.stale && !connection?.expired };
     } catch {
       if (current === generation) get('exam-status').textContent = report
         ? 'Sync unavailable · showing saved dates. Try Sync again.'
         : 'Could not check dates. Try Sync again.';
+      return { ok: false };
     } finally {
-      if (current === generation) { loading = false; button.disabled = false; }
+      if (current === generation) button.disabled = false;
     }
   }
   get('exam-sync').addEventListener('click', () => refresh(true));
@@ -109,5 +116,5 @@ globalThis.anonExamDates = (() => {
     report = normalize(data); connection = connections?.portal || null; render();
   }, render, markOpened, refresh,
     forDate(date) { return (report?.entries || []).filter(item => item.date === model.key(date)); },
-    clear() { generation++; loading = false; get('exam-sync').disabled = false; report = null; period = ''; connection = null; render(); } };
+    clear() { generation++; request = null; get('exam-sync').disabled = false; report = null; period = ''; connection = null; render(); } };
 })();

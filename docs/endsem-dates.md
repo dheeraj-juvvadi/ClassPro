@@ -29,8 +29,11 @@ returned **No subjects found**. No real student data is committed as a fixture.
 ## Refresh and fallback
 
 Opening Endsem dates makes a read request to `/api/exams`; its Sync button
-requests `/api/exams?force=1`. Login and attendance/marks sync do not wait for
-exam requests. A successful exam check is reused for six hours; failed checks
+requests `/api/exams?force=1`. The main Sync and Settings Sync buttons also
+refresh exams once attendance/marks finish, including queued recovery. They
+stay busy until that exam check completes and report partial failures. Login
+and scheduled background sync do not request exams. Overlapping exam reads
+share one browser request. A successful exam check is reused for six hours; failed checks
 are reused for 15 minutes. Manual exam refresh bypasses that cache after a
 60-second cooldown. The existing API admission limit and session lock bound
 concurrent work, with two concurrent period reads, a 25-second overall deadline,

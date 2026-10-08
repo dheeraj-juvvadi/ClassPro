@@ -55,7 +55,7 @@ globalThis.anonSettings = (() => {
     catch { tell('Browser storage is unavailable. Changes will last for this visit.'); return false; }
   }
   function apply() {
-    document.body.dataset.accent = ['sand', 'clay'].includes(prefs.theme) ? prefs.theme : 'sage';
+    document.body.dataset.accent = ['sand', 'clay', 'cats'].includes(prefs.theme) ? prefs.theme : 'sage';
     get('settings-theme').value = document.body.dataset.accent;
     get('settings-haptics').checked = prefs.haptics !== false;
     anonFeedback.setHaptics(prefs.haptics !== false);
@@ -151,7 +151,7 @@ globalThis.anonSettings = (() => {
   get('settings-sync').addEventListener('click', async () => {
     if (get('settings-sync').disabled) return;
     tell('');
-    try { const data = await loadReports({ force: true });
+    try { const data = await loadReports({ force: true, includeExams: true });
       if (data?.sync?.pending) tell('');
       else if (data?.warnings?.length || data?.attendance?.error || data?.marks?.error) tell('Some data could not refresh. Your last data is still available.');
       else tell('Your data is up to date.');

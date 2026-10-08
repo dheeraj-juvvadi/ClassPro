@@ -26,6 +26,7 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
     { code: 'ROUND', title: 'Rounded change', present: 9, conducted: 12, change24h: { points: -0.04 } },
     { code: 'NOHISTORY', title: 'No previous record', present: 5, conducted: 6 },
     { code: 'BADHISTORY', title: 'Unconfirmed history', present: 5, conducted: 6, change24h: { points: '2' } },
+    { code: 'RECENT', title: 'Recent sync', present: 9, conducted: 11, changeSinceSync: { points: 1.82 } },
   ] };
   await page.evaluate(report => renderAttendance(report), report);
   const ds = page.locator('.attendance-row[data-course="DS"]');
@@ -42,6 +43,9 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '−1.2pp');
   assert.equal(await cn.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '+1.8pp');
   assert.match(await ds.locator('.attendance-change .sr-only').textContent(), /-1.2 percentage points · past 24 hours/);
+  const recent = page.locator('.attendance-row[data-course="RECENT"]');
+  assert.equal(await recent.locator('.attendance-change-value').textContent(), '+1.8pp');
+  assert.match(await recent.locator('.attendance-change').getAttribute('title'), /since previous sync/);
   for (const code of ['ZERO', 'ROUND']) {
     const row = page.locator(`.attendance-row[data-course="${code}"]`);
     assert.equal(await row.locator('.attendance-change.unchanged .attendance-change-value').textContent(), '0.0pp');

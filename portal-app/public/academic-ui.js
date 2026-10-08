@@ -50,11 +50,12 @@ globalThis.academicUI = (() => {
     percentage.append(document.createTextNode(status.percentage.replace('%', '')));
     if (status.percent !== undefined) percentage.append(create('small', '', '%'));
     rate.append(percentage);
-    const delta = course.change24h?.points;
+    const daily = Number.isFinite(course.change24h?.points);
+    const delta = daily ? course.change24h.points : course.changeSinceSync?.points;
     if (status.hours !== null && Number.isFinite(delta)) {
       const points = Number(delta.toFixed(1)) || 0;
       const change = create('span', `attendance-change ${points > 0 ? 'positive' : points < 0 ? 'negative' : 'unchanged'}`);
-      const description = `${points > 0 ? '+' : ''}${points} percentage points · past 24 hours`;
+      const description = `${points > 0 ? '+' : ''}${points} percentage points · ${daily ? 'past 24 hours' : 'since previous sync'}`;
       const value = create('span', 'attendance-change-value', `${points > 0 ? '+' : points < 0 ? '−' : ''}${Math.abs(points).toFixed(1)}`);
       value.setAttribute('aria-hidden', 'true');
       value.append(create('small', '', 'pp'));
@@ -113,7 +114,7 @@ globalThis.academicUI = (() => {
       let displayed = course;
       if (projection) {
         const planned = predictions.get(course.code), prediction = planned?.prediction;
-        displayed = { ...course, change24h: undefined,
+        displayed = { ...course, change24h: undefined, changeSinceSync: undefined,
           present: !unconfirmed && prediction?.valid ? prediction.present + planned.impact.attend : null,
           conducted: !unconfirmed && prediction?.valid ? prediction.conducted : null };
       }

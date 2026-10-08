@@ -32,6 +32,10 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
     response.json({ ...reportsPayload, sync: { ...reportsPayload.sync, syncedAt,
       pending, nextAt: pending ? Date.now() + 1000 : reportsPayload.sync.nextAt } });
   });
+  app.get('/api/exams', (request, response) => response.json({
+    exams: { entries: [], stale: false, checkedAt: new Date().toISOString() },
+    connections: reportsPayload.connections,
+  }));
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   context.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));

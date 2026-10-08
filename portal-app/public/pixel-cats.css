@@ -1,0 +1,136 @@
+/* Cats: original local pixel artwork above a quiet indigo reading surface. */
+body[data-accent="cats"] {
+  --page: #191e33;
+  --surface: #222940;
+  --soft: #2d3652;
+  --ink: #f1eee8;
+  --muted: #b4bdd4;
+  --line: #424e6b;
+  --accent: #c3c9ef;
+  --accent-hover: #dce0ff;
+  --on-accent: #232a43;
+  --focus: #edc58f;
+  --error: #f0b2a4;
+  --error-bg: #422d3b;
+  --planner-green: #c3c9ef;
+  --planner-muted: #b4bdd4;
+  background: var(--page);
+  color: var(--ink);
+}
+body[data-accent="cats"] .botanical-backdrop { display: none; }
+/* The illustration has its own space; it never sits beneath report text. */
+body.planner[data-accent="cats"] main::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 144px;
+  max-width: 1120px;
+  margin: -16px auto 24px;
+  background: url('/pixel-cats-desktop.svg') center bottom / contain no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+body.planner[data-accent="cats"] :is(.site-header, #planner-nav) {
+  background-color: var(--page);
+  border-color: var(--line);
+}
+body.planner[data-accent="cats"] #planner-nav button { color: var(--muted); }
+body.planner[data-accent="cats"] #planner-nav button[aria-current] {
+  color: var(--accent);
+  background-color: var(--soft);
+}
+body.planner[data-accent="cats"] #planner-nav button:hover { background-color: var(--soft); }
+body.planner[data-accent="cats"] :is(.sidebar-tools, .day-timeline) { border-color: var(--line); }
+body.planner[data-accent="cats"] :is(.planner-menu-items, dialog) {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line);
+}
+body.planner[data-accent="cats"] .planner-menu-items button:hover { background: var(--soft); }
+body.planner[data-accent="cats"] :is(#today-classes, #attendance-panel .attendance-rows, #marks-panel .marks-list) {
+  background: var(--surface);
+  border-color: var(--line);
+}
+body.planner[data-accent="cats"] #marks-panel .assessment-row {
+  background: var(--surface);
+  border-color: var(--line);
+}
+body.planner[data-accent="cats"] .next-class-card {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+body.planner[data-accent="cats"] :is(.class-arrow, .next-class-calculate) {
+  background: var(--on-accent);
+  color: var(--ink);
+}
+body.planner[data-accent="cats"] .class-arrow:hover { background: #3c4767; }
+body.planner[data-accent="cats"] .insight-card:not(.risk, .caution, .neutral, .insight-empty) {
+  background: #b8c8cd;
+  color: #23313d;
+}
+body.planner[data-accent="cats"] :is(.insight-card.neutral, .insight-card.insight-empty) {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+body.planner[data-accent="cats"] .calendar-week button:hover { background: var(--soft); }
+body.planner[data-accent="cats"] .calendar-week button[aria-pressed="true"] .calendar-day-number {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+body.planner[data-accent="cats"] .calendar-week button[aria-current="date"]:not([aria-pressed="true"]) .calendar-day-number {
+  box-shadow: inset 0 0 0 1px var(--muted);
+}
+body.planner[data-accent="cats"] :is(#calculate-attendance, #attendance-plan-reset, .period-plan, #refresh, #settings-sync) {
+  color: var(--accent);
+  text-shadow: none;
+}
+body.planner[data-accent="cats"] :is(#refresh, #settings-sync) .sync-icon { filter: none; }
+body.planner[data-accent="cats"] :is(.attendance-course-heading h3, #marks-panel .course-title) { color: #d0d5e5; }
+body.planner[data-accent="cats"] :is(.attendance-record, .attendance-detail-body > p, .attendance-course-meta dt,
+  .attendance-plan p, #marks-panel .course-code, #marks-panel .assessment-name, #marks-panel .mini-score small) { color: var(--muted); }
+body.planner[data-accent="cats"] .attendance-rail::before { background: var(--line); }
+body.planner[data-accent="cats"] .attendance-rail-target { box-shadow: 0 0 0 2px var(--surface); }
+body.planner[data-accent="cats"] #settings-view :is(.settings-row, .connection-row, .settings-detail) { border-color: var(--line); }
+body.planner[data-accent="cats"] #settings-view :is(.settings-row small, .settings-detail p) { color: var(--muted); }
+body.planner[data-accent="cats"] #settings-view .settings-detail > summary { color: var(--ink); }
+body.planner[data-accent="cats"] #settings-view.workspace-page .settings-row select {
+  color: var(--ink);
+  background-color: var(--surface);
+  border-color: var(--line);
+}
+body.planner[data-accent="cats"] :is(button, a, input, select, summary):focus-visible {
+  outline-color: var(--focus);
+}
+body.planner[data-accent="cats"] #calendar-view .academic-month button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+body.planner[data-accent="cats"] :is(.date-actions, .projection-calendar) button {
+  background: var(--soft);
+  color: var(--ink);
+}
+body.planner[data-accent="cats"] :is(.date-actions, .projection-calendar) button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+body.planner[data-accent="cats"] :is(dialog select, .report-actions button) { border-color: var(--line); }
+body.planner[data-accent="cats"] dialog select { background: var(--page); color: var(--ink); }
+@media (min-width: 1000px) {
+  body.planner[data-accent="cats"] #planner-nav { background: transparent; }
+}
+@media (max-width: 999px) {
+  body.planner[data-accent="cats"] main::before { height: 104px; margin-top: -8px; }
+  body.planner[data-accent="cats"] #planner-nav button[aria-current] { background: transparent; }
+}
+@media (max-width: 700px) {
+  body.planner[data-accent="cats"] main::before {
+    height: 112px;
+    max-width: 392px;
+    margin: -12px auto 22px;
+    background-image: url('/pixel-cats-mobile.svg');
+  }
+}
+@media print {
+  body.planner[data-accent="cats"] main::before { display: none; }
+}

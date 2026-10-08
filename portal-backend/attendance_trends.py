@@ -1,4 +1,5 @@
 """Bounded attendance observations, persisted with the encrypted session."""
+import math
 DAY = 86400
 
 
@@ -16,8 +17,8 @@ def observe(entry, timestamp):
         return
     samples = [sample for sample in entry.get("attendance_samples", [])
                if timestamp - 3 * DAY <= sample["at"] <= timestamp]
-    # Multiple manual refreshes in one minute share an observation.
-    if samples and timestamp - samples[-1]["at"] < 60:
+    # Coalesce rapid unchanged reads without discarding a genuine change.
+    if samples and timestamp - samples[-1]["at"] < 60 and samples[-1]["values"] == values:
         samples.pop()
     samples.append({"at": timestamp, "values": values})
     entry["attendance_samples"] = samples[-200:]
@@ -33,14 +34,24 @@ def decorate(entry, timestamp):
     cutoff = current_at - DAY
     candidates = [s for s in entry.get("attendance_samples", []) if cutoff - 7200 <= s["at"] <= cutoff]
     baseline = max(candidates, key=lambda s: s["at"], default=None)
+    previous = sorted((s for s in entry.get("attendance_samples", [])
+                       if current_at - 3 * DAY <= s["at"] < current_at), key=lambda s: s["at"], reverse=True)
     rows = []
     for course in attendance.get("data", []):
         row = dict(course)
         row.pop("change24h", None)
+        row.pop("changeSinceSync", None)
         old = baseline["values"].get(course.get("code")) if baseline else None
+        comparison, field = baseline, "change24h"
+        if old is None:
+            comparison = next((s for s in previous if course.get("code") in s["values"]), None)
+            old = comparison["values"].get(course.get("code")) if comparison else None
+            field = "changeSinceSync"
         present, total = course.get("present"), course.get("conducted")
-        if old is not None and isinstance(present, (int, float)) and isinstance(total, (int, float)) and total > 0 and 0 <= present <= total:
-            row["change24h"] = {"points": round(100 * present / total - old, 2),
-                                "from": baseline["at"] * 1000, "to": current_at * 1000}
+        if (not report.get("warnings") and isinstance(old, (int, float)) and math.isfinite(old)
+                and isinstance(present, (int, float)) and isinstance(total, (int, float))
+                and math.isfinite(present) and math.isfinite(total) and total > 0 and 0 <= present <= total):
+            row[field] = {"points": round(100 * present / total - old, 2),
+                          "from": comparison["at"] * 1000, "to": current_at * 1000}
         rows.append(row)
     return {**report, "attendance": {**attendance, "data": rows}}

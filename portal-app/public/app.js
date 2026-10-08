@@ -6,6 +6,8 @@ let busy = false;
 let reportLoad = null;
 let nextAutoSync = 0;
 let pendingSyncTimer = null, pendingSyncChecks = 0;
+let pendingExamSync = false;
+let syncGeneration = 0;
 let reportFingerprint = {};
 let manualChallengeAt = 0;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
@@ -119,6 +121,8 @@ function showLogin(text = '', error = false) {
   reportFingerprint = {};
   nextAutoSync = 0;
   clearTimeout(pendingSyncTimer); pendingSyncChecks = 0;
+  pendingExamSync = false;
+  syncGeneration++;
   authenticated = false;
   dismissStartup();
   $('login-view').hidden = false;
@@ -313,6 +317,7 @@ function renderMarks(report, courses = {}) {
 }
 
 function loadReports(options = {}) {
+  if (options.includeExams && !designPreview) pendingExamSync = true;
   if (reportLoad) return reportLoad;
   reportLoad = fetchReports(options).finally(() => { reportLoad = null; });
   return reportLoad;
@@ -320,6 +325,7 @@ function loadReports(options = {}) {
 
 async function fetchReports({ cacheOnly = false, force = false, silent = false, followup = false, waitForCompletion = false } = {}) {
   if (designPreview) return;
+  const generation = syncGeneration;
   clearTimeout(pendingSyncTimer);
   if (!followup) pendingSyncChecks = 0;
   anonSyncControl.begin({ notify: !cacheOnly });
@@ -337,6 +343,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     const query = force ? '?force=1&wait=1' : cacheOnly
       ? `?cache=only${waitForCompletion ? '&wait=1' : ''}` : '?wait=1';
     const reports = await api(`/api/reports${query}`);
+    if (generation !== syncGeneration) return;
     const changed = (key, data, update) => {
       const fingerprint = JSON.stringify(data);
       if (reportFingerprint[key] !== fingerprint) { update(); reportFingerprint[key] = fingerprint; }
@@ -347,12 +354,28 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     changed('home', [reports.attendance, reports.schedule, reports.exams], () => anonHome.update(reports.attendance, reports.schedule));
     anonSettings.update(reports);
     changed('connections', [reports.connections, reports.warnings], () => providerConnections.update(reports));
-    $('refresh').title = 'Sync attendance and marks';
+    $('refresh').title = 'Sync attendance, marks and endsem dates';
     nextAutoSync = reports.sync?.pending ? reports.sync.nextAt : reports.sync?.due && cacheOnly ? 0 : reports.sync?.nextAt || reportSyncSchedule.next();
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', !reports.sync?.pending && (reports.attendance?.error || reports.marks?.error) ? 'Some reports could not be loaded. Try Sync.' : '');
     writeReportsCache(reports);
+    // Wait for report recovery first, including queued follow-ups, so exams use
+    // the refreshed Portal cookies. Automatic sync never sets this flag.
+    if (!reports.sync?.pending && pendingExamSync) {
+      pendingExamSync = false;
+      if (reports.connections?.portal?.connected) {
+        const result = await anonExamDates.refresh(true);
+        if (generation !== syncGeneration) return;
+        if (result?.exams) {
+          reports.exams = result.exams;
+          anonHome.update(reports.attendance, reports.schedule);
+        }
+        if (!result?.ok) reports.warnings = [...(reports.warnings || []),
+          'Endsem dates could not refresh. Open Endsem dates to retry.'];
+        writeReportsCache(reports);
+      }
+    }
     anonSyncControl.complete(reports);
     if (reports.sync?.pending) {
       // At low load, wait on the existing job so completion is returned as
@@ -370,6 +393,8 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     } else pendingSyncChecks = 0;
     return reports;
   } catch (error) {
+    if (generation !== syncGeneration) return;
+    pendingExamSync = false;
     anonSyncControl.fail(error);
     for (const kind of ['attendance', 'marks']) {
       const container = $(`${kind}-content`);
@@ -382,7 +407,7 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     }
     throw error;
   } finally {
-    anonSyncControl.end();
+    if (generation === syncGeneration) anonSyncControl.end();
   }
 }
 
@@ -480,7 +505,7 @@ document.addEventListener('visibilitychange', resumeSync);
 setInterval(resumeSync, 15000);
 
 $('refresh').addEventListener('click', () => run(async () => {
-  await loadReports({ force: true });
+  await loadReports({ force: true, includeExams: true });
 }));
 $('logout').addEventListener('click', () => run(async () => {
   if (designPreview) { location.href = '/'; return; }
