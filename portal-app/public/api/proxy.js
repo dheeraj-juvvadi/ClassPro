@@ -2,7 +2,7 @@
 
 const ROUTES = new Map([
   ['session', ['GET', 'DELETE']], ['challenge', ['POST']],
-  ['login/client', ['POST']], ['reports', ['GET']],
+  ['login/client', ['POST']], ['reports', ['GET']], ['exams', ['GET']],
   ['presence', ['POST']], ['client-events', ['POST']],
 ]);
 const REQUEST_HEADERS = new Set(['cookie', 'origin', 'content-type', 'sec-fetch-site', 'user-agent', 'accept']);
@@ -60,6 +60,7 @@ async function handler(request, response) {
     const value = incoming.searchParams.get(key);
     if (value !== null) target.searchParams.set(key, value);
   }
+  if (path === 'exams' && incoming.searchParams.get('force') === '1') target.searchParams.set('force', '1');
   let upstream;
   try {
     upstream = await fetch(target, { method: request.method, headers,

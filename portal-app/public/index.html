@@ -21,6 +21,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Anon">
+  <link rel="stylesheet" href="/exam-dates.css?v=7681b95568">
   <link rel="stylesheet" href="/consent.css?v=c8239834ce">
   <script defer src="/consent.js?v=be694796ec"></script>
   <script src="/client-logs.js?v=6c257371d6" defer></script>
@@ -57,12 +58,12 @@
   <script src="/schedule-model.js?v=d2b68a1d5e" defer></script>
   <script src="/class-reminders.js?v=e03c1743e1" defer></script>
   <script src="/schedule-calendar.js?v=950fe08fe4" defer></script>
-  <script src="/academic-calendar.js?v=103508279b" defer></script>
+  <script src="/academic-calendar.js?v=a88fb96d4d" defer></script>
   <script src="/timetable-svg.js?v=91d022936a" defer></script>
   <script src="/course-details.js?v=d68ba23df7" defer></script>
   <script src="/greeting.js?v=68e7af92e7" defer></script>
   <script src="/schedule-preferences.js?v=3db9f39d36" defer></script>
-  <script src="/home.js?v=6c50ba76c6" defer></script>
+  <script src="/home.js?v=b31076fc7d" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=4d20a96ca1" defer></script>
   <script src="/date-planner-calendar.js?v=e31651db2f" defer></script>
@@ -79,7 +80,8 @@
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
   <script src="/sync-control.js?v=e9711364ec" defer></script>
   <script src="/settings.js?v=f72a8534f9" defer></script>
-  <script src="/app.js?v=8259ebb25f" defer></script>
+  <script src="/exam-dates.js?v=ce279d3fed" defer></script>
+  <script src="/app.js?v=6416f24133" defer></script>
   <script src="/credential-integrity.js?v=fbfd4079df" defer></script>
   <script src="/offline-shell.js?v=183c619836" defer></script>
   <script src="/login-effects.js?v=e6fe094e1b" defer></script>
@@ -100,6 +102,7 @@
       <span class="sidebar-label">Your space</span>
       <button type="button" data-sidebar-action="open-schedule"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M9 10v11M15 10v11"/></svg>Schedule</button>
       <button type="button" data-sidebar-action="open-grades"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM6 10v7c3 3 9 3 12 0v-7M21 8v8"/></svg>Grade calculator</button>
+      <button type="button" data-sidebar-action="open-exams">Endsem dates</button>
       <button type="button" data-sidebar-action="open-calendar"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></svg>Academic calendar</button>
       <button type="button" data-sidebar-action="open-accounts"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>Settings</button>
       <button type="button" data-sidebar-action="logout"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 4H4v16h6m4-12 4 4-4 4m-6-4h10"/></svg>Sign out</button>
@@ -110,6 +113,7 @@
       <div class="planner-menu-items">
         <button id="open-schedule" type="button">Schedule</button>
         <button id="open-grades" type="button">Grade calculator</button>
+        <button id="open-exams" type="button">View your endsem dates</button>
         <button id="open-calendar" type="button">Academic calendar</button>
         <button id="open-accounts" type="button">Settings</button>
         <button id="logout" class="secondary" type="button" hidden>Sign out</button>
@@ -185,6 +189,7 @@
       <div class="home-intro">
       <div class="home-greeting"><h1 id="home-title" tabindex="-1">Good morning.</h1><p id="home-date"></p></div>
       <p id="home-message" class="message" role="status" hidden></p>
+      <a id="home-exam-link" class="home-exam-link" href="#exams" hidden>View your endsem dates <span aria-hidden="true">↗</span></a>
       <p id="home-preview-note" class="preview-note" hidden>Design preview · sample day <a href="/">Back to sign in</a></p>
       </div>
       <article id="next-class-card" class="next-class-card" aria-labelledby="next-class-title"></article>
@@ -224,6 +229,14 @@
         </section>
       </div>
     </section>
+  <section id="exams-view" class="workspace-page" hidden aria-labelledby="exams-title">
+    <div class="exam-heading"><h1 id="exams-title" tabindex="-1">View your endsem dates</h1><button id="exam-sync" type="button">Sync</button></div>
+    <p id="exam-status" role="status" aria-live="polite"></p>
+    <p id="exam-checked"></p><p id="exam-source"></p>
+    <label id="exam-period-field" hidden>Exam session<select id="exam-period"><option value="">All upcoming sessions</option></select></label>
+    <div id="exam-list"></div>
+    <p class="exam-disclaimer">Scribe Request dates are provisional, not official, and may change. Confirm with the official timetable or hall ticket.<br><a href="https://sp.srmist.edu.in/srmiststudentportal/students/template/HRDSystem.jsp" target="_blank" rel="noopener noreferrer">Open Student Portal ↗</a></p>
+  </section>
   <section id="grades-view" class="workspace-page" hidden aria-labelledby="grades-title">
     <h1 id="grades-title" tabindex="-1">Grade calculator</h1>
     <p class="grades-intro quiet">Your grade targets and academic history.</p>

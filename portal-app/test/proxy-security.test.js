@@ -16,6 +16,21 @@ function response() {
     status(n) { this.statusCode = n; return this; }, json(v) { this.body = v; }, send(v) { this.body = v; } };
 }
 
+test('exam reads forward only the supported refresh flag', async t => {
+  process.env.BACKEND_URL = 'https://backend.test'; process.env.BACKEND_TOKEN = 'server-only-secret';
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    calls.push(String(url));
+    return new Response('{"exams":null}', { headers: { 'content-type': 'application/json' } });
+  });
+  const req = request('exams'); req.url += '&force=1&year=2025';
+  const res = response(); await proxy(req, res);
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(calls, ['https://backend.test/api/exams?force=1']);
+  const wrong = response(); await proxy(request('exams', { method: 'POST' }), wrong);
+  assert.equal(wrong.statusCode, 405);
+});
+
 test('proxy rejects internal routes, traversal, wrong methods and oversized bodies', async t => {
   process.env.BACKEND_URL = 'https://backend.test'; process.env.BACKEND_TOKEN = 'server-only-secret';
   const fetch = t.mock.method(globalThis, 'fetch', async () => new Response('{}', { headers: { 'content-type': 'application/json' } }));

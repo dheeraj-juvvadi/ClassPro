@@ -28,6 +28,7 @@ from academic_data import extras
 from provider_flow import providers, combined, same_student, normalize_account, refresh as refresh_providers
 from session_store import SessionStore, lifetime
 from report_response import ReportResponse
+from portal_exams import refresh_exams
 import sync_schedule
 import attendance_trends
 from client_logs import ClientLogStore
@@ -100,7 +101,7 @@ class AdmissionTimeout(Exception):
 async def dispatch(request, call_next, token, deadline=None):
     if not token:
         return await call_next(request)
-    if request and request.method == "GET":
+    if request and request.method == "GET" and request.url.path != "/api/exams":
         return await call_next(request)
     lock = session_locks.setdefault(token, asyncio.Lock())
     try:
@@ -247,7 +248,7 @@ async def lifespan(app):
 
 app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 PUBLIC_ROUTES = {"/api/session": {"GET", "DELETE"}, "/api/challenge": {"POST"},
-                 "/api/login/client": {"POST"}, "/api/reports": {"GET"},
+                 "/api/login/client": {"POST"}, "/api/reports": {"GET"}, "/api/exams": {"GET"},
                  "/api/presence": {"POST"}, "/api/client-events": {"POST"}}
 
 
@@ -299,7 +300,7 @@ def report(data, previous=None):
     if isinstance(data.get("exams"), dict):
         result["exams"] = data["exams"]
     elif isinstance((previous or {}).get("exams"), dict):
-        result["exams"] = {**previous["exams"], "stale": True}
+        result["exams"] = previous["exams"]
     return result
 
 
@@ -725,6 +726,37 @@ async def refresh_job(token, entry, request):
                           "queue_ms": round(((started if started is not None else finished) - queued_at) * 1000),
                           "duration_ms": round((finished - started) * 1000) if started is not None else 0,
                           "exception_type": exception_type}), flush=True)
+
+
+@app.get("/api/exams")
+async def exams(request: Request):
+    token = session_token(request)
+    entry = sessions.get(token)
+    if not entry or not providers(entry):
+        return failure("SESSION_EXPIRED", "Please sign in again.")
+    if sessions.get(token) is not entry:
+        return failure("SESSION_EXPIRED", "Please sign in again.")
+    portal = providers(entry).get("portal")
+    if not portal or portal.get("expired"):
+        saved = portal.get("report", {}).get("exams") if portal else None
+        cached = {**saved, "stale": True,
+                  "entries": [{**row, "stale": True} for row in saved.get("entries", [])]} if saved else None
+        return {"exams": cached, "connections": combined(entry)["connections"]}
+    if not can_admit(MEMORY_RESERVE_MB):
+        return admission_failure(wait=15)
+    previous = portal.get("report", {}).get("exams")
+    now = time.time()
+    try:
+        attempted = datetime.fromisoformat((previous or {}).get("lastAttemptAt", "")).timestamp()
+    except (ValueError, TypeError):
+        attempted = 0
+    force = request.query_params.get("force") == "1" and now - attempted >= REFRESH_COOLDOWN
+    result = await refresh_exams(portal["cookies"], previous, now, force=force)
+    if sessions.get(token) is not entry:
+        return failure("SESSION_EXPIRED", "Please sign in again.")
+    portal.setdefault("report", {})["exams"] = result
+    entry["report"] = combined(entry)
+    return {"exams": result, "connections": entry["report"]["connections"]}
 
 
 @app.get("/api/reports", response_model=ReportResponse)

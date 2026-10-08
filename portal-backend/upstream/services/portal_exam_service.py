@@ -59,13 +59,7 @@ def candidates(offered, today):
     current = today.year * 12 + today.month
     available = [item for item in offered if -1 <= item["year"] * 12 + item["month"] - current <= 12]
     available.sort(key=lambda item: (item["year"], item["month"]))
-    # The inspected Scribe selector lags behind its November subject endpoint.
-    # Keep this single, bounded provisional read until that session is advertised.
-    november = "11_2026"
-    if date(2026, 7, 1) <= today <= date(2026, 12, 31) and not any(item["value"] == november for item in available):
-        available.append({"value": november, "month": 11, "year": 2026,
-                          "label": "Nov 2026", "provisional": True})
-    return sorted(available, key=lambda item: (item["year"], item["month"]))[:6]
+    return available[:6]
 
 
 def table_records(html, source):

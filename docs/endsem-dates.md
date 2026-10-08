@@ -1,5 +1,9 @@
 # Endsem dates
 
+The Home shortcut stays visible until Endsem dates is first opened. That choice
+is remembered on this browser across reloads. The + menu and desktop sidebar
+keep the page available afterward.
+
 `+ → View your endsem dates` reads the signed-in student's Student Portal data.
 It makes only read requests; it never submits a Scribe application, payment,
 document upload, or attendance change.
@@ -14,9 +18,9 @@ the form `month_year`. Anon requests the corresponding subject table from
 Discovery follows advertised sessions from the previous month through the next
 12 months, with a maximum of six periods per check. It supports November and
 December 2026, April and May 2027, and later year transitions without a release.
-The verified `11_2026` workaround is used only through December 31, 2026, until
-the portal advertises that value itself. Other unadvertised periods are not
-guessed. The same subject can appear in multiple exam sessions.
+The portal now advertises November 2026. The old `11_2026` fallback has been
+removed: only advertised option values are requested, without changing a 2025
+option or inventing another session. The same subject can appear in multiple exam sessions.
 
 The October 2, 2026 live read found four November 2026 subjects with blank date
 and session fields. These display as **Not published**. The dedicated timetable
@@ -24,11 +28,17 @@ returned **No subjects found**. No real student data is committed as a fixture.
 
 ## Refresh and fallback
 
-Checks run on Student Portal login and during Anon's existing active-session
-report refresh. A successful check is reused for six hours; failures are retried
-after 15 minutes at the next report sync. There is no new background polling
-service for inactive users. Requests use two concurrent period reads at most,
-a 25-second overall deadline, and bounded response sizes.
+Opening Endsem dates makes a read request to `/api/exams`; its Sync button
+requests `/api/exams?force=1`. Login and attendance/marks sync do not wait for
+exam requests. A successful exam check is reused for six hours; failed checks
+are reused for 15 minutes. Manual exam refresh bypasses that cache after a
+60-second cooldown. The existing API admission limit and session lock bound
+concurrent work, with two concurrent period reads, a 25-second overall deadline,
+and bounded response sizes. Signed-out requests cannot read exam data.
+Exam requests wait for their session lock before taking an API worker slot,
+so repeated opens cannot occupy workers while waiting on the same student.
+If Student Portal expires, saved dates remain visible as cached with a reconnect
+message. Signing out clears the page and its saved report data.
 
 Successful responses replace that period's previous result, including explicitly
 blank or empty tables. A failed request or unknown layout retains the last

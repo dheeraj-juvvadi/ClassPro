@@ -114,8 +114,7 @@ class ParserTests(unittest.TestCase):
         self.assertEqual([item['value'] for item in candidates(options,date(2026,10,2))], ['11_2026','12_2026','1_2027'])
         self.assertEqual(options[-1]['label'], 'Jan 2027')
         old = sessions(selector(['0','11_2025','5_2026']),date(2026,10,2))
-        self.assertEqual(candidates(old,date(2026,10,2))[0]['value'],'11_2026')
-        self.assertTrue(candidates(old,date(2026,10,2))[0]['provisional'])
+        self.assertEqual(candidates(old,date(2026,10,2)), [])
 
     def test_blank_is_unpublished_and_private_application_fields_are_dropped(self):
         row = table_records(scribe(), 'scribe')[0]
@@ -159,11 +158,10 @@ class ParserTests(unittest.TestCase):
                 self.assertEqual([row['value'] for row in chosen], expected)
         self.assertEqual(candidates([], date(2027, 1, 1)), [])
 
-    def test_november_fallback_has_a_fixed_expiry(self):
-        for today, expected in [(date(2026, 6, 30), []), (date(2026, 7, 1), ['11_2026']),
-                                (date(2026, 12, 31), ['11_2026']), (date(2027, 1, 1), [])]:
+    def test_no_unadvertised_november_session_is_invented(self):
+        for today in [date(2026, 7, 1), date(2026, 10, 7), date(2026, 12, 31), date(2027, 1, 1)]:
             with self.subTest(today=today):
-                self.assertEqual([row['value'] for row in candidates([], today)], expected)
+                self.assertEqual(candidates([], today), [])
 
     def test_parser_returns_only_public_exam_fields(self):
         private = '<input name="applicationId" value="private-application"><input value="private-student">'
@@ -200,11 +198,11 @@ class CollectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('private', json.dumps(result))
         return result, sources.calls
 
-    async def test_november_workaround_is_pending_until_dates_exist(self):
+    async def test_advertised_november_is_pending_until_dates_exist(self):
         body = scribe()
         row = body[body.index('<tr><td>'):body.index('</table>')]
         body = body.replace('</table>', ''.join(row.replace('CS1', f'CS{i}') for i in range(2, 5)) + '</table>')
-        result,_=await self.run_source(['11_2025','5_2026'],{'11_2026':body})
+        result,_=await self.run_source(['11_2025','5_2026','11_2026'],{'11_2026':body})
         self.assertEqual(result['status'],'pending')
         self.assertEqual(result['sessionId'],'11_2026')
         self.assertTrue(result['provisional'])
@@ -213,8 +211,8 @@ class CollectionTests(unittest.IsolatedAsyncioTestCase):
                             and row['provisional'] and row['sourceKind'] == 'scribe'
                             and not row['stale'] for row in result['entries']))
 
-    async def test_stale_november_selector_posts_current_year_and_returns_dates(self):
-        result, calls = await self.run_source(['5_2026', '11_2025'],
+    async def test_advertised_november_posts_exact_month_year_and_returns_dates(self):
+        result, calls = await self.run_source(['5_2026', '11_2025', '11_2026'],
                                              {'11_2026': scribe('12-11-2026')})
         subject_calls = [call for call in calls if str(call.url) == SUBJECTS]
         self.assertEqual(len(subject_calls), 1)
@@ -494,7 +492,7 @@ class RefreshTests(unittest.IsolatedAsyncioTestCase):
         old = {'nextCheckAt': (NOW + CHECK_SECONDS) * 1000,
                'status': 'pending', 'entries': []}
         result = await self.refresh_fixture(
-            Sources(['11_2025'], {'11_2026': scribe('12-11-2026')}), old)
+            Sources(['11_2026'], {'11_2026': scribe('12-11-2026')}), old)
         self.assertEqual(result['fetchVersion'], FETCH_VERSION)
         self.assertEqual(result['status'], 'published')
         self.assertEqual(old['entries'], [])
@@ -503,7 +501,7 @@ class RefreshTests(unittest.IsolatedAsyncioTestCase):
         old = {'fetchVersion': FETCH_VERSION, 'nextCheckAt': (NOW + CHECK_SECONDS) * 1000,
                'status': 'pending', 'entries': []}
         result = await self.refresh_fixture(
-            Sources(['11_2025'], {'11_2026': scribe('12-11-2026')}), old, force=True)
+            Sources(['11_2026'], {'11_2026': scribe('12-11-2026')}), old, force=True)
         self.assertEqual(result['status'], 'published')
         self.assertEqual(result['entries'][0]['date'], '2026-11-12')
 

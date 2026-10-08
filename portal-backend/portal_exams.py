@@ -1,4 +1,4 @@
-"""Session-scoped exam refresh and last-success fallback, piggybacked on sync."""
+"""On-demand, session-scoped exam refresh and last-success fallback."""
 import asyncio
 import copy
 from datetime import datetime, timedelta, timezone
@@ -14,7 +14,7 @@ SUBJECTS = BASE + "students/certificateRequest/ScribeInner.jsp"
 NOTICE = "Exam dates may change. Confirm with Student Portal or your hall ticket before each exam."
 CHECK_SECONDS = 6 * 3600
 RETRY_SECONDS = 15 * 60
-FETCH_VERSION = 2
+FETCH_VERSION = 3
 
 
 def stamp(now):

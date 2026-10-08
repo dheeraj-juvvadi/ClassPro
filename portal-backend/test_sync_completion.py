@@ -82,13 +82,13 @@ class CompletionTests(unittest.IsolatedAsyncioTestCase):
                 finish.set()
         self.assertEqual(server.refresh_response_waiters, 0)
 
-    async def test_retired_exams_are_not_fetched_on_login_or_manual_sync(self):
+    async def test_exams_are_not_fetched_on_login_or_general_sync(self):
         async def invoke(request, path, payload):
             return httpx.Response(200), {"success": True, "cookies": {"JSESSIONID": "new"},
                 "attendance": [{"code": "SYN001", "conducted": 10, "absent": 1}]}
 
         self.entry.update(digest="synthetic", pending_provider="portal")
-        with patch("portal_exams.refresh_exams", new_callable=AsyncMock) as exams, \
+        with patch.object(server, "refresh_exams", new_callable=AsyncMock) as exams, \
              patch("portal_exams.PortalClient", side_effect=AssertionError("retired exam fetch")), \
              patch.object(server, "invoke", side_effect=invoke):
             response = await self.client.post("/api/login/client", headers={"Origin": server.origin},
@@ -99,6 +99,57 @@ class CompletionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotIn("exams", response.json())
             exams.assert_not_awaited()
+
+    async def test_exam_page_fetches_only_connected_students_and_retains_cache(self):
+        data = {"status": "published", "entries": [{"code": "SYN001", "title": "Sample course",
+                "date": "2026-11-26", "period": "11_2026", "session": "AN"}],
+                "lastAttemptAt": "2026-10-07T06:00:00+00:00", "stale": False}
+        with patch.object(server, "refresh_exams", new_callable=AsyncMock, return_value=data) as fetch:
+            response = await self.client.get("/api/exams")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["exams"], data)
+            self.assertEqual(fetch.await_args.args[0], {"JSESSIONID": "synthetic"})
+            self.assertFalse(fetch.await_args.kwargs["force"])
+            self.assertEqual(self.entry["report"]["exams"], data)
+            self.assertFalse(server.report({}, {"exams": data})["exams"]["stale"])
+            await self.client.get("/api/exams?force=1")
+            self.assertTrue(fetch.await_args.kwargs["force"])
+            self.entry["providers"]["portal"]["expired"] = True
+            response = await self.client.get("/api/exams")
+            self.assertTrue(response.json()["exams"]["stale"])
+            self.assertTrue(response.json()["exams"]["entries"][0]["stale"])
+            self.assertEqual(response.json()["exams"]["entries"][0]["date"], "2026-11-26")
+            self.assertFalse(data["stale"])
+            self.assertEqual(fetch.await_count, 2)
+            server.sessions.clear()
+            self.assertEqual((await self.client.get("/api/exams")).status_code, 401)
+
+    async def test_exam_refresh_honors_recent_attempt_cooldown(self):
+        data = {"entries": [], "lastAttemptAt": "2026-10-07T06:00:00+00:00"}
+        self.entry["providers"]["portal"]["report"]["exams"] = data
+        with patch.object(server, "refresh_exams", new_callable=AsyncMock, return_value=data) as fetch, \
+             patch.object(server.time, "time", return_value=1791352801):
+            response = await self.client.get("/api/exams?force=1")
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(fetch.await_args.kwargs["force"])
+
+    async def test_exam_waiters_do_not_occupy_workers_or_block_cached_reports(self):
+        lock = server.session_locks.setdefault("synthetic", asyncio.Lock())
+        await lock.acquire()
+        try:
+            with patch.object(server, "QUEUE_WAIT", .05), \
+                 patch.object(server, "refresh_exams", new_callable=AsyncMock) as fetch:
+                pending = asyncio.create_task(self.client.get("/api/exams"))
+                async with asyncio.timeout(1):
+                    while not server.admission_waiters:
+                        await asyncio.sleep(.001)
+                self.assertEqual(server.gate._value, server.API_CONCURRENCY)
+                cached = await self.client.get("/api/reports?cache=only")
+                self.assertEqual(cached.status_code, 200)
+                self.assertEqual((await pending).status_code, 503)
+                fetch.assert_not_awaited()
+        finally:
+            lock.release()
 
     async def test_logout_during_completion_wait_does_not_return_private_report(self):
         finish = asyncio.Event()
