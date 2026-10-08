@@ -14,6 +14,9 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
   context.after(() => browser.close());
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   page.setDefaultTimeout(4000);
+  // Hold the first polling timer while CI performs the initial UI assertions.
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 100));
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   const origin = `http://127.0.0.1:${server.address().port}`;
@@ -50,6 +53,7 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
   assert.equal(await page.locator('#reports-message').isVisible(), false, 'queued sync has no duplicate report banner');
   mode = 'completed'; latest = Date.now();
   const completionStarted = Date.now();
+  await page.clock.resume();
   await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Synced');
   assert.ok(Date.now() - completionStarted < 1500, 'completion should honor the short server hint without an artificial two-second wait');
   assert.equal(requests, 2);
