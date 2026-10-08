@@ -30,6 +30,13 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
   await page.addInitScript(payload => {
     localStorage.setItem('anon-reports-cache', JSON.stringify({ ...payload, syncedAt: Date.now() }));
     localStorage.setItem('anon.consent.v1', 'declined');
+    const schedule = window.setTimeout;
+    window.syncPollDelays = [];
+    window.setTimeout = function(callback, delay, ...args) {
+      if (typeof callback === 'function' && callback.toString().includes('retryAdmission'))
+        window.syncPollDelays.push(delay);
+      return schedule.call(this, callback, delay, ...args);
+    };
   }, report);
   let mode = 'queued', requests = 0, latest = report.sync.syncedAt, completionWait = false;
   const requestURLs = [];
@@ -52,10 +59,10 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
   assert.equal(await page.locator('#sync-notice').isVisible(), false, 'queued sync has no floating progress box');
   assert.equal(await page.locator('#reports-message').isVisible(), false, 'queued sync has no duplicate report banner');
   mode = 'completed'; latest = Date.now();
-  const completionStarted = Date.now();
+  const initialDelay = await page.evaluate(() => syncPollDelays.at(-1));
+  assert.ok(initialDelay >= 200 && initialDelay < 1500, 'short server hints must not acquire an artificial two-second delay');
   await page.clock.resume();
   await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Synced');
-  assert.ok(Date.now() - completionStarted < 1500, 'completion should honor the short server hint without an artificial two-second wait');
   assert.equal(requests, 2);
   assert.equal(await page.locator('#sync-progress').textContent(), '');
   assert.match(requestURLs[0], /cache=only/);
@@ -66,9 +73,9 @@ test('returning sync distinguishes queue, completion, unchanged data and failure
   mode = 'queued'; completionWait = true;
   await page.evaluate(() => { pendingSyncChecks = 8; return loadReports({ force: true, followup: true }); });
   mode = 'completed'; latest += 1000;
-  const awaitedCompletion = Date.now();
+  const completionDelay = await page.evaluate(() => syncPollDelays.at(-1));
+  assert.ok(completionDelay >= 200 && completionDelay < 1500, 'server completion wait must bypass the five-second polling backoff');
   await page.waitForFunction(() => document.querySelector('#sync-notice-label').textContent === 'Synced');
-  assert.ok(Date.now() - awaitedCompletion < 1500, 'server completion wait must bypass the five-second polling backoff');
   assert.match(requestURLs.at(-1), /cache=only&wait=1/);
   completionWait = false;
   mode = 'partial';
