@@ -26,11 +26,11 @@ body .site-header > #planner-menu > summary {
   border-radius: 10px;
   background: transparent;
   box-shadow: none;
-  color: #e5e9cf;
+  color: var(--catnap-ink, #e5e9cf);
   font-size: 27px;
   line-height: 1;
   text-align: center;
-  text-shadow: 0 0 5px #edf1d42a, 0 0 12px #c9d7a512;
+  text-shadow: 0 0 5px var(--catnap-overlay-edf1d42a, #edf1d42a), 0 0 12px var(--catnap-overlay-c9d7a512, #c9d7a512);
   list-style: none;
   cursor: pointer;
 }
@@ -65,10 +65,10 @@ body .site-header > #planner-menu > summary > span {
 }
 
 body .site-header > #planner-menu > summary:hover {
-  color: #f1eee3;
+  color: var(--catnap-ink, #f1eee3);
 }
 
 body .site-header > #planner-menu > summary:focus-visible {
-  outline: 2px solid #c5d4a7;
+  outline: 2px solid var(--catnap-accent, #c5d4a7);
   outline-offset: 3px;
 }

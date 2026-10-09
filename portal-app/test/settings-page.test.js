@@ -107,9 +107,9 @@ test('real profile edits survive refresh, remain local, reset and clear across a
   assert.equal(JSON.parse(storage.get(key)).prefs.name, 'Élodie O’Connor');
   context.anonSettings.clear(); update(report());
   assert.equal(get('settings-name').textContent, 'Élodie O’Connor');
-  get('settings-theme').value = 'clay'; await get('settings-theme').emit('change');
+  get('settings-theme').value = 'cats'; await get('settings-theme').emit('change');
   get('settings-haptics').checked = false; await get('settings-haptics').emit('change');
-  assert.equal(context.document.body.dataset.accent, 'clay');
+  assert.equal(context.document.body.dataset.accent, 'cats');
   assert.equal(calls.haptics, false);
   await get('settings-reset').click();
   assert.equal(get('settings-name').textContent, 'Mira Rao');

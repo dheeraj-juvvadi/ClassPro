@@ -1,21 +1,21 @@
-body.planner #exams-view{max-width:900px;min-width:0;margin:0 auto;color:#f1eee3}
+body.planner #exams-view{max-width:900px;min-width:0;margin:0 auto;color:var(--catnap-ink, #f1eee3)}
 #exams-view .exam-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
 #exams-title{margin:0;font-size:27px;font-weight:500;line-height:1.25}
-#exam-sync{min-width:44px;min-height:44px;padding:8px 0 8px 12px;background:none;color:#c5d4a7;font-size:12px;flex:none}
-#exam-status{font-size:13px;line-height:1.6;color:#c1c8b8;margin:0 0 8px;max-width:65ch}
-#exam-checked,#exam-source{font-size:11px;line-height:1.6;color:#adb4a4;margin:0}
-#exam-period-field{display:grid;gap:7px;max-width:320px;margin:20px 0 0;font-size:12px;color:#adb4a4}
-#exam-period{width:100%;min-height:44px;padding:10px 12px;border:1px solid #424c3b;border-radius:8px;background:#232720;color:#f1eee3;font-size:14px}
-#exam-list{margin-top:20px;padding:0 16px;border-radius:20px;background:#232720}
+#exam-sync{min-width:44px;min-height:44px;padding:8px 0 8px 12px;background:none;color:var(--catnap-accent, #c5d4a7);font-size:12px;flex:none}
+#exam-status{font-size:13px;line-height:1.6;color:var(--catnap-muted, #c1c8b8);margin:0 0 8px;max-width:65ch}
+#exam-checked,#exam-source{font-size:11px;line-height:1.6;color:var(--catnap-muted, #adb4a4);margin:0}
+#exam-period-field{display:grid;gap:7px;max-width:320px;margin:20px 0 0;font-size:12px;color:var(--catnap-muted, #adb4a4)}
+#exam-period{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--catnap-line, #424c3b);border-radius:8px;background:var(--catnap-surface, #232720);color:var(--catnap-ink, #f1eee3);font-size:14px}
+#exam-list{margin-top:20px;padding:0 16px;border-radius:20px;background:var(--catnap-surface, #232720)}
 .exam-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 0;min-width:0}
-.exam-row+.exam-row{border-top:1px solid #3b4235}.exam-row>div:first-child{min-width:0}
-.exam-row h2{margin:0;font-size:13px;font-weight:450;line-height:1.45;color:#bbc1b4;overflow-wrap:anywhere;text-transform:none}
-.exam-meta{font-size:10px;line-height:1.5;color:#adb4a4;margin:5px 0 0}
+.exam-row+.exam-row{border-top:1px solid var(--catnap-line, #3b4235)}.exam-row>div:first-child{min-width:0}
+.exam-row h2{margin:0;font-size:13px;font-weight:450;line-height:1.45;color:var(--catnap-muted, #bbc1b4);overflow-wrap:anywhere;text-transform:none}
+.exam-meta{font-size:10px;line-height:1.5;color:var(--catnap-muted, #adb4a4);margin:5px 0 0}
 .exam-when{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-variant-numeric:tabular-nums}
-.exam-when time{font-size:15px;font-weight:500}.exam-when>span{font-size:11px;color:#adb4a4}.exam-when .exam-pending{font-size:12px}
-.exam-when small{font-size:10px;color:#dfb993}.exam-empty{padding:20px 0;font-size:12px;line-height:1.6;color:#adb4a4;margin:0}
-.exam-disclaimer{margin:18px 0 0;font-size:11px;line-height:1.7;color:#adb4a4;max-width:75ch}
-.exam-disclaimer a{color:#c5d4a7;text-underline-offset:3px;display:inline-block;min-height:44px;padding-block:12px}
-.home-exam-link{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:8px 0;color:#c5d4a7;font-size:12px;text-decoration:none}
-.calendar-exam{padding:12px 0;border-bottom:1px solid #3b4235}.calendar-exam strong{font-size:13px;font-weight:450}.calendar-exam p{font-size:11px;color:#adb4a4;margin-top:4px}
+.exam-when time{font-size:15px;font-weight:500}.exam-when>span{font-size:11px;color:var(--catnap-muted, #adb4a4)}.exam-when .exam-pending{font-size:12px}
+.exam-when small{font-size:10px;color:var(--catnap-warning, #dfb993)}.exam-empty{padding:20px 0;font-size:12px;line-height:1.6;color:var(--catnap-muted, #adb4a4);margin:0}
+.exam-disclaimer{margin:18px 0 0;font-size:11px;line-height:1.7;color:var(--catnap-muted, #adb4a4);max-width:75ch}
+.exam-disclaimer a{color:var(--catnap-accent, #c5d4a7);text-underline-offset:3px;display:inline-block;min-height:44px;padding-block:12px}
+.home-exam-link{display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:8px 0;color:var(--catnap-accent, #c5d4a7);font-size:12px;text-decoration:none}
+.calendar-exam{padding:12px 0;border-bottom:1px solid var(--catnap-line, #3b4235)}.calendar-exam strong{font-size:13px;font-weight:450}.calendar-exam p{font-size:11px;color:var(--catnap-muted, #adb4a4);margin-top:4px}
 @media(max-width:380px){#exams-title{font-size:24px}#exam-list{padding-inline:13px}.exam-row{gap:10px}.exam-when time{font-size:13px}}

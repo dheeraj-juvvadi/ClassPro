@@ -1,14 +1,14 @@
-.consent-banner { position: fixed; z-index: 40; left: 24px; right: 24px; bottom: 24px; max-width: 900px; margin: auto; display: flex; align-items: center; gap: 24px; padding: 22px 24px; background: #252c22; color: #f1eee3; border: 1px solid #536047; border-radius: 12px; font: 13px/1.6 Inter, sans-serif; box-shadow: 0 8px 32px #0004; }
+.consent-banner { position: fixed; z-index: 40; left: 24px; right: 24px; bottom: 24px; max-width: 900px; margin: auto; display: flex; align-items: center; gap: 24px; padding: 22px 24px; background: var(--catnap-surface, #252c22); color: var(--catnap-ink, #f1eee3); border: 1px solid var(--catnap-line, #536047); border-radius: 12px; font: 13px/1.6 Inter, sans-serif; box-shadow: 0 8px 32px #0004; }
 .consent-banner[hidden] { display: none; }
 body.planner .consent-banner { bottom: max(84px, calc(env(safe-area-inset-bottom) + 76px)); }
 @media (min-width: 1000px) { body.planner .consent-banner { left: 240px; bottom: 24px; } }
 .consent-banner strong { font-size: 15px; }
 .consent-banner p { margin: 5px 0; max-width: 62ch; }
-.consent-banner a { color: #d5dda9; text-underline-offset: 3px; }
+.consent-banner a { color: var(--catnap-accent, #d5dda9); text-underline-offset: 3px; }
 .consent-actions { display: flex; flex: none; gap: 8px; }
-.consent-actions button { min-height: 44px; padding: 10px 14px; border: 1px solid #768364; background: transparent; color: #f1eee3; border-radius: 7px; font: inherit; cursor: pointer; white-space: nowrap; }
-.consent-actions button:hover { background: #35402d; }
-.consent-actions button:focus-visible { outline: 2px solid #d5dda9; outline-offset: 3px; }
+.consent-actions button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--catnap-line, #768364); background: transparent; color: var(--catnap-ink, #f1eee3); border-radius: 7px; font: inherit; cursor: pointer; white-space: nowrap; }
+.consent-actions button:hover { background: var(--catnap-raised, #35402d); }
+.consent-actions button:focus-visible { outline: 2px solid var(--catnap-accent, #d5dda9); outline-offset: 3px; }
 @media (max-width: 700px) {
   .consent-banner { left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); display: block; padding: 18px; }
   .consent-actions { margin-top: 14px; }

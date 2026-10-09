@@ -1,17 +1,9 @@
 import { writeFile } from 'node:fs/promises';
-import { styledScenes } from './scene-styles.mjs';
 
 // Static, locally generated panoramas: no canvas or animation work in the app.
 const root = new URL('../public/', import.meta.url);
 const width = 480, height = 84;
-const scenes = {
-  sunrise: { name: 'First Light', sky: ['#244b50', '#70a59a', '#e6dcab'], sun: '#fff0bb', warm: '#f5d3a0' },
-  sunset: { name: 'Ember Coast', sky: ['#572d48', '#c76054', '#ffa454'], sun: '#ffe5a3', warm: '#ffd0a3' },
-  moonlight: { name: 'Roman Nocturne', sky: ['#0d1734', '#243f77', '#526ca8'], stone: [91, 132, 197], moon: '#d5e5fc', warm: '#efcb8a' },
-  cats: { name: 'Catnap Alley', sky: ['#30244b', '#6d528b', '#b797b8'], moon: '#e8cfb4', warm: '#f1c292' },
-  sand: { name: 'Saffron Dunes', sky: ['#57482b', '#b08743', '#edca79'], sun: '#fff0bb', warm: '#e8c9a3' },
-  clay: { name: 'Rosewood Valley', sky: ['#522e3a', '#ae7583', '#edd0c3'], sun: '#f8e8d6', warm: '#eac3a5' },
-};
+const scene = { name: 'Catnap Alley', sky: ['#30244b', '#6d528b', '#b797b8'], moon: '#e8cfb4', warm: '#f1c292' };
 const rgb = hex => hex.slice(1).match(/../g).map(n => parseInt(n, 16));
 const hex = values => '#' + values.map(n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('');
 const mix = (a, b, t) => a.map((n, i) => n * (1 - t) + b[i] * t);
@@ -89,15 +81,9 @@ function svg(name, x = 0, w = width) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${height}" shape-rendering="crispEdges" data-art-style="pixel"><title>${name} pixel panorama</title>`
     + [...paths].map(([color, path]) => `<path fill="${color}" d="${path}"/>`).join('') + '</svg>\n';
 }
-for (const [name, colors] of Object.entries(scenes)) {
-  if (name === 'cats') {
-    palette = colors; pixels = new Array(width * height);
-    sky(); rooftops();
-    await writeFile(new URL(`scene-${name}.svg`, root), svg(colors.name));
-  } else {
-    await writeFile(new URL(`scene-${name}.svg`, root), styledScenes[name]());
-  }
-}
+palette = scene; pixels = new Array(width * height);
+sky(); rooftops();
+await writeFile(new URL('scene-cats.svg', root), svg(scene.name));
 // A real pixel wordmark, with a text alternative in the HTML header.
 const glyphs = {
   A: ['01110','11011','11011','11111','11011','11011','11011'],
@@ -112,4 +98,4 @@ for (const letter of 'Anon') {
   offset += 6;
 }
 await writeFile(new URL('anon-pixel.svg', root), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 7" shape-rendering="crispEdges"><title>Anon</title><path fill="#f3ece0" d="${wordmark}"/></svg>\n`);
-console.log(`Built ${Object.keys(scenes).length} responsive scenes and the pixel Anon wordmark.`);
+console.log('Built Catnap Alley and the pixel Anon wordmark.');

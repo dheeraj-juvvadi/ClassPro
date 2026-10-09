@@ -3,15 +3,15 @@
   --page: #f5f6f2;
   --surface: #ffffff;
   --soft: #edf2eb;
-  --ink: #1c3028;
+  --ink: var(--catnap-on-accent, #1c3028);
   --muted: #5a6b62;
   --line: #d8e0d7;
-  --accent: #265d43;
-  --accent-hover: #174a32;
+  --accent: var(--catnap-on-accent, #265d43);
+  --accent-hover: var(--catnap-on-accent, #174a32);
   --on-accent: #ffffff;
-  --error: #963928;
-  --error-bg: #fff1ec;
-  --focus: #bd6e17;
+  --error: var(--catnap-risk-line, #963928);
+  --error-bg: var(--catnap-on-risk, #fff1ec);
+  --focus: var(--catnap-warning, #bd6e17);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 16px;
   font-synthesis: none;
@@ -143,18 +143,18 @@ summary:focus-visible { outline-offset: -4px; }
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --page: #141a17;
+    --page: var(--catnap-page, #141a17);
     --surface: #1c2420;
     --soft: #26312a;
-    --ink: #e6eee7;
-    --muted: #a9b9ac;
+    --ink: var(--catnap-ink, #e6eee7);
+    --muted: var(--catnap-muted, #a9b9ac);
     --line: #3d4b40;
-    --accent: #a1d8b4;
-    --accent-hover: #bde9cb;
-    --on-accent: #163521;
-    --error: #ffb8a4;
-    --error-bg: #3a2520;
-    --focus: #efb063;
+    --accent: var(--catnap-positive, #a1d8b4);
+    --accent-hover: var(--catnap-positive, #bde9cb);
+    --on-accent: var(--catnap-on-accent, #163521);
+    --error: var(--catnap-risk, #ffb8a4);
+    --error-bg: var(--catnap-risk-surface, #3a2520);
+    --focus: var(--catnap-warning, #efb063);
   }
 }
 @media (prefers-reduced-motion: no-preference) {

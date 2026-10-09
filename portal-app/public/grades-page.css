@@ -8,22 +8,22 @@ body.planner #grades-view {
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: #f1eee3;
+  color: var(--catnap-ink, #f1eee3);
 }
 #grades-title { margin: 0 0 8px; }
 #grades-view .grades-intro { margin: 0 0 24px; color: var(--planner-muted); }
 #grades-view .journey-heading h3 { margin: 0; font-size: 16px; font-weight: 500; letter-spacing: -.02em; }
 #grades-content .grade-course-list { display: grid; gap: 16px; margin-top: 24px; }
 .grade-course {
-  --mark-sage: var(--planner-green, #c5d4a7);
-  --mark-muted: #adb4a4;
-  --mark-line: #373d36;
+  --mark-sage: var(--planner-green, var(--catnap-accent, #c5d4a7));
+  --mark-muted: var(--catnap-muted, #adb4a4);
+  --mark-line: var(--catnap-line, #373d36);
   min-width: 0;
   padding: 8px 24px;
-  border: 1px solid #434b3d;
+  border: 1px solid var(--catnap-line, #434b3d);
   border-radius: 16px;
-  background: #1c1e1b;
-  color: #f1eee3;
+  background: var(--catnap-inset, #1c1e1b);
+  color: var(--catnap-ink, #f1eee3);
 }
 .grade-course > .course-heading { gap: 4px; padding-block: 16px; }
 .grade-course .course-title { font-size: 18px; font-weight: 500; line-height: 1.4; letter-spacing: -.025em; }

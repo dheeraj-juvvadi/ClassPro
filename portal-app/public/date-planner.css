@@ -1,7 +1,7 @@
 #projection-dialog {
-  --plan-bg: #191b19; --plan-panel: #191b19; --plan-line: #373c32;
-  --plan-ink: #f1efe6; --plan-muted: #b3b8ab; --plan-risk: #e2aa96;
-  --plan-leave: #d5dda9; --plan-attend: #d5dda9; --plan-od: #d5dda9;
+  --plan-bg: var(--catnap-page, #191b19); --plan-panel: var(--catnap-page, #191b19); --plan-line: var(--catnap-line, #373c32);
+  --plan-ink: var(--catnap-ink, #f1efe6); --plan-muted: var(--catnap-muted, #b3b8ab); --plan-risk: var(--catnap-risk, #e2aa96);
+  --plan-leave: var(--catnap-accent, #d5dda9); --plan-attend: var(--catnap-accent, #d5dda9); --plan-od: var(--catnap-accent, #d5dda9);
   box-sizing: border-box; color-scheme: dark; isolation: isolate;
   position: fixed; inset: 0; width: 100%; max-width: 100%;
   height: 100vh; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0;
@@ -9,7 +9,7 @@
   background: var(--plan-bg); color: var(--plan-ink);
   font: 400 14px/1.5 Inter, -apple-system, BlinkMacSystemFont, sans-serif;
   overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
-  scrollbar-width: thin; scrollbar-color: #63714f transparent;
+  scrollbar-width: thin; scrollbar-color: var(--catnap-line, #63714f) transparent;
 }
 #projection-dialog[open] { display: block; }
 #projection-dialog:not([open]), #projection-dialog [hidden] { display: none !important; }
@@ -23,7 +23,7 @@
 #projection-dialog button, #projection-dialog input, #projection-dialog select { font-family: inherit; touch-action: manipulation; }
 #projection-dialog button { cursor: pointer; }
 #projection-dialog button:disabled { cursor: default; opacity: .55; }
-#projection-dialog :is(button, input, select, summary):focus-visible { outline: 2px solid #a4a8df; outline-offset: 4px; }
+#projection-dialog :is(button, input, select, summary):focus-visible { outline: 2px solid var(--catnap-focus, #a4a8df); outline-offset: 4px; }
 #projection-dialog :is(.date-planner-header, .date-planner-layout, .date-planner-footer) {
   width: min(390px, calc(100% - 48px)); margin-inline: auto;
 }
@@ -50,8 +50,8 @@
 #projection-mode option { background: var(--plan-bg); color: var(--plan-ink); }
 #projection-range-form input {
   display: block; width: 100%; min-width: 0; height: 50px; min-height: 50px;
-  margin: 8px 0 0; padding: 12px 10px; border: 1px solid #45483e; border-radius: 5px;
-  background: #191b18; color: var(--plan-ink); font-size: 13px;
+  margin: 8px 0 0; padding: 12px 10px; border: 1px solid var(--catnap-line, #45483e); border-radius: 5px;
+  background: var(--catnap-page, #191b18); color: var(--plan-ink); font-size: 13px;
 }
 #projection-range-form input::-webkit-calendar-picker-indicator { opacity: .65; }
 #projection-range-form input[aria-invalid="true"] { border-color: var(--plan-risk); }
@@ -61,14 +61,14 @@
 #projection-dialog :is(#projection-apply, #projection-review-custom) {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
   width: 100%; min-height: 58px; margin: 0; padding: 10px 12px 10px 21px;
-  border: 0; border-radius: 32px; background: #20271e; color: var(--plan-ink);
+  border: 0; border-radius: 32px; background: var(--catnap-inset, #20271e); color: var(--plan-ink);
   font-size: 13px; font-weight: 550; text-align: left;
 }
 #projection-dialog :is(#projection-apply, #projection-review-custom) > span {
   display: grid; place-items: center; flex: none; width: 34px; height: 34px;
-  border-radius: 50%; background: var(--plan-attend); color: #252b1c; font-size: 21px; font-weight: 400;
+  border-radius: 50%; background: var(--plan-attend); color: var(--catnap-on-accent, #252b1c); font-size: 21px; font-weight: 400;
 }
-#projection-dialog :is(#projection-apply, #projection-review-custom):hover:not(:disabled) { background: #293225; }
+#projection-dialog :is(#projection-apply, #projection-review-custom):hover:not(:disabled) { background: var(--catnap-raised, #293225); }
 #projection-customize { margin: 12px 0 70px; padding: 0; border: 0; background: transparent; }
 #projection-customize > summary { display: flex; align-items: center; gap: 10px; width: fit-content; min-height: 44px; padding: 0; color: var(--plan-muted); font-size: 11px; cursor: pointer; list-style: none; }
 #projection-customize > summary::after { content: '+'; font-size: 16px; }
@@ -78,10 +78,10 @@
 #projection-customize #projection-review-custom { margin-top: 24px; }
 
 /* The calendar and per-class editor are secondary, inside Customize days. */
-#projection-customize .date-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin: 14px 0 8px; border-radius: 8px; border: 1px solid var(--plan-line); background: #171c16; }
+#projection-customize .date-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; margin: 14px 0 8px; border-radius: 8px; border: 1px solid var(--plan-line); background: var(--catnap-page, #171c16); }
 #projection-customize .date-actions button { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 9px 4px; border: 0; border-radius: 5px; background: transparent; color: var(--plan-muted); font-size: 12px; font-weight: 500; }
 #projection-customize .date-actions svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-#projection-customize .date-actions button[aria-pressed="true"] { background: var(--plan-attend); color: #252b1c; }
+#projection-customize .date-actions button[aria-pressed="true"] { background: var(--plan-attend); color: var(--catnap-on-accent, #252b1c); }
 #projection-customize .date-planner-hint { min-height: 18px; margin: 0 0 8px; color: var(--plan-muted); font-size: 11px; line-height: 1.6; }
 #projection-customize .date-range-summary { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 14px 0 12px; margin-bottom: 8px; border-bottom: 1px solid var(--plan-line); }
 #projection-customize .date-range-summary > div { display: grid; gap: 6px; }
@@ -100,19 +100,19 @@
 #projection-customize calendar-month::part(th) { color: var(--plan-muted); height: 26px; font-size: 10px; font-weight: 450; }
 #projection-customize calendar-month::part(td) { padding: 0; }
 #projection-customize calendar-month::part(button) { width: 100%; height: 40px; min-width: 0; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--plan-ink); font: 500 12px/1 Inter, sans-serif; -webkit-tap-highlight-color: transparent; }
-#projection-customize calendar-month::part(today) { border-color: #a6b884; }
-#projection-customize calendar-month::part(disallowed) { background: transparent; color: #8b9382; cursor: default; }
+#projection-customize calendar-month::part(today) { border-color: var(--catnap-accent, #a6b884); }
+#projection-customize calendar-month::part(disallowed) { background: transparent; color: var(--catnap-muted, #8b9382); cursor: default; }
 #projection-customize calendar-month::part(plan-leave),
 #projection-customize calendar-month::part(plan-attend),
-#projection-customize calendar-month::part(plan-od) { background: var(--plan-attend); color: #252b1c; opacity: 1; }
-#projection-customize calendar-month::part(plan-selected) { border-radius: 0; background: #34412b; color: #e7efd9; }
-#projection-customize calendar-month::part(plan-start) { border-radius: 5px 0 0 5px; background: var(--plan-attend); color: #252b1c; }
-#projection-customize calendar-month::part(plan-end) { border-radius: 0 5px 5px 0; background: var(--plan-attend); color: #252b1c; }
+#projection-customize calendar-month::part(plan-od) { background: var(--plan-attend); color: var(--catnap-on-accent, #252b1c); opacity: 1; }
+#projection-customize calendar-month::part(plan-selected) { border-radius: 0; background: var(--catnap-raised, #34412b); color: var(--catnap-accent-hover, #e7efd9); }
+#projection-customize calendar-month::part(plan-start) { border-radius: 5px 0 0 5px; background: var(--plan-attend); color: var(--catnap-on-accent, #252b1c); }
+#projection-customize calendar-month::part(plan-end) { border-radius: 0 5px 5px 0; background: var(--plan-attend); color: var(--catnap-on-accent, #252b1c); }
 #projection-customize calendar-month::part(plan-start plan-end) { border-radius: 5px; }
 #projection-customize calendar-month::part(button):focus-visible,
-#projection-customize #projection-calendar::part(button):focus-visible { outline: 2px solid #a4a8df; outline-offset: 2px; }
+#projection-customize #projection-calendar::part(button):focus-visible { outline: 2px solid var(--catnap-focus, #a4a8df); outline-offset: 2px; }
 #projection-customize #projection-calendar-loading { padding: 24px 8px; min-height: 220px; color: var(--plan-muted); font-size: 12px; }
-#projection-customize #projection-calendar-retry { min-height: 44px; background: #39432d; color: var(--plan-ink); }
+#projection-customize #projection-calendar-retry { min-height: 44px; background: var(--catnap-raised, #39432d); color: var(--plan-ink); }
 #projection-customize .date-planner-calendar-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; }
 #projection-customize .date-planner-calendar-foot p { margin: 0; font-size: 10px; line-height: 1.5; color: var(--plan-muted); }
 #projection-customize :is(#projection-today, #projection-clear) { padding: 6px; min-height: 44px; background: transparent; color: var(--plan-attend); font-size: 11px; white-space: nowrap; }
@@ -140,7 +140,7 @@
 #projection-customize .day-class-select input { flex: none; width: 18px; height: 18px; min-height: 18px; margin: 0; accent-color: var(--plan-attend); }
 #projection-customize .day-editor-room { color: var(--plan-muted); font-size: 10px; line-height: 1.5; }
 #projection-customize #projection-day-editor label:not(.day-class-select) { display: block; margin-top: 14px; color: var(--plan-muted); font-size: 10px; }
-#projection-customize #projection-day-editor select { width: 100%; min-height: 44px; border: 1px solid var(--plan-line); border-radius: 5px; background: #20251c; color: var(--plan-ink); font-size: 12px; }
+#projection-customize #projection-day-editor select { width: 100%; min-height: 44px; border: 1px solid var(--plan-line); border-radius: 5px; background: var(--catnap-inset, #20251c); color: var(--plan-ink); font-size: 12px; }
 
 #projection-dialog .date-planner-section { display: flex; justify-content: space-between; gap: 16px; margin: 0 0 7px; padding: 0 22px 0 0; color: var(--plan-muted); font-size: 10px; }
 #projection-summary { margin: 0 0 16px; color: var(--plan-muted); font-size: 12px; line-height: 1.6; }
@@ -235,21 +235,21 @@
   width: 100%; min-width: 44px; height: 44px; min-height: 44px; gap: 4px; padding: 3px 0;
   border: 0; border-radius: 0; color: var(--plan-ink); background: transparent; font: 400 13px/16px Inter, sans-serif;
 }
-#projection-customize calendar-month::part(button)::after { content: '?'; color: #969f8f; font: 400 8px/10px Inter, sans-serif; }
+#projection-customize calendar-month::part(button)::after { content: '?'; color: var(--catnap-muted, #969f8f); font: 400 8px/10px Inter, sans-serif; }
 #projection-customize calendar-month::part(do-1)::after { content: 'DO 1'; }
 #projection-customize calendar-month::part(do-2)::after { content: 'DO 2'; }
 #projection-customize calendar-month::part(do-3)::after { content: 'DO 3'; }
 #projection-customize calendar-month::part(do-4)::after { content: 'DO 4'; }
 #projection-customize calendar-month::part(do-5)::after { content: 'DO 5'; }
 #projection-customize calendar-month::part(holiday)::after { content: 'Holiday'; }
-#projection-customize calendar-month::part(holiday) { color: #b3ac9e; }
+#projection-customize calendar-month::part(holiday) { color: var(--catnap-muted, #b3ac9e); }
 #projection-customize calendar-month::part(plan-selected),
 #projection-customize calendar-month::part(plan-start),
 #projection-customize calendar-month::part(plan-end) {
-  box-sizing: border-box; background: #b8c398; color: #23281d; font-weight: 500; opacity: 1;
+  box-sizing: border-box; background: var(--catnap-accent, #b8c398); color: var(--catnap-surface, #23281d); font-weight: 500; opacity: 1;
   border: solid #fff; border-width: 1px 0; border-radius: 0;
 }
-#projection-customize calendar-month::part(plan-selected)::after { color: #424b35; }
+#projection-customize calendar-month::part(plan-selected)::after { color: var(--catnap-line, #424b35); }
 #projection-customize calendar-month::part(plan-start) { border-left-width: 1px; border-top-left-radius: 999px; border-bottom-left-radius: 999px; }
 #projection-customize calendar-month::part(plan-end) { border-right-width: 1px; border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
 #projection-customize calendar-month::part(plan-start plan-end) { border-radius: 999px; }

@@ -1,48 +1,54 @@
 /* A shallow panorama in the flowers' masthead, fading into the reading surface. */
-body:is([data-accent="sand"], [data-accent="clay"], [data-accent="cats"],
-  [data-accent="sunrise"], [data-accent="sunset"], [data-accent="moonlight"]) {
-  --ink: #f3ece0;
-  --on-accent: #24212a;
-  --error: #efad99;
-  --error-bg: #422b30;
-  --planner-green: var(--accent);
-  --planner-muted: var(--muted);
-  --accent-hover: var(--ink);
-  --focus: var(--accent);
-  --shade: rgba(19, 21, 26, .3);
-  --shade-solid: rgba(19, 21, 26, .38);
-  background: var(--page);
-  color: var(--ink);
-}
-body[data-accent="sunrise"] {
-  --page: #182826; --surface: #213632; --soft: #2c443d;
-  --muted: #adc8be; --line: #3c5b51; --accent: #b7dcca;
-  --backdrop: url('/scene-sunrise.svg');
-}
-body[data-accent="sunset"] {
-  --page: #302023; --surface: #3c292c; --soft: #4c3435;
-  --muted: #d5b5aa; --line: #664749; --accent: #ffb17e;
-  --backdrop: url('/scene-sunset.svg');
-}
-body[data-accent="moonlight"] {
-  --page: #151e32; --surface: #1f2b46; --soft: #2b3a59;
-  --muted: #b3c3e5; --line: #40567c; --accent: #b0caff;
-  --backdrop: url('/scene-moonlight.svg');
-}
-body[data-accent="sand"] {
-  --page: #2b2619; --surface: #383021; --soft: #473c27;
-  --muted: #cec09b; --line: #5b4e31; --accent: #e5ca83;
-  --backdrop: url('/scene-sand.svg');
-}
-body[data-accent="clay"] {
-  --page: #2d222d; --surface: #3b2c3b; --soft: #4b394a;
-  --muted: #d1b5c8; --line: #654c61; --accent: #edbdd5;
-  --backdrop: url('/scene-clay.svg');
-}
 body[data-accent="cats"] {
   --page: #272139; --surface: #352c48; --soft: #433758;
-  --muted: #c7b9de; --line: #5e4a78; --accent: #d5baef;
+  --ink: #f3ece0; --muted: #c7b9de; --line: #5e4a78;
+  --accent: #d5baef; --accent-hover: #e4cffa; --on-accent: #2a2035;
+  --error: #edb3af; --error-bg: #493040; --focus: #e4cffa;
+  --planner-green: var(--accent); --planner-muted: var(--muted);
   --backdrop: url('/scene-cats.svg');
+  --backdrop-mobile: var(--backdrop);
+  --shade: rgba(39, 33, 57, .3);
+  --shade-solid: rgba(39, 33, 57, .38);
+  --catnap-page: var(--page);
+  --catnap-inset: #2c253c;
+  --catnap-surface: var(--surface);
+  --catnap-raised: #463955;
+  --catnap-line: var(--line);
+  --catnap-ink: var(--ink);
+  --catnap-muted: var(--muted);
+  --catnap-accent: var(--accent);
+  --catnap-accent-hover: var(--accent-hover);
+  --catnap-on-accent: var(--on-accent);
+  --catnap-risk: #edb3bf;
+  --catnap-risk-card: #cc91aa;
+  --catnap-risk-surface: #493040;
+  --catnap-risk-line: #956079;
+  --catnap-on-risk: #2b1b30;
+  --catnap-warning: #e4c4a2;
+  --catnap-warning-card: #d9b992;
+  --catnap-warning-surface: #463644;
+  --catnap-on-warning: #2e2133;
+  --catnap-positive: #d3b9ed;
+  --catnap-focus: var(--focus);
+  --catnap-overlay-24322126: color-mix(in srgb, var(--catnap-on-accent) 15%, transparent);
+  --catnap-overlay-191b19d9: color-mix(in srgb, var(--catnap-page) 85%, transparent);
+  --catnap-overlay-191b19de: color-mix(in srgb, var(--catnap-page) 87%, transparent);
+  --catnap-overlay-1d211dfa: color-mix(in srgb, var(--catnap-inset) 98%, transparent);
+  --catnap-overlay-080b08b8: color-mix(in srgb, var(--catnap-page) 72%, transparent);
+  --catnap-overlay-10160dd9: color-mix(in srgb, var(--catnap-page) 85%, transparent);
+  --catnap-overlay-0b100d40: color-mix(in srgb, var(--catnap-page) 25%, transparent);
+  --catnap-overlay-454a393d: color-mix(in srgb, var(--catnap-line) 24%, transparent);
+  --catnap-overlay-525c474d: color-mix(in srgb, var(--catnap-line) 30%, transparent);
+  --catnap-overlay-bac69a30: color-mix(in srgb, var(--catnap-accent) 19%, transparent);
+  --catnap-overlay-bfc98f35: color-mix(in srgb, var(--catnap-accent) 21%, transparent);
+  --catnap-overlay-c5d4a740: color-mix(in srgb, var(--catnap-accent) 25%, transparent);
+  --catnap-overlay-c5d4a766: color-mix(in srgb, var(--catnap-accent) 40%, transparent);
+  --catnap-overlay-c9d7a50c: color-mix(in srgb, var(--catnap-accent) 5%, transparent);
+  --catnap-overlay-c9d7a512: color-mix(in srgb, var(--catnap-accent) 7%, transparent);
+  --catnap-overlay-d5dda910: color-mix(in srgb, var(--catnap-accent) 6%, transparent);
+  --catnap-overlay-edf1d42a: color-mix(in srgb, var(--catnap-accent) 16%, transparent);
+  --catnap-overlay-f1eee380: color-mix(in srgb, var(--catnap-ink) 50%, transparent);
+  background: var(--page); color: var(--ink);
 }
 /* The default floral artwork uses the same disappearing strip. */
 body.planner .botanical-backdrop {
@@ -54,7 +60,7 @@ body.planner:not([data-accent]), body.planner[data-accent="sage"] {
   --shade: rgba(25, 27, 25, .32);
   --shade-solid: rgba(25, 27, 25, .28);
 }
-body:is(.planner, .garden-login)[data-accent]:not([data-accent="sage"]) .botanical-backdrop {
+body:is(.planner, .garden-login)[data-accent="cats"] .botanical-backdrop {
   inset: 0 0 auto;
   height: 210px;
   background-image: var(--backdrop);
@@ -64,22 +70,22 @@ body:is(.planner, .garden-login)[data-accent]:not([data-accent="sage"]) .botanic
   mask-image: linear-gradient(#000 0, #000 68px, transparent 210px);
   -webkit-mask-image: linear-gradient(#000 0, #000 68px, transparent 210px);
 }
-body:is(.planner, .garden-login)[data-accent]:not([data-accent="sage"]) .botanical-backdrop::after {
+body:is(.planner, .garden-login)[data-accent="cats"] .botanical-backdrop::after {
   background: linear-gradient(90deg, var(--page), transparent 48%),
     linear-gradient(var(--shade-solid), var(--shade));
 }
-body:is(.planner, .garden-login)[data-accent="cats"]:not([data-accent="sage"]) .botanical-backdrop { image-rendering: pixelated; }
+body:is(.planner, .garden-login)[data-accent="cats"] .botanical-backdrop { image-rendering: pixelated; }
 .brand-pixel { display: none; }
 .brand .brand-name { font: inherit; color: inherit; letter-spacing: inherit; }
-body[data-accent]:not([data-accent="sage"]) .brand {
+body[data-accent="cats"] .brand {
   position: relative; min-height: 32px; background: transparent;
 }
-body[data-accent]:not([data-accent="sage"]) .brand-mark { display: none; }
-body[data-accent]:not([data-accent="sage"]) .brand-name {
+body[data-accent="cats"] .brand-mark { display: none; }
+body[data-accent="cats"] .brand-name {
   position: absolute; width: 1px; height: 1px; padding: 0;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
-body[data-accent]:not([data-accent="sage"]) .brand-pixel {
+body[data-accent="cats"] .brand-pixel {
   display: block; width: 92px; height: 28px; image-rendering: pixelated;
 }
 body[data-accent="cats"] .brand::after {
@@ -89,20 +95,20 @@ body[data-accent="cats"] .brand::after {
   image-rendering: pixelated;
 }
 @media (min-width: 1000px) {
-  body.planner[data-accent]:not([data-accent="sage"]) .botanical-backdrop {
+  body.planner[data-accent="cats"] .botanical-backdrop {
     height: 240px; background-size: cover; background-position: center bottom;
     mask-image: linear-gradient(#000 0, #000 58px, transparent 240px);
     -webkit-mask-image: linear-gradient(#000 0, #000 58px, transparent 240px);
   }
-  body.planner[data-accent]:not([data-accent="sage"]) .site-header { background: transparent; }
+  body.planner[data-accent="cats"] .site-header { background: transparent; }
 }
 @media (max-width: 700px) {
-  body:is(.planner, .garden-login)[data-accent]:not([data-accent="sage"]) .botanical-backdrop {
+  body:is(.planner, .garden-login)[data-accent="cats"] .botanical-backdrop {
     height: 170px; background-size: auto 170px; background-position: 80% top;
     mask-image: linear-gradient(#000 0, #000 42px, transparent 170px);
     -webkit-mask-image: linear-gradient(#000 0, #000 42px, transparent 170px);
   }
-  body[data-accent]:not([data-accent="sage"]) .brand-pixel { width: 69px; height: 21px; }
+  body[data-accent="cats"] .brand-pixel { width: 69px; height: 21px; }
   body[data-accent="cats"] .brand::after { width: 36px; height: 18px; bottom: calc(100% - 9px); }
 }
 @media (forced-colors: active) {

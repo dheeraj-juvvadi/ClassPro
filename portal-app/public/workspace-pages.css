@@ -3,32 +3,32 @@ body.planner #calendar-view, body.planner #settings-view { width: 100%; max-widt
 body.planner #settings-view { max-width: 900px; }
 .workspace-page h1 { font-size: 27px; font-weight: 500; line-height: 1.3; letter-spacing: -.045em; }
 #calendar-view > h1 { margin: 0 0 28px; }
-#calendar-view .calendar-layout { border-top: 1px solid #3b4333; }
+#calendar-view .calendar-layout { border-top: 1px solid var(--catnap-line, #3b4333); }
 #calendar-view .calendar-picker { padding: 24px 24px 24px 0; }
 #calendar-view .calendar-detail { background: transparent; border-top: 0; padding: 30px 0 24px 28px; }
 #calendar-view .academic-month button { background: transparent; border-radius: 8px; }
-#calendar-view .academic-month button[data-kind="holiday"] { color: #bba995; background: transparent; }
-#calendar-view .academic-month button[data-kind="exam"] { color: #d4c49b; background: transparent; }
-#calendar-view .academic-month button[aria-pressed="true"] { background: #c5d4a7; color: #233020; }
-.calendar-day-classes { margin-top: 24px; border-top: 1px solid #3b4333; padding-top: 18px; }
+#calendar-view .academic-month button[data-kind="holiday"] { color: var(--catnap-warning, #bba995); background: transparent; }
+#calendar-view .academic-month button[data-kind="exam"] { color: var(--catnap-warning, #d4c49b); background: transparent; }
+#calendar-view .academic-month button[aria-pressed="true"] { background: var(--catnap-accent, #c5d4a7); color: var(--catnap-on-accent, #233020); }
+.calendar-day-classes { margin-top: 24px; border-top: 1px solid var(--catnap-line, #3b4333); padding-top: 18px; }
 .calendar-day-classes h4 { font-size: 12px; font-weight: 500; margin-bottom: 12px; }
-.calendar-day-class { padding: 12px 0; border-top: 1px solid #31392c; font-size: 12px; }
-.calendar-day-class p { color: #abb69e; font-size: 11px; margin-top: 5px; }
-.calendar-day-classes button { background: transparent; color: #c5d4a7; padding: 12px 0; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+.calendar-day-class { padding: 12px 0; border-top: 1px solid var(--catnap-line, #31392c); font-size: 12px; }
+.calendar-day-class p { color: var(--catnap-muted, #abb69e); font-size: 11px; margin-top: 5px; }
+.calendar-day-classes button { background: transparent; color: var(--catnap-accent, #c5d4a7); padding: 12px 0; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
 #settings-view .settings-cover { padding: 0 0 24px; }
 #settings-view #accounts-title { margin: 0; font-size: 27px; }
 #settings-view .settings-intro { padding: 0 0 18px; margin: 0 0 18px; }
 #settings-view .settings-name-form { max-width: 520px; }
 #settings-view .settings-name-form input { min-height: 44px; font-size: 16px; }
 #settings-view .settings-name-form button { border-radius: 7px; }
-#settings-view .settings-section-title { margin: 28px 0 12px; color: #acb89d; letter-spacing: .02em; text-transform: none; font-size: 13px; }
-#settings-view .connection-row { background: transparent; padding: 18px 0; border-top: 1px solid #3b4333; border-radius: 0; }
-#settings-view .settings-row { padding: 22px 0; border-color: #3b4333; }
-#settings-view .settings-row small { max-width: 55ch; color: #aeb7a2; }
+#settings-view .settings-section-title { margin: 28px 0 12px; color: var(--catnap-muted, #acb89d); letter-spacing: .02em; text-transform: none; font-size: 13px; }
+#settings-view .connection-row { background: transparent; padding: 18px 0; border-top: 1px solid var(--catnap-line, #3b4333); border-radius: 0; }
+#settings-view .settings-row { padding: 22px 0; border-color: var(--catnap-line, #3b4333); }
+#settings-view .settings-row small { max-width: 55ch; color: var(--catnap-muted, #aeb7a2); }
 #settings-view select { border-radius: 7px; min-height: 44px; }
-#settings-view .settings-detail { border-color: #3b4333; }
-#settings-view .settings-detail > summary { color: #d3dac8; }
-#settings-view .settings-detail p { max-width: 70ch; color: #b4bdab; }
+#settings-view .settings-detail { border-color: var(--catnap-line, #3b4333); }
+#settings-view .settings-detail > summary { color: var(--catnap-ink, #d3dac8); }
+#settings-view .settings-detail p { max-width: 70ch; color: var(--catnap-muted, #b4bdab); }
 #settings-view .settings-feedback { padding: 20px 0; }
 #settings-view #settings-message { font-size: 12px; line-height: 1.6; margin-top: 12px; }
 @media (max-width: 999px) {
@@ -36,7 +36,7 @@ body.planner #settings-view { max-width: 900px; }
 }
 @media (max-width: 650px) {
   #calendar-view .calendar-picker { padding: 20px 0; }
-  #calendar-view .calendar-detail { padding: 22px 0; border-left: 0; border-top: 1px solid #3b4333; }
+  #calendar-view .calendar-detail { padding: 22px 0; border-left: 0; border-top: 1px solid var(--catnap-line, #3b4333); }
   .calendar-day-classes { grid-column: 1 / -1; }
   #settings-view .provider-connections { grid-template-columns: 1fr; gap: 0; }
   .workspace-page h1, #settings-view #accounts-title { font-size: 26px; }
@@ -44,18 +44,18 @@ body.planner #settings-view { max-width: 900px; }
 body.planner #schedule-view { max-width: 1000px; margin: 0 auto; }
 .schedule-page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .schedule-page-heading h1 { margin: 0; }
-.schedule-page-heading p { color: #aeb7a2; font-size: 12px; line-height: 1.7; margin-top: 10px; max-width: 55ch; }
-#schedule-include-all { flex: none; border: 1px solid #48503e; border-radius: 6px; background: transparent; color: #c5d4a7; font-size: 12px; min-height: 40px; padding: 9px 12px; }
-#schedule-choice-status { color: #aeb7a2; font-size: 11px; line-height: 1.7; margin: 20px 0; }
+.schedule-page-heading p { color: var(--catnap-muted, #aeb7a2); font-size: 12px; line-height: 1.7; margin-top: 10px; max-width: 55ch; }
+#schedule-include-all { flex: none; border: 1px solid var(--catnap-line, #48503e); border-radius: 6px; background: transparent; color: var(--catnap-accent, #c5d4a7); font-size: 12px; min-height: 40px; padding: 9px 12px; }
+#schedule-choice-status { color: var(--catnap-muted, #aeb7a2); font-size: 11px; line-height: 1.7; margin: 20px 0; }
 .schedule-choice-group { margin: 28px 0; }
 .schedule-choice-group h2 { font-size: 14px; font-weight: 500; margin: 0 0 12px; }
-.schedule-choice-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 20px 0; margin: 0; border-top: 1px solid #3b4333; }
-.schedule-choice-row input { width: 18px; height: 18px; min-height: 18px; accent-color: #c5d4a7; margin: 0; }
+.schedule-choice-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 20px 0; margin: 0; border-top: 1px solid var(--catnap-line, #3b4333); }
+.schedule-choice-row input { width: 18px; height: 18px; min-height: 18px; accent-color: var(--catnap-accent, #c5d4a7); margin: 0; }
 .schedule-choice-row strong { display: block; font-size: 13px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
-.schedule-choice-row small { display: block; font-size: 11px; color: #aab49e; margin-top: 4px; line-height: 1.6; }
-.schedule-choice-time { font-size: 12px; color: #c7cfbc; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.schedule-choice-row[data-included="false"] strong { color: #939c88; }
-.schedule-choice-note, .schedule-choice-empty { color: #aeb7a2; font-size: 12px; line-height: 1.7; margin-top: 24px; }
+.schedule-choice-row small { display: block; font-size: 11px; color: var(--catnap-muted, #aab49e); margin-top: 4px; line-height: 1.6; }
+.schedule-choice-time { font-size: 12px; color: var(--catnap-ink, #c7cfbc); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.schedule-choice-row[data-included="false"] strong { color: var(--catnap-muted, #939c88); }
+.schedule-choice-note, .schedule-choice-empty { color: var(--catnap-muted, #aeb7a2); font-size: 12px; line-height: 1.7; margin-top: 24px; }
 .day-done-caption { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
 @media (max-width: 999px) {
   body.planner[data-page="schedule"] main { padding: 24px 24px 112px; margin: 0; }

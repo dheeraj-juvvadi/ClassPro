@@ -1,6 +1,6 @@
 /* Subject cards and a simple, credit-weighted grade projection. */
 .planner #marks-panel .marks-list { display: grid; gap: 12px; margin-top: 16px; }
-.mark-course { --mark-sage: var(--planner-green, #c5d4a7); --mark-muted: #adb4a4; --mark-line: #373d36; min-width: 0; color: #f1eee3; padding: 8px 24px; border: 1px solid #434b3d; border-radius: 16px; background: #1c1e1b; }
+.mark-course { --mark-sage: var(--planner-green, var(--catnap-accent, #c5d4a7)); --mark-muted: var(--catnap-muted, #adb4a4); --mark-line: var(--catnap-line, #373d36); min-width: 0; color: var(--catnap-ink, #f1eee3); padding: 8px 24px; border: 1px solid var(--catnap-line, #434b3d); border-radius: 16px; background: var(--catnap-inset, #1c1e1b); }
 .mark-course-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding-block: 12px; }
 .planner #marks-panel .mark-course .course-heading { gap: 4px; }
 .planner #marks-panel .mark-course .course-title { margin: 0; font-size: 18px; font-weight: 500; line-height: 1.3; letter-spacing: -.025em; }
@@ -21,24 +21,24 @@
 .mark-target-grade { color: var(--mark-sage); font-size: 24px; font-weight: 600; }
 .mark-grade-range, .mark-expected input { display: block; appearance: none; -webkit-appearance: none; width: 100%; min-height: 44px; height: 44px; margin: 0; padding: 0; border: 0; background: transparent; accent-color: var(--mark-sage); cursor: pointer; }
 .mark-grade-range { width: calc(85.714286% + 20px); margin-inline: calc(7.142857% - 10px); }
-.mark-plan input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: #535c4b; }
-.mark-plan input[type="range"]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border: 2px solid #191b19; border-radius: 50%; background: var(--mark-sage); }
-.mark-plan input[type="range"]::-moz-range-track { height: 4px; border-radius: 4px; background: #535c4b; }
-.mark-plan input[type="range"]::-moz-range-thumb { box-sizing: border-box; width: 20px; height: 20px; border: 2px solid #191b19; border-radius: 50%; background: var(--mark-sage); }
+.mark-plan input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: var(--catnap-line, #535c4b); }
+.mark-plan input[type="range"]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border: 2px solid var(--catnap-page, #191b19); border-radius: 50%; background: var(--mark-sage); }
+.mark-plan input[type="range"]::-moz-range-track { height: 4px; border-radius: 4px; background: var(--catnap-line, #535c4b); }
+.mark-plan input[type="range"]::-moz-range-thumb { box-sizing: border-box; width: 20px; height: 20px; border: 2px solid var(--catnap-page, #191b19); border-radius: 50%; background: var(--mark-sage); }
 .mark-grade-stops { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .mark-grade-stops button { min-width: 0; min-height: 44px; padding: 4px 0; border: 0; border-radius: 4px; background: transparent; color: var(--mark-muted); font-size: 14px; font-weight: 400; }
-.mark-grade-stops button[aria-pressed="true"] { color: var(--mark-sage); background: #2a3024; font-weight: 600; }
+.mark-grade-stops button[aria-pressed="true"] { color: var(--mark-sage); background: var(--catnap-surface, #2a3024); font-weight: 600; }
 .mark-plan :is(button, input, summary):focus-visible { outline: 2px solid var(--mark-sage); outline-offset: 2px; }
-.mark-result { display: block; margin-top: 16px; padding: 24px; border-radius: 8px; background: #252b21; font-variant-numeric: tabular-nums; }
+.mark-result { display: block; margin-top: 16px; padding: 24px; border-radius: 8px; background: var(--catnap-surface, #252b21); font-variant-numeric: tabular-nums; }
 .mark-result-caption { display: block; margin-bottom: 8px; color: var(--mark-muted); font-size: 14px; }
 .mark-result-number { color: var(--mark-sage); font-size: 48px; font-weight: 500; letter-spacing: -.04em; line-height: 1.1; }
 .mark-result-max { color: var(--mark-muted); font-size: 18px; white-space: nowrap; }
-.mark-result-detail { margin: 12px 0 0; color: #cdd2c6; font-size: 12px; line-height: 1.5; }
-.mark-result[data-tone="limited"] .mark-result-number { font-size: 30px; color: #e7c6a1; }
+.mark-result-detail { margin: 12px 0 0; color: var(--catnap-ink, #cdd2c6); font-size: 12px; line-height: 1.5; }
+.mark-result[data-tone="limited"] .mark-result-number { font-size: 30px; color: var(--catnap-warning, #e7c6a1); }
 .mark-expected { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; margin-top: 24px; color: var(--mark-muted); font-size: 12px; }
 .mark-expected input { grid-column: 1 / -1; }
-.mark-expected-value { color: #f1eee3; font-variant-numeric: tabular-nums; }
-.mark-plan-error { margin: 12px 0 0; color: #f0b795; font-size: 12px; line-height: 1.5; }
+.mark-expected-value { color: var(--catnap-ink, #f1eee3); font-variant-numeric: tabular-nums; }
+.mark-plan-error { margin: 12px 0 0; color: var(--catnap-warning, #f0b795); font-size: 12px; line-height: 1.5; }
 .mark-include { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 12px; color: var(--mark-muted); font-size: 12px; }
 .mark-include input { width: 16px; height: 16px; accent-color: var(--mark-sage); }
 .mark-plan[data-excluded="true"] .mark-plan-selected { color: var(--mark-muted); text-decoration: line-through; }
@@ -47,45 +47,45 @@
 .planner #marks-panel .mark-course .course-details > summary::after { margin-left: auto; width: 20px; font-size: 18px; color: var(--mark-sage); text-align: center; }
 .planner #marks-panel .mark-course .assessments { padding: 4px 0 16px; }
 .planner #marks-panel .mark-course .assessment-row { padding-block: 12px; }
-.marks-projection { margin-top: 16px; padding: 0 24px; border: 1px solid #4f5b42; border-radius: 16px; background: #262e21; }
-.marks-projection-toggle { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 0; color: #f1eee3; font-size: 14px; cursor: pointer; list-style: none; }
+.marks-projection { margin-top: 16px; padding: 0 24px; border: 1px solid var(--catnap-line, #4f5b42); border-radius: 16px; background: var(--catnap-surface, #262e21); }
+.marks-projection-toggle { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 12px 0; color: var(--catnap-ink, #f1eee3); font-size: 14px; cursor: pointer; list-style: none; }
 .marks-projection-toggle::-webkit-details-marker { display: none; }
-.marks-projection-toggle::after { content: '+'; color: var(--planner-green, #c5d4a7); font-size: 20px; }
+.marks-projection-toggle::after { content: '+'; color: var(--planner-green, var(--catnap-accent, #c5d4a7)); font-size: 20px; }
 .marks-projection[open] > summary::after { content: '−'; }
-.marks-projection-toggle:focus-visible { outline: 2px solid var(--planner-green, #c5d4a7); outline-offset: 4px; }
-.marks-projection-preview { display: flex; align-items: baseline; gap: 4px; margin-left: auto; color: var(--planner-green, #c5d4a7); white-space: nowrap; }
+.marks-projection-toggle:focus-visible { outline: 2px solid var(--planner-green, var(--catnap-accent, #c5d4a7)); outline-offset: 4px; }
+.marks-projection-preview { display: flex; align-items: baseline; gap: 4px; margin-left: auto; color: var(--planner-green, var(--catnap-accent, #c5d4a7)); white-space: nowrap; }
 .marks-projection-preview strong { font-size: 24px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.marks-projection-preview small { color: #adb4a4; font-size: 11px; }
-.marks-projection-content { padding: 16px 0 24px; border-top: 1px solid #434b3d; }
+.marks-projection-preview small { color: var(--catnap-muted, #adb4a4); font-size: 11px; }
+.marks-projection-content { padding: 16px 0 24px; border-top: 1px solid var(--catnap-line, #434b3d); }
 .marks-projection:not([open]) > .marks-projection-content { display: none; }
 .marks-projection-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .marks-projection[hidden] { display: none; }
-.marks-overall-target { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #f1eee3; font-size: 14px; }
-.marks-overall-target output { color: var(--planner-green, #c5d4a7); font-size: 12px; }
-.marks-overall-range { display: block; appearance: none; -webkit-appearance: none; width: 100%; height: 44px; min-height: 44px; margin: 8px 0 0; padding: 0; border: 0; background: transparent; accent-color: var(--planner-green, #c5d4a7); cursor: pointer; }
-.marks-overall-range::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: #535c4b; }
-.marks-overall-range::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; margin-top: -10px; border: 2px solid #262e21; border-radius: 50%; background: var(--planner-green, #c5d4a7); }
-.marks-overall-range::-moz-range-track { height: 4px; border-radius: 4px; background: #535c4b; }
-.marks-overall-range::-moz-range-thumb { width: 20px; height: 20px; border: 2px solid #262e21; border-radius: 50%; background: var(--planner-green, #c5d4a7); }
-.marks-overall-range:focus-visible { outline: 2px solid var(--planner-green, #c5d4a7); outline-offset: 2px; }
-.marks-overall-stops { display: flex; justify-content: space-between; margin-bottom: 24px; color: #adb4a4; font-size: 12px; }
-.marks-projection h3 { margin: 0; color: #f1eee3; font-size: 16px; font-weight: 500; }
-.marks-projection p { margin: 8px 0 0; color: #adb4a4; font-size: 12px; line-height: 1.5; }
+.marks-overall-target { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--catnap-ink, #f1eee3); font-size: 14px; }
+.marks-overall-target output { color: var(--planner-green, var(--catnap-accent, #c5d4a7)); font-size: 12px; }
+.marks-overall-range { display: block; appearance: none; -webkit-appearance: none; width: 100%; height: 44px; min-height: 44px; margin: 8px 0 0; padding: 0; border: 0; background: transparent; accent-color: var(--planner-green, var(--catnap-accent, #c5d4a7)); cursor: pointer; }
+.marks-overall-range::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: var(--catnap-line, #535c4b); }
+.marks-overall-range::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; margin-top: -10px; border: 2px solid var(--catnap-surface, #262e21); border-radius: 50%; background: var(--planner-green, var(--catnap-accent, #c5d4a7)); }
+.marks-overall-range::-moz-range-track { height: 4px; border-radius: 4px; background: var(--catnap-line, #535c4b); }
+.marks-overall-range::-moz-range-thumb { width: 20px; height: 20px; border: 2px solid var(--catnap-surface, #262e21); border-radius: 50%; background: var(--planner-green, var(--catnap-accent, #c5d4a7)); }
+.marks-overall-range:focus-visible { outline: 2px solid var(--planner-green, var(--catnap-accent, #c5d4a7)); outline-offset: 2px; }
+.marks-overall-stops { display: flex; justify-content: space-between; margin-bottom: 24px; color: var(--catnap-muted, #adb4a4); font-size: 12px; }
+.marks-projection h3 { margin: 0; color: var(--catnap-ink, #f1eee3); font-size: 16px; font-weight: 500; }
+.marks-projection p { margin: 8px 0 0; color: var(--catnap-muted, #adb4a4); font-size: 12px; line-height: 1.5; }
 .marks-projection-score { display: flex; align-items: baseline; gap: 8px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
-.marks-projection-score strong { color: var(--planner-green, #c5d4a7); font-size: 48px; font-weight: 500; letter-spacing: -.04em; }
-.marks-projection-score span { color: #adb4a4; font-size: 14px; }
+.marks-projection-score strong { color: var(--planner-green, var(--catnap-accent, #c5d4a7)); font-size: 48px; font-weight: 500; letter-spacing: -.04em; }
+.marks-projection-score span { color: var(--catnap-muted, #adb4a4); font-size: 14px; }
 .marks-history { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
-.marks-history label { display: grid; gap: 8px; color: #cdd2c6; font-size: 12px; }
-.marks-history input { min-width: 0; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid #535d4b; border-radius: 8px; background: #1c1e1b; color: #f1eee3; font-size: 16px; }
-.marks-history input:focus-visible { outline: 2px solid var(--planner-green, #c5d4a7); outline-offset: 2px; }
-.marks-history input[aria-invalid="true"] { border-color: #e7c6a1; }
-.marks-semester { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #434b3d; }
-.marks-semester > div > span { color: #f1eee3; font-size: 14px; }
+.marks-history label { display: grid; gap: 8px; color: var(--catnap-ink, #cdd2c6); font-size: 12px; }
+.marks-history input { min-width: 0; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--catnap-line, #535d4b); border-radius: 8px; background: var(--catnap-inset, #1c1e1b); color: var(--catnap-ink, #f1eee3); font-size: 16px; }
+.marks-history input:focus-visible { outline: 2px solid var(--planner-green, var(--catnap-accent, #c5d4a7)); outline-offset: 2px; }
+.marks-history input[aria-invalid="true"] { border-color: var(--catnap-warning, #e7c6a1); }
+.marks-semester { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--catnap-line, #434b3d); }
+.marks-semester > div > span { color: var(--catnap-ink, #f1eee3); font-size: 14px; }
 .marks-semester p { margin-top: 4px; }
-.marks-semester output { color: var(--planner-green, #c5d4a7); font-size: 24px; font-variant-numeric: tabular-nums; }
+.marks-semester output { color: var(--planner-green, var(--catnap-accent, #c5d4a7)); font-size: 24px; font-variant-numeric: tabular-nums; }
 @media (hover: hover) and (pointer: fine) {
-  .mark-grade-stops button:hover, .mark-plan-toggle:hover { color: #f1eee3; }
-  .planner #marks-panel .mark-course .course-details > summary:hover { background: transparent; color: #f1eee3; }
+  .mark-grade-stops button:hover, .mark-plan-toggle:hover { color: var(--catnap-ink, #f1eee3); }
+  .planner #marks-panel .mark-course .course-details > summary:hover { background: transparent; color: var(--catnap-ink, #f1eee3); }
 }
 @media (max-width: 640px) {
   .mark-course { padding: 8px 16px; }

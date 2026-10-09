@@ -71,9 +71,6 @@ body.planner #settings-view.workspace-page {
 #settings-view.workspace-page .settings-issue-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 0; color: var(--settings-muted); font-size: 12px; text-underline-offset: 4px; }
 #settings-view.workspace-page #settings-message { margin-top: 12px; color: var(--settings-muted); font-size: 12px; line-height: 1.6; }
 #settings-view.workspace-page :focus-visible { outline: 2px solid var(--settings-accent); outline-offset: 3px; }
-.planner[data-accent="sand"] { --planner-green: #d8c49f; }
-.planner[data-accent="clay"] { --planner-green: #d4ac91; }
-.planner[data-accent="sand"] #planner-nav button[aria-current], .planner[data-accent="clay"] #planner-nav button[aria-current] { background: var(--planner-green); }
 /* Original florals remain the default. Pixel scene palettes live together
    in appearance-scenes.css. */
 body {

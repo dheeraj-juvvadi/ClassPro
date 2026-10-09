@@ -121,8 +121,8 @@ test('academic UI handles reported timetables, calendar gaps and static sign-in'
   await page.locator('#settings-display-name').fill('Alex');
   await page.locator('#settings-profile-form button').click();
   assert.equal(await page.locator('#settings-name').innerText(), 'Alex');
-  await page.locator('#settings-theme').selectOption('sand');
-  assert.equal(await page.locator('body').getAttribute('data-accent'), 'sand');
+  await page.locator('#settings-theme').selectOption('cats');
+  assert.equal(await page.locator('body').getAttribute('data-accent'), 'cats');
 
   await page.getByRole('button', { name: 'Connect Academia', exact: true }).click();
   const providerRequests = [];

@@ -3,11 +3,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { load } from 'cheerio';
+import express from 'express';
+import { chromium } from 'playwright';
+import { fileURLToPath } from 'node:url';
 
 const source = name => fs.readFileSync(new URL(`../public/${name}`, import.meta.url), 'utf8');
 const markup = source('index.html');
 const css = source('appearance-scenes.css');
-const themes = ['sage', 'sunrise', 'sunset', 'moonlight', 'sand', 'clay', 'cats'];
+const themes = ['sage', 'cats'];
 
 function appearance(storage = new Map()) {
   const $ = load(markup), wrappers = new WeakMap();
@@ -60,10 +63,26 @@ function appearance(storage = new Map()) {
   return { get, storage, context, update, accent: () => context.document.body.dataset.accent };
 }
 
-test('Settings offers the original florals and all six scenery choices', () => {
+test('Settings offers only Wildflower and Catnap Alley', () => {
   const $ = load(markup);
   assert.deepEqual($('#settings-theme option').map((_, n) => $(n).attr('value')).get(), themes);
   assert.equal($('link[href^="/appearance-scenes.css"]').length, 1);
+  assert.deepEqual($('#settings-theme option').map((_, n) => $(n).text()).get(), ['Wildflower', 'Catnap Alley']);
+});
+
+test('retired and unknown saved themes return to Wildflower without losing preferences', () => {
+  for (const theme of ['sunrise', 'sunset', 'moonlight', 'sand', 'clay', 'invalid']) {
+    const original = appearance();
+    const key = [...original.storage.keys()][0];
+    original.storage.set(key, JSON.stringify({ prefs: { theme, name: 'Mira', haptics: false } }));
+    const reloaded = appearance(original.storage);
+    assert.equal(reloaded.accent(), 'sage');
+    assert.equal(reloaded.get('settings-theme').value, 'sage');
+    const saved = JSON.parse(reloaded.storage.get(key)).prefs;
+    assert.equal(saved.theme, 'sage');
+    assert.equal(saved.name, 'Mira');
+    assert.equal(saved.haptics, false);
+  }
 });
 
 test('each appearance applies, survives reload, and clears without leaking into other themes', () => {
@@ -85,13 +104,11 @@ test('each appearance applies, survives reload, and clears without leaking into 
   assert.equal(fixture.accent(), 'sage');
 });
 
-test('panoramas use distinct art styles and remain available in the offline shell', () => {
+test('Catnap Alley and the original florals remain available offline', () => {
   const worker = source('service-worker.js');
-  const styles = new Set();
   for (const theme of themes.filter(theme => theme !== 'sage')) {
     const filename = `scene-${theme}.svg`, drawing = source(filename);
     const $ = load(drawing, { xmlMode: true });
-    styles.add($('svg').attr('data-art-style'));
     assert.equal($('svg').attr('shape-rendering'), theme === 'cats' ? 'crispEdges' : undefined);
     assert.equal($('svg').attr('viewBox'), theme === 'cats' ? '0 0 480 84' : '0 0 1440 300');
     assert.ok($('title').text().length > 0);
@@ -99,7 +116,9 @@ test('panoramas use distinct art styles and remain available in the offline shel
     assert.ok(Buffer.byteLength(drawing) < 110_000);
     assert.ok(worker.includes(`/${filename}`), `${theme} is cached offline`);
   }
-  assert.equal(styles.size, 6, 'each scene has a different illustration style');
+  assert.ok(worker.includes('/floral-screenprint.svg'));
+  assert.ok(worker.includes('/floral-mobile.svg'));
+  assert.doesNotMatch(worker, /scene-(?:sunrise|sunset|moonlight|sand|clay)\.svg/);
   assert.doesNotMatch(css, /main::before|@import|(?:animation|transition)\s*:/);
   assert.match(css, /mask-image:\s*linear-gradient/);
   assert.match(css, /background-position:\s*80% top/);
@@ -129,4 +148,64 @@ test('all scene palettes retain readable text and selected controls', () => {
       assert.ok((hi + .05) / (lo + .05) >= 4.5, `${theme}: ${fg} on ${bg}`);
     }
   }
+});
+
+test('Catnap recolors app surfaces, planners and timetable, then restores Wildflower', { timeout: 30000 }, async t => {
+  const app = express(); app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  t.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+  t.after(() => browser.close());
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
+  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#settings`);
+  await page.locator('#settings-theme').selectOption('cats');
+  const styles = await page.evaluate(() => {
+    const read = (selector, property = 'backgroundColor') => getComputedStyle(document.querySelector(selector))[property];
+    const result = {
+      home: read('.next-class-card'), attendance: read('.attendance-rows'), marks: read('.marks-list'),
+      assessment: read('.assessment-row'), grade: read('.grade-course'),
+      marksText: read('.mini-score', 'color'), settingsInput: read('#settings-display-name'),
+    };
+    dateAttendance.open();
+    result.dialog = read('#projection-dialog');
+    result.plannerInput = read('#projection-from');
+    result.plannerArt = getComputedStyle(document.querySelector('#projection-dialog'), '::before').backgroundImage;
+    document.querySelector('#projection-dialog').close();
+    return result;
+  });
+  assert.equal(styles.home, 'rgb(213, 186, 239)');
+  for (const key of ['attendance', 'marks', 'assessment', 'settingsInput']) assert.equal(styles[key], 'rgb(53, 44, 72)', key);
+  assert.equal(styles.grade, 'rgb(44, 37, 60)');
+  assert.equal(styles.marksText, 'rgb(243, 236, 224)');
+  for (const key of ['dialog', 'plannerInput']) assert.equal(styles[key], 'rgb(39, 33, 57)', key);
+  assert.match(styles.plannerArt, /scene-cats\.svg/);
+  for (const width of [320, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const overflow = await page.evaluate(() => {
+      const bad = [];
+      for (const destination of ['home', 'attendance', 'marks', 'grades', 'exams', 'calendar', 'schedule', 'settings']) {
+        anonHome.navigate(destination);
+        if (document.documentElement.scrollWidth > innerWidth) bad.push(destination);
+      }
+      return bad;
+    });
+    assert.deepEqual(overflow, [], `No page overflow at ${width}px`);
+  }
+  await page.locator('#settings-theme').selectOption('sage');
+  const reset = await page.evaluate(() => ({
+    body: getComputedStyle(document.body).backgroundColor,
+    card: getComputedStyle(document.querySelector('.next-class-card')).backgroundColor,
+    marks: getComputedStyle(document.querySelector('.marks-list')).backgroundColor,
+    cat: getComputedStyle(document.querySelector('.brand'), '::after').content,
+    scene: getComputedStyle(document.querySelector('.botanical-backdrop')).backgroundImage,
+  }));
+  assert.equal(reset.body, 'rgb(25, 27, 25)');
+  assert.equal(reset.card, 'rgb(197, 212, 167)');
+  assert.equal(reset.marks, 'rgb(35, 39, 32)');
+  assert.equal(reset.cat, 'none');
+  assert.match(reset.scene, /floral-screenprint\.svg/);
+  assert.deepEqual(errors, []);
 });
