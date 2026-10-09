@@ -22,6 +22,15 @@ CAT_GINGER = ('#e09a5f', '#a4653e', '#f8ca8d', '#2b1c22')
 CAT_DARK = ('#6d6a94', '#43406a', '#a09cc6', '#241f3a')
 CAT_CREAM = ('#e8d3ae', '#ab9673', '#fff1d2', '#3a2b28')
 
+# Full-screen backdrop: the same sunset, layered for depth behind live UI.
+DUSK = ['#0b1029', '#111737', '#172045', '#1f2a56', '#2b3163', '#3a3668',
+        '#4b3a68', '#5f3f65', '#76455f', '#8f4c58', '#a8544f', '#c05e4a',
+        '#d46e48', '#e4814a', '#f0944e']
+FAR, FAR_TOP = '#241f4a', '#2e2857'
+MID, MID_TOP = '#1a1637', '#221d45'
+NEAR, NEAR_TOP = '#120f2a', '#1a1637'
+WALL, WALL_TOP, WALL_LIT = '#0d0a1e', '#6a3a45', '#b5645a'
+
 
 class Canvas:
     """A flat pixel grid. Empty cells stay None so later layers can overlap."""
@@ -29,6 +38,7 @@ class Canvas:
     def __init__(self, width, height):
         self.width, self.height = width, height
         self.grid = [[None] * width for _ in range(height)]
+        self.bands, self.band_step = SKY, 4
 
     def px(self, x, y, color):
         if color is not None and 0 <= x < self.width and 0 <= y < self.height:
@@ -56,7 +66,15 @@ class Canvas:
             self.rect(x + w - span if flip else x, y + row, span, 1, color)
 
     def sky_band(self, y):
-        return SKY[min(len(SKY) - 1, max(0, y) // 4)]
+        return self.bands[min(len(self.bands) - 1, max(0, y) // self.band_step)]
+
+    def paint_sky(self, bands, step=4):
+        """Fill the top of the canvas with a stepped ramp and remember it."""
+        self.bands, self.band_step = bands, step
+        for index, colour in enumerate(bands):
+            self.rect(0, index * step, self.width, step, colour)
+        self.rect(0, len(bands) * step, self.width,
+                  self.height - len(bands) * step, bands[-1])
 
     def erase(self, x, y, w, h):
         for row in range(max(0, y), min(self.height, y + h)):
@@ -116,18 +134,17 @@ KEY.update({
     GLOW: 'o', GLOW_CORE: 'Q', '#2f2748': 'y',
     '#5a3960': 'c', '#a9555b': 'C', '#2c2a56': 'c', '#5b3a5f': 'C',
     '#633a5e': 'c', '#b45a58': 'C', '#7a425a': 'c', '#cf6f56': 'C',
+    '#3c3358': 'c', '#8a4a55': 'C', '#4a3558': 'c', '#a0525a': 'C',
+    '#5c3a5c': 'c', '#b4595a': 'C',
     '#5e8f7d': 'p', '#4d7f70': 'P', '#6fa08c': 'q',
     '#2b2445': 'z', '#8a5560': 'u', '#a86a72': 'U', '#241f3c': 'e',
     CAT_GINGER[0]: 'g', CAT_GINGER[1]: 'G', CAT_GINGER[2]: 'h', CAT_GINGER[3]: 'k',
     CAT_DARK[0]: 'd', CAT_DARK[1]: 'D', CAT_DARK[2]: 'L', CAT_DARK[3]: 'K',
     CAT_CREAM[0]: 'n', CAT_CREAM[1]: 'N', CAT_CREAM[2]: 'M', CAT_CREAM[3]: 'j',
+    FAR: 'f', FAR_TOP: 'F', MID: 'i', MID_TOP: 'I',
+    NEAR: 'r', NEAR_TOP: 'R', WALL: 's', WALL_TOP: 'S', WALL_LIT: 'l',
 })
-
-
-def sky(canvas):
-    for index in range(len(SKY)):
-        canvas.rect(0, index * 4, canvas.width, 4, SKY[index])
-    canvas.rect(0, len(SKY) * 4, canvas.width, canvas.height - len(SKY) * 4, SKY[-1])
+KEY.update(dict(zip(DUSK, ' .,-=+*~^%&$#@!')))
 
 
 def sun(canvas, cx, cy, radius, stripes=True):
@@ -141,38 +158,6 @@ def sun(canvas, cx, cy, radius, stripes=True):
     if stripes:
         for offset in range(2, radius, 4):
             canvas.erase(cx - radius - 1, cy + offset, radius * 2 + 3, 2)
-
-
-def cloud(canvas, x, y, width, shade, lit):
-    canvas.oval(x, y + 3, width, 4, shade)
-    canvas.oval(x + width // 6, y, width // 2, 6, shade)
-    canvas.oval(x + width // 2, y + 2, width // 3, 5, shade)
-    canvas.oval(x + width // 4, y + 5, width // 2, 2, lit)
-
-
-def hills(canvas, base):
-    canvas.oval(-40, base - 26, 190, 60, HILL)
-    canvas.oval(120, base - 16, 240, 44, HILL)
-    canvas.oval(430, base - 22, 200, 52, HILL)
-
-
-def skyline(canvas, seed, base, gap=None, gap_heights=(5, 6, 7, 8)):
-    rng = Random(seed)
-    x = -4
-    while x < canvas.width:
-        width = rng.choice([8, 9, 11, 13, 15, 18, 22])
-        height = rng.choice([14, 18, 22, 26, 30, 34, 38])
-        if gap and x + width > gap[0] and x < gap[1]:
-            height = rng.choice(gap_heights)
-        top = base - height
-        canvas.rect(x, top, width, height, CITY)
-        canvas.rect(x, top, width, 1, CITY_TOP)
-        canvas.rect(x + width - 1, top, 1, height, CITY_SIDE)
-        for wy in range(top + 3, base - 4, 4):
-            for wx in range(x + 2, x + width - 2, 4):
-                if rng.random() < 0.55:
-                    canvas.rect(wx, wy, 2, 2, rng.choice(WINDOW))
-        x += width + rng.choice([0, 0, 1, 2, 3])
 
 
 def tower(canvas, cx, base, top, half):
@@ -190,30 +175,6 @@ def tower(canvas, cx, base, top, half):
     for deck_y, extra in ((base - 30, 3), (base - 18, 4)):
         span = span_at(deck_y)
         canvas.rect(cx - span - extra, deck_y, (span + extra) * 2 + 1, 2, TOWER_DECK)
-
-
-def pylon(canvas, x, base, top):
-    canvas.rect(x, top, 3, base - top, CITY_SIDE)
-    canvas.rect(x, top, 1, base - top, CITY_TOP)
-    for arm in range(4):
-        y = top + 3 + arm * 4
-        canvas.rect(x - 7, y, 17, 1, CITY_SIDE)
-    canvas.rect(x - 4, top + 14, 11, 1, CITY_SIDE)
-
-
-def wire(canvas, x1, x2, y, sag, color):
-    for x in range(x1, x2 + 1):
-        t = (x - x1) / max(1, x2 - x1)
-        canvas.px(x, y + round(sag * 4 * t * (1 - t)), color)
-        canvas.px(x, y + round(sag * 4 * t * (1 - t)) + 1, color)
-
-
-def ledge(canvas, y):
-    canvas.rect(0, y, canvas.width, 1, LEDGE_LIT)
-    canvas.rect(0, y + 1, canvas.width, 1, LEDGE_MID)
-    canvas.rect(0, y + 2, canvas.width, canvas.height - y - 2, LEDGE)
-    for x in range(10, canvas.width, 52):
-        canvas.rect(x, y + 3, 1, canvas.height - y - 3, LEDGE_SEAM)
 
 
 def ears(canvas, x, y, colors):
@@ -286,101 +247,139 @@ def cat_sit(canvas, x, y, colors):
     canvas.rect(x + 16, y + 12, 3, 8, light)
 
 
-def pot_plant(canvas, x, y):
-    canvas.oval(x + 1, y - 12, 12, 14, '#5e8f7d')
-    canvas.oval(x + 8, y - 16, 12, 18, '#4d7f70')
-    canvas.oval(x + 4, y - 9, 10, 11, '#6fa08c')
-    canvas.rect(x - 1, y, 18, 3, '#2b2445')
-    canvas.rect(x, y + 3, 16, 9, '#8a5560')
-    canvas.rect(x, y + 3, 16, 2, '#a86a72')
-    canvas.rect(x + 3, y + 12, 10, 1, '#241f3c')
-
-
-def lantern(canvas, x, y):
-    canvas.rect(x + 6, y - 10, 1, 10, CITY_SIDE)
-    canvas.rect(x, y, 13, 14, GLOW)
-    canvas.rect(x + 1, y + 1, 11, 12, GLOW_CORE)
-    canvas.rect(x - 1, y - 2, 15, 3, '#2f2748')
-    canvas.rect(x - 1, y + 14, 15, 2, '#2f2748')
-    canvas.rect(x + 5, y + 1, 1, 12, '#f2a95e')
-    canvas.rect(x + 8, y + 1, 1, 12, '#f2a95e')
-
-
-def paint_tokyo(canvas):
-    sky(canvas)
-    sun(canvas, 428, 36, 18)
-    cloud(canvas, 18, 20, 84, '#5a3960', '#a9555b')
-    cloud(canvas, 146, 8, 66, '#2c2a56', '#5b3a5f')
-    cloud(canvas, 256, 28, 88, '#633a5e', '#b45a58')
-    cloud(canvas, 384, 16, 58, '#7a425a', '#cf6f56')
-    hills(canvas, 58)
-    skyline(canvas, 11, 58, (378, 486))
-    tower(canvas, 116, 58, 14, 13)
-    pylon(canvas, 32, 58, 24)
-    pylon(canvas, 244, 58, 28)
-    for offset in (0, 4, 8):
-        wire(canvas, 33, 245, 24 + offset, 3, CITY_SIDE)
-    ledge(canvas, 58)
-
-
-def desktop():
-    canvas = Canvas(560, 72)
-    paint_tokyo(canvas)
-    cat_stretch(canvas, 52, 41, CAT_CREAM)
-    cat_loaf(canvas, 190, 40, CAT_GINGER)
-    cat_curl(canvas, 300, 41, CAT_DARK)
-    pot_plant(canvas, 486, 44)
-    lantern(canvas, 142, 34)
-    canvas.save('pixel-cats-desktop.svg',
-                'Pixel cats resting on a rooftop above Tokyo at sunset')
-
-
-def paint_mobile(canvas):
-    sky(canvas)
-    sun(canvas, 142, 32, 13)
-    cloud(canvas, 6, 14, 62, '#5a3960', '#a9555b')
-    cloud(canvas, 110, 20, 56, '#633a5e', '#b45a58')
-    hills(canvas, 50)
-    skyline(canvas, 5, 50, (104, 182), (4, 5, 6, 7))
-    tower(canvas, 112, 50, 18, 9)
-    pylon(canvas, 178, 50, 24)
-    ledge(canvas, 50)
-
-
-def mobile():
-    canvas = Canvas(196, 64)
-    paint_mobile(canvas)
-    cat_curl(canvas, 10, 33, CAT_DARK)
-    cat_loaf(canvas, 54, 32, CAT_GINGER)
-    pot_plant(canvas, 148, 36)
-    canvas.save('pixel-cats-mobile.svg',
-                'A ginger pixel cat and a sleeping blue cat on a Tokyo rooftop at sunset')
-
-
 def perched():
     canvas = Canvas(30, 28)
     cat_sit(canvas, 3, 3, CAT_GINGER)
     canvas.save('pixel-cats-perched.svg', 'A pixel cat sitting above the Anon wordmark')
 
 
+def drift(canvas, x, y, w, h, shade, lit):
+    """A long flat-bottomed cloud that reads at backdrop scale."""
+    canvas.oval(x, y, w, h, shade)
+    canvas.oval(x + w // 5, y - h // 2, w // 2, h, shade)
+    canvas.oval(x + w // 2, y - h // 3, w // 3, h, shade)
+    canvas.rect(x + 2, y + h - 2, w - 4, 2, lit)
+
+
+def city_layer(canvas, seed, base, low, high, colour, top, odds=0.0, tallest_odds=0.15):
+    rng = Random(seed)
+    x = -20
+    while x < canvas.width:
+        width = rng.choice([26, 34, 42, 56, 70, 88])
+        height = rng.randint(low, high)
+        if rng.random() < tallest_odds:
+            height = high + rng.randint(10, 46)
+        roof = base - height
+        canvas.rect(x, roof, width, height, colour)
+        canvas.rect(x, roof, width, 2, top)
+        if odds:
+            for wy in range(roof + 8, base - 8, 12):
+                for wx in range(x + 6, x + width - 6, 12):
+                    if rng.random() < odds:
+                        canvas.rect(wx, wy, 4, 6, rng.choice(WINDOW))
+        x += width + rng.choice([0, 2, 4, 8])
+
+
+def wall(canvas, y):
+    canvas.rect(0, y, canvas.width, 3, WALL_LIT)
+    canvas.rect(0, y + 3, canvas.width, 2, WALL_TOP)
+    canvas.rect(0, y + 5, canvas.width, canvas.height - y - 5, WALL)
+    for x in range(24, canvas.width, 96):
+        canvas.rect(x, y + 6, 2, canvas.height - y - 6, '#151129')
+
+
+def bird(canvas, x, y, colour):
+    canvas.rect(x + 1, y, 2, 1, colour)
+    canvas.px(x, y + 1, colour)
+    canvas.px(x + 3, y + 1, colour)
+
+
+def mast(canvas, x, base, top):
+    canvas.rect(x, top, 5, base - top, NEAR)
+    canvas.rect(x, top, 2, base - top, MID_TOP)
+    for arm in range(5):
+        y = top + 10 + arm * 16
+        canvas.rect(x - 20, y, 45, 2, NEAR)
+        canvas.rect(x - 12, y - 9, 29, 2, NEAR)
+
+
+def cable(canvas, x1, x2, y, sag, colour):
+    for x in range(x1, x2 + 1):
+        t = (x - x1) / max(1, x2 - x1)
+        canvas.px(x, y + round(sag * 4 * t * (1 - t)), colour)
+
+
+def planter(canvas, x, y, tall=False):
+    """A potted plant sized for the backdrop."""
+    reach = 26 if tall else 16
+    canvas.oval(x + 2, y - reach, 16, reach + 4, '#4d7f70')
+    canvas.oval(x + 12, y - reach - 6, 16, reach + 8, '#5e8f7d')
+    canvas.oval(x + 6, y - reach + 4, 14, reach, '#6fa08c')
+    canvas.rect(x - 2, y, 26, 4, '#2b2445')
+    canvas.rect(x, y + 4, 22, 13, '#8a5560')
+    canvas.rect(x, y + 4, 22, 3, '#a86a72')
+    canvas.rect(x + 4, y + 17, 14, 2, '#241f3c')
+
+
+def lantern(canvas, x, y, scale=1):
+    """A paper lantern hanging from a cable."""
+    w, h = 20 * scale, 26 * scale
+    canvas.rect(x + w // 2, y - 22 * scale, 2, 22 * scale, NEAR)
+    canvas.rect(x, y, w, h, GLOW)
+    canvas.rect(x + 2, y + 2, w - 4, h - 4, GLOW_CORE)
+    canvas.rect(x - 3, y - 4, w + 6, 5, '#2f2748')
+    canvas.rect(x - 3, y + h, w + 6, 4, '#2f2748')
+
+
+WALL_TOP = 430
+ROOF_LINE = 410
+
+WIDE_CATS = [(cat_sit, 30, ROOF_LINE - 1, CAT_GINGER),
+             (cat_loaf, 116, ROOF_LINE - 6, CAT_DARK),
+             (cat_curl, 292, ROOF_LINE - 5, CAT_CREAM),
+             (cat_stretch, 392, ROOF_LINE - 5, CAT_DARK),
+             (cat_sit, 636, ROOF_LINE - 1, CAT_GINGER)]
+TALL_CATS = [(cat_loaf, 26, ROOF_LINE - 6, CAT_GINGER),
+             (cat_curl, 148, ROOF_LINE - 5, CAT_DARK),
+             (cat_sit, 274, ROOF_LINE - 1, CAT_GINGER)]
+
+
+def backdrop(canvas, sun_x, seed, cats, scale=1.0):
+    """A full-viewport scene that sits behind live UI at every size."""
+    canvas.paint_sky(DUSK, 20)
+    sun(canvas, sun_x, 296, round(74 * scale))
+    drift(canvas, 24, 118, round(248 * scale), 22, '#3c3358', '#8a4a55')
+    drift(canvas, canvas.width - 226, 158, 196, 18, '#4a3558', '#a0525a')
+    drift(canvas, 96, 214, round(300 * scale), 20, '#5c3a5c', '#b4595a')
+    drift(canvas, sun_x - round(168 * scale), 248, 210, 16, '#7a425a', '#cf6f56')
+    city_layer(canvas, seed, 350, 26, 66, FAR, FAR_TOP, tallest_odds=0.22)
+    city_layer(canvas, seed + 1, 402, 34, 88, MID, MID_TOP, odds=0.07)
+    city_layer(canvas, seed + 2, 452, 40, 112, NEAR, NEAR_TOP, odds=0.16)
+    tower(canvas, round(canvas.width * 0.15), WALL_TOP, 126, 30)
+    mast_at = round(canvas.width * 0.66)
+    mast(canvas, mast_at, WALL_TOP, 236)
+    for offset in (0, 7, 14):
+        cable(canvas, mast_at + 2, canvas.width - 24, 234 + offset, 8, NEAR)
+    for x, y in [(112, 96), (138, 82), (388, 132), (410, 120), (604, 74)]:
+        bird(canvas, x, y, MID)
+    wall(canvas, WALL_TOP)
+    for draw, x, y, palette in cats:
+        draw(canvas, x, y, palette)
+    planter(canvas, round(canvas.width * 0.33), WALL_TOP, tall=True)
+    planter(canvas, round(canvas.width * 0.92), WALL_TOP)
+    lantern(canvas, mast_at - 26, 306)
+
+
 if __name__ == '__main__':
     import sys
     if '--ascii' in sys.argv:
-        show = Canvas(560, 72)
-        paint_tokyo(show)
-        show.preview(step=4)
-        cat_stretch(show, 52, 41, CAT_CREAM)
-        cat_loaf(show, 190, 40, CAT_GINGER)
-        cat_curl(show, 300, 41, CAT_DARK)
-        pot_plant(show, 486, 44)
-        lantern(show, 142, 34)
-        show.preview(step=2)
-        print('--- mobile ---')
-        paint_mobile(show := Canvas(196, 64))
-        cat_curl(show, 10, 33, CAT_DARK)
-        cat_loaf(show, 54, 32, CAT_GINGER)
-        pot_plant(show, 148, 36)
-        show.preview(step=2)
+        show = Canvas(720, 500)
+        backdrop(show, 470, 11, WIDE_CATS)
+        show.preview(step=8)
+    elif '--ascii-mobile' in sys.argv:
+        show = Canvas(360, 500)
+        backdrop(show, 180, 4, TALL_CATS, scale=0.86)
+        show.preview(step=6)
     elif '--cats' in sys.argv:
         for name, draw, x, y in [('stretch', cat_stretch, 14, 5),
                                  ('loaf', cat_loaf, 14, 5),
@@ -391,6 +390,12 @@ if __name__ == '__main__':
             draw(small, x, y, CAT_GINGER)
             small.preview(step=1)
     else:
-        desktop()
-        mobile()
+        wide = Canvas(720, 500)
+        backdrop(wide, 470, 11, WIDE_CATS)
+        wide.save('backdrop-cats.svg',
+                  'Pixel cats on a Tokyo rooftop at sunset')
+        tall = Canvas(360, 500)
+        backdrop(tall, 180, 4, TALL_CATS, scale=0.86)
+        tall.save('backdrop-cats-mobile.svg',
+                  'Pixel cats on a Tokyo rooftop at sunset, tall crop')
         perched()

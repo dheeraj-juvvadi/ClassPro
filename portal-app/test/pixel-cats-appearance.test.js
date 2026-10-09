@@ -86,7 +86,7 @@ test('each appearance applies, survives reload, and clears without leaking into 
 });
 
 test('artwork stays local, static, lightweight, and has distinct mobile composition', () => {
-  const drawings = ['pixel-cats-desktop.svg', 'pixel-cats-mobile.svg', 'pixel-cats-perched.svg']
+  const drawings = ['backdrop-cats.svg', 'backdrop-cats-mobile.svg', 'pixel-cats-perched.svg']
     .map(name => source(name));
   for (const drawing of drawings) {
     const $ = load(drawing, { xmlMode: true });
@@ -94,10 +94,14 @@ test('artwork stays local, static, lightweight, and has distinct mobile composit
     assert.ok($('title').text().length > 0);
     assert.equal($('script, image, foreignObject, animate, animateTransform, filter').length, 0);
     assert.doesNotMatch(drawing, /(?:href|src)=|https?:\/\/(?!www\.w3\.org\/2000\/svg)/);
-    assert.ok(Buffer.byteLength(drawing) < 40_000, 'each drawing has a bounded transfer size');
+    assert.ok(Buffer.byteLength(drawing) < 250_000, 'each drawing has a bounded transfer size');
   }
   assert.notEqual(drawings[0], drawings[1]);
   assert.notEqual(drawings[2], drawings[0]);
+  const viewBox = index => load(drawings[index], { xmlMode: true })('svg').attr('viewBox');
+  assert.equal(viewBox(0), '0 0 720 500', 'the desktop artwork fills a whole viewport');
+  assert.equal(viewBox(1), '0 0 360 500', 'the mobile artwork is a tall viewport of its own');
+  assert.doesNotMatch(css, /main::before/, 'artwork never occupies space inside the reading column');
   assert.match(css, /max-width:\s*700px/);
   assert.match(css, /pointer-events:\s*none/);
   assert.doesNotMatch(css, /@import|(?:animation|transition)\s*:|https?:/);
@@ -124,4 +128,32 @@ test('Cats reading colors and selected controls retain AA contrast', () => {
     const values = [luminance(tokens[fg]), luminance(tokens[bg])].sort((a, b) => b - a);
     assert.ok((values[0] + 0.05) / (values[1] + 0.05) >= 4.5, `${fg} on ${bg}`);
   }
+});
+
+test('every appearance carries a full palette that still meets AA contrast', () => {
+  const settings = source('settings.css');
+  const luminance = hex => hex.slice(1).match(/../g).map(c => parseInt(c, 16) / 255)
+    .map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+    .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+  const ratio = (a, b) => [...[luminance(a), luminance(b)]].sort((x, y) => y - x)
+    .reduce((hi, lo) => (hi + 0.05) / (lo + 0.05));
+  const rulesFor = accent => [...settings.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter(([, selector]) => selector.includes(`[data-accent="${accent}"]`))
+    .map(([, , body]) => body).join(';');
+  const tokenOf = (body, name) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`).exec(body)?.[1] || null;
+  for (const accent of ['sand', 'clay', 'cats']) {
+    const body = accent === 'cats' ? css : rulesFor(accent);
+    for (const name of ['page', 'surface', 'soft', 'ink', 'muted', 'line', 'accent', 'on-accent']) {
+      assert.ok(tokenOf(body, name), `${accent} defines --${name}`);
+    }
+    const token = name => tokenOf(body, name);
+    for (const [fg, bg] of [['ink', 'page'], ['muted', 'page'], ['muted', 'surface'], ['accent', 'soft'], ['on-accent', 'accent']]) {
+      assert.ok(ratio(token(fg), token(bg)) >= 4.5, `${accent} ${fg} on ${bg}`);
+    }
+  }
+  assert.match(rulesFor('sand'), /--backdrop:\s*url\('\/backdrop-sand\.svg'\)/);
+  assert.match(rulesFor('clay'), /--backdrop:\s*url\('\/backdrop-clay\.svg'\)/);
+  assert.match(css, /--backdrop:\s*url\('\/backdrop-cats\.svg'\)/);
+  assert.match(css, /--shade:\s*rgba\(/);
+  assert.match(settings, /--shade:\s*rgba\(/);
 });

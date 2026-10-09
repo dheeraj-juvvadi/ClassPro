@@ -14,21 +14,12 @@ body[data-accent="cats"] {
   --error-bg: #43222f;
   --planner-green: #f0a55f;
   --planner-muted: #b8b0d0;
+  --backdrop: url('/backdrop-cats.svg');
+  --backdrop-mobile: url('/backdrop-cats-mobile.svg');
+  --shade: rgba(26, 23, 48, .81);
+  --shade-solid: rgba(26, 23, 48, .95);
   background: var(--page);
   color: var(--ink);
-}
-body[data-accent="cats"] .botanical-backdrop { display: none; }
-/* The illustration has its own space; it never sits beneath report text. */
-body.planner[data-accent="cats"] main::before {
-  content: "";
-  display: block;
-  width: 100%;
-  height: 144px;
-  max-width: 1120px;
-  margin: -16px auto 24px;
-  background: url('/pixel-cats-desktop.svg') center bottom / contain no-repeat;
-  image-rendering: pixelated;
-  pointer-events: none;
 }
 /* A cat sits on top of the Anon wordmark, the way one would on a shop sign. */
 body.planner[data-accent="cats"] .brand { position: relative; }
@@ -133,7 +124,6 @@ body.planner[data-accent="cats"] dialog select { background: var(--page); color:
   body.planner[data-accent="cats"] #planner-nav { background: transparent; }
 }
 @media (max-width: 999px) {
-  body.planner[data-accent="cats"] main::before { height: 104px; margin-top: -8px; }
   body.planner[data-accent="cats"] #planner-nav button[aria-current] { background: transparent; }
 }
 @media (max-width: 700px) {
@@ -143,13 +133,4 @@ body.planner[data-accent="cats"] dialog select { background: var(--page); color:
     height: 20px;
     bottom: calc(100% - 3px);
   }
-  body.planner[data-accent="cats"] main::before {
-    height: 112px;
-    max-width: 392px;
-    margin: -12px auto 22px;
-    background-image: url('/pixel-cats-mobile.svg');
-  }
-}
-@media print {
-  body.planner[data-accent="cats"] main::before { display: none; }
 }

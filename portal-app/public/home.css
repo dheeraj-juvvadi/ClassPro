@@ -1,5 +1,22 @@
 .planner { font-family: Inter, sans-serif; background: #191b19; isolation: isolate; --planner-green: #c5d4a7; --planner-muted: #adb4a4; }
-.planner .botanical-backdrop { display: block; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: url('/floral-screenprint.svg') center / cover no-repeat; }
+.planner .botanical-backdrop {
+  display: block; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: var(--backdrop, url('/floral-screenprint.svg'));
+  background-position: center; background-size: cover; background-repeat: no-repeat;
+}
+/* The shade is what keeps illustration and report text from fighting: a flat
+   veil everywhere, deepened under the masthead and navigation. */
+.planner .botanical-backdrop::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(to bottom, var(--shade-solid, rgba(25, 27, 25, .92)) 0, transparent 170px),
+    linear-gradient(to bottom, var(--shade, rgba(25, 27, 25, .72)), var(--shade, rgba(25, 27, 25, .72)));
+}
+@media (max-width: 700px) {
+  .planner .botanical-backdrop {
+    background-image: var(--backdrop-mobile, var(--backdrop, url('/floral-mobile.svg')));
+  }
+}
 .planner .site-header { max-width: 760px; min-height: 78px; padding: 20px 28px; border: 0; }
 .planner .brand { font-weight: 750; font-size: 1.3rem; letter-spacing: -.06em; color: #f1eee3; }
 .planner main { max-width: 760px; padding: 4px 28px 120px; min-height: calc(100svh - 78px); }

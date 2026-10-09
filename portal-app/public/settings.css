@@ -74,6 +74,54 @@ body.planner #settings-view.workspace-page {
 .planner[data-accent="sand"] { --planner-green: #d8c49f; }
 .planner[data-accent="clay"] { --planner-green: #d4ac91; }
 .planner[data-accent="sand"] #planner-nav button[aria-current], .planner[data-accent="clay"] #planner-nav button[aria-current] { background: var(--planner-green); }
+/* Every appearance owns a full-viewport backdrop and the shade that keeps
+   report text readable on top of it. Sage is the default, painted with the
+   original screenprint florals. */
+body {
+  --backdrop: url('/floral-screenprint.svg');
+  --backdrop-mobile: url('/floral-mobile.svg');
+  --shade: rgba(25, 27, 25, .76);
+  --shade-solid: rgba(25, 27, 25, .95);
+}
+body[data-accent="sand"], body[data-accent="clay"] {
+  --ink: #f4ece0;
+  --on-accent: #2a2114;
+}
+body[data-accent="sand"] {
+  --page: #1a1710;
+  --surface: #241f16;
+  --soft: #2f2819;
+  --muted: #c0b39a;
+  --line: #453a28;
+  --accent: #d8c49f;
+  --accent-hover: #eed9b4;
+  --focus: #e8c98a;
+  --planner-muted: #c0b39a;
+  --backdrop: url('/backdrop-sand.svg');
+  --backdrop-mobile: url('/backdrop-sand.svg');
+  --shade: rgba(26, 23, 16, .75);
+  --shade-solid: rgba(26, 23, 16, .95);
+  background: var(--page);
+  color: var(--ink);
+}
+body[data-accent="clay"] {
+  --page: #1c1411;
+  --surface: #261b17;
+  --soft: #32231d;
+  --muted: #c6ab9e;
+  --line: #4a3229;
+  --accent: #d4ac91;
+  --accent-hover: #e7c2a8;
+  --focus: #e8a86f;
+  --on-accent: #2b1a13;
+  --planner-muted: #c6ab9e;
+  --backdrop: url('/backdrop-clay.svg');
+  --backdrop-mobile: url('/backdrop-clay.svg');
+  --shade: rgba(28, 20, 17, .78);
+  --shade-solid: rgba(28, 20, 17, .95);
+  background: var(--page);
+  color: var(--ink);
+}
 @media (max-width: 350px) {
   #settings-view.workspace-page #accounts-title { font-size: 29px; }
   #settings-view.workspace-page .settings-name-form > div { gap: 8px; }

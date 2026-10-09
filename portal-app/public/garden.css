@@ -2,7 +2,8 @@
 :root{color-scheme:dark;--page:#191b19;--surface:#20231f;--soft:#2b3029;--ink:#f1efe6;--muted:#b3b8ab;--line:#42483b;--accent:#d5dda9;--accent-hover:#e6edc2;--on-accent:#252b1c;--focus:#a4a8df;--error:#ffc0aa;--error-bg:#3b2924}
 body.garden-login{background:#191b19;isolation:isolate}
 .botanical-backdrop{display:none}
-.garden-login .botanical-backdrop{display:block;position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/floral-screenprint.svg') center/cover no-repeat}
+.garden-login .botanical-backdrop{display:block;position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:var(--backdrop, url('/floral-screenprint.svg'));background-position:center;background-size:cover;background-repeat:no-repeat}
+.garden-login .botanical-backdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,var(--shade-solid, rgba(25,27,25,.92)) 0,transparent 170px),linear-gradient(to bottom,var(--shade, rgba(25,27,25,.72)),var(--shade, rgba(25,27,25,.72)))}
 .garden-login .site-header{max-width:1400px;min-height:90px;border:0;padding:1.5rem 3rem;position:relative}
 .garden-login .brand{font-size:1.3rem;font-weight:600;letter-spacing:-.06em;color:#f1efe6;background:#191b19d9;padding:.3rem .65rem;border-radius:2px}
 .brand-caption{display:none!important}
@@ -45,7 +46,7 @@ body.garden-login{background:#191b19;isolation:isolate}
 .garden-login .login-card{background:#20211f;border-color:#46483e}
 .garden-login input{background:#191b18}
 @media(max-width:700px){
- .garden-login .botanical-backdrop{background-size:100% 100%}
+ .garden-login .botanical-backdrop{background-image:var(--backdrop-mobile, var(--backdrop, url('/floral-mobile.svg')));background-size:cover}
  .garden-login .site-header{min-height:70px;padding:1rem 1.25rem}
  .garden-login main{padding:1.5rem 2rem 2.5rem;min-height:calc(100svh - 140px)}
  .garden-login .login-layout{max-width:330px}
