@@ -55,7 +55,7 @@ globalThis.anonSettings = (() => {
     catch { tell('Browser storage is unavailable. Changes will last for this visit.'); return false; }
   }
   function apply() {
-    document.body.dataset.accent = ['sand', 'clay', 'cats'].includes(prefs.theme) ? prefs.theme : 'sage';
+    document.body.dataset.accent = ['sand', 'clay', 'cats', 'sunrise', 'sunset', 'moonlight'].includes(prefs.theme) ? prefs.theme : 'sage';
     get('settings-theme').value = document.body.dataset.accent;
     get('settings-haptics').checked = prefs.haptics !== false;
     anonFeedback.setHaptics(prefs.haptics !== false);

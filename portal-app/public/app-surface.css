@@ -13,8 +13,8 @@ body.planner .report-section {
 body.planner .section-heading { border-bottom: 0; }
 body.planner .botanical-backdrop {
   clip-path: none;
-  mask-image: none;
-  -webkit-mask-image: none;
+  mask-image: linear-gradient(to bottom, #000 0, #000 60px, transparent 150px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 60px, transparent 150px);
 }
 /* Preserve content alignment after removing the former one-pixel shell. */
 body.planner main { padding-inline: 29px; }

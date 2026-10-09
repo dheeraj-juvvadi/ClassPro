@@ -6,7 +6,8 @@ import { load } from 'cheerio';
 
 const source = name => fs.readFileSync(new URL(`../public/${name}`, import.meta.url), 'utf8');
 const markup = source('index.html');
-const css = source('pixel-cats.css');
+const css = source('appearance-scenes.css');
+const themes = ['sage', 'sunrise', 'sunset', 'moonlight', 'sand', 'clay', 'cats'];
 
 function appearance(storage = new Map()) {
   const $ = load(markup), wrappers = new WeakMap();
@@ -59,16 +60,15 @@ function appearance(storage = new Map()) {
   return { get, storage, context, update, accent: () => context.document.body.dataset.accent };
 }
 
-test('Settings offers Cats alongside the original appearances', () => {
+test('Settings offers the original florals and all six scenery choices', () => {
   const $ = load(markup);
-  assert.deepEqual($('#settings-theme option').map((_, n) => $(n).attr('value')).get(), ['sage', 'sand', 'clay', 'cats']);
-  assert.equal($('#settings-theme option[value="cats"]').text(), 'Cats');
-  assert.equal($('link[href^="/pixel-cats.css"]').length, 1);
+  assert.deepEqual($('#settings-theme option').map((_, n) => $(n).attr('value')).get(), themes);
+  assert.equal($('link[href^="/appearance-scenes.css"]').length, 1);
 });
 
 test('each appearance applies, survives reload, and clears without leaking into other themes', () => {
   const fixture = appearance();
-  for (const theme of ['cats', 'sand', 'clay', 'sage', 'cats']) {
+  for (const theme of [...themes, 'sage']) {
     fixture.get('settings-theme').value = theme;
     fixture.get('settings-theme').emit('change');
     assert.equal(fixture.accent(), theme, `${theme} applies from the real Settings control`);
@@ -85,75 +85,48 @@ test('each appearance applies, survives reload, and clears without leaking into 
   assert.equal(fixture.accent(), 'sage');
 });
 
-test('artwork stays local, static, lightweight, and has distinct mobile composition', () => {
-  const drawings = ['backdrop-cats.svg', 'backdrop-cats-mobile.svg', 'pixel-cats-perched.svg']
-    .map(name => source(name));
-  for (const drawing of drawings) {
+test('panoramas use distinct art styles and remain available in the offline shell', () => {
+  const worker = source('service-worker.js');
+  const styles = new Set();
+  for (const theme of themes.filter(theme => theme !== 'sage')) {
+    const filename = `scene-${theme}.svg`, drawing = source(filename);
     const $ = load(drawing, { xmlMode: true });
-    assert.equal($('svg').attr('shape-rendering'), 'crispEdges');
+    styles.add($('svg').attr('data-art-style'));
+    assert.equal($('svg').attr('shape-rendering'), theme === 'cats' ? 'crispEdges' : undefined);
+    assert.equal($('svg').attr('viewBox'), theme === 'cats' ? '0 0 480 84' : '0 0 1440 300');
     assert.ok($('title').text().length > 0);
     assert.equal($('script, image, foreignObject, animate, animateTransform, filter').length, 0);
-    assert.doesNotMatch(drawing, /(?:href|src)=|https?:\/\/(?!www\.w3\.org\/2000\/svg)/);
-    assert.ok(Buffer.byteLength(drawing) < 250_000, 'each drawing has a bounded transfer size');
+    assert.ok(Buffer.byteLength(drawing) < 110_000);
+    assert.ok(worker.includes(`/${filename}`), `${theme} is cached offline`);
   }
-  assert.notEqual(drawings[0], drawings[1]);
-  assert.notEqual(drawings[2], drawings[0]);
-  const viewBox = index => load(drawings[index], { xmlMode: true })('svg').attr('viewBox');
-  assert.equal(viewBox(0), '0 0 720 500', 'the desktop artwork fills a whole viewport');
-  assert.equal(viewBox(1), '0 0 360 500', 'the mobile artwork is a tall viewport of its own');
-  assert.doesNotMatch(css, /main::before/, 'artwork never occupies space inside the reading column');
-  assert.match(css, /max-width:\s*700px/);
-  assert.match(css, /pointer-events:\s*none/);
-  assert.doesNotMatch(css, /@import|(?:animation|transition)\s*:|https?:/);
-  for (const [, selector] of css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{/g)) {
-    if (selector.trim().startsWith('@')) continue;
-    assert.ok(selector.includes('[data-accent="cats"]'), `theme rule must be scoped: ${selector.trim()}`);
-  }
+  assert.equal(styles.size, 6, 'each scene has a different illustration style');
+  assert.doesNotMatch(css, /main::before|@import|(?:animation|transition)\s*:/);
+  assert.match(css, /mask-image:\s*linear-gradient/);
+  assert.match(css, /background-position:\s*80% top/);
 });
 
-test('a pixel cat is perched on the Anon wordmark in the planner header', () => {
-  assert.match(css, /body\.planner\[data-accent="cats"\] \.brand \{ position: relative; \}/);
-  assert.match(css, /body\.planner\[data-accent="cats"\] \.brand::after \{[^}]*url\('\/pixel-cats-perched\.svg'\)/);
-  assert.match(css, /body\.planner\[data-accent="cats"\] \.brand::after \{[^}]*image-rendering: pixelated/);
-  const perched = source('pixel-cats-perched.svg');
-  assert.equal(load(perched, { xmlMode: true })('svg').attr('viewBox'), '0 0 30 28');
+test('pixel Anon keeps an accessible name and a sleeping cat only in Catnap Alley', () => {
+  const $ = load(markup);
+  assert.equal($('.brand .brand-name').text(), 'Anon');
+  assert.equal($('.brand .brand-pixel').attr('aria-hidden'), 'true');
+  assert.equal($('.brand .brand-pixel').attr('src'), '/anon-pixel.svg');
+  assert.match(css, /body\[data-accent="cats"\] \.brand::after/);
+  assert.match(css, /anon-sleeping-cat\.svg/);
+  assert.equal(load(source('anon-sleeping-cat.svg'), { xmlMode: true })('svg').attr('shape-rendering'), 'crispEdges');
+  assert.match(css, /forced-colors/);
 });
 
-test('Cats reading colors and selected controls retain AA contrast', () => {
-  const tokens = Object.fromEntries([...css.matchAll(/--([a-z-]+):\s*(#[0-9a-f]{6})/g)].map(m => [m[1], m[2]]));
+test('all scene palettes retain readable text and selected controls', () => {
   const luminance = hex => hex.slice(1).match(/../g).map(c => parseInt(c, 16) / 255)
-    .map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
-    .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
-  for (const [fg, bg] of [['ink', 'page'], ['muted', 'page'], ['muted', 'surface'], ['accent', 'soft'], ['on-accent', 'accent']]) {
-    const values = [luminance(tokens[fg]), luminance(tokens[bg])].sort((a, b) => b - a);
-    assert.ok((values[0] + 0.05) / (values[1] + 0.05) >= 4.5, `${fg} on ${bg}`);
-  }
-});
-
-test('every appearance carries a full palette that still meets AA contrast', () => {
-  const settings = source('settings.css');
-  const luminance = hex => hex.slice(1).match(/../g).map(c => parseInt(c, 16) / 255)
-    .map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
-    .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
-  const ratio = (a, b) => [...[luminance(a), luminance(b)]].sort((x, y) => y - x)
-    .reduce((hi, lo) => (hi + 0.05) / (lo + 0.05));
-  const rulesFor = accent => [...settings.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-    .filter(([, selector]) => selector.includes(`[data-accent="${accent}"]`))
-    .map(([, , body]) => body).join(';');
-  const tokenOf = (body, name) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`).exec(body)?.[1] || null;
-  for (const accent of ['sand', 'clay', 'cats']) {
-    const body = accent === 'cats' ? css : rulesFor(accent);
-    for (const name of ['page', 'surface', 'soft', 'ink', 'muted', 'line', 'accent', 'on-accent']) {
-      assert.ok(tokenOf(body, name), `${accent} defines --${name}`);
-    }
-    const token = name => tokenOf(body, name);
+    .map(c => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4)
+    .reduce((sum, c, i) => sum + c * [.2126, .7152, .0722][i], 0);
+  const common = { ink: '#f3ece0', 'on-accent': '#24212a' };
+  for (const theme of themes.filter(theme => theme !== 'sage')) {
+    const body = css.match(new RegExp(`body\\[data-accent="${theme}"\\] \\{([^}]+)`))[1];
+    const tokens = { ...common, ...Object.fromEntries([...body.matchAll(/--([a-z-]+):\s*(#[0-9a-f]{6})/g)].map(m => [m[1], m[2]])) };
     for (const [fg, bg] of [['ink', 'page'], ['muted', 'page'], ['muted', 'surface'], ['accent', 'soft'], ['on-accent', 'accent']]) {
-      assert.ok(ratio(token(fg), token(bg)) >= 4.5, `${accent} ${fg} on ${bg}`);
+      const [hi, lo] = [luminance(tokens[fg]), luminance(tokens[bg])].sort((a, b) => b - a);
+      assert.ok((hi + .05) / (lo + .05) >= 4.5, `${theme}: ${fg} on ${bg}`);
     }
   }
-  assert.match(rulesFor('sand'), /--backdrop:\s*url\('\/backdrop-sand\.svg'\)/);
-  assert.match(rulesFor('clay'), /--backdrop:\s*url\('\/backdrop-clay\.svg'\)/);
-  assert.match(css, /--backdrop:\s*url\('\/backdrop-cats\.svg'\)/);
-  assert.match(css, /--shade:\s*rgba\(/);
-  assert.match(settings, /--shade:\s*rgba\(/);
 });

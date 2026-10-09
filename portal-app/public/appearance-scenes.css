@@ -1,0 +1,112 @@
+/* A shallow panorama in the flowers' masthead, fading into the reading surface. */
+body:is([data-accent="sand"], [data-accent="clay"], [data-accent="cats"],
+  [data-accent="sunrise"], [data-accent="sunset"], [data-accent="moonlight"]) {
+  --ink: #f3ece0;
+  --on-accent: #24212a;
+  --error: #efad99;
+  --error-bg: #422b30;
+  --planner-green: var(--accent);
+  --planner-muted: var(--muted);
+  --accent-hover: var(--ink);
+  --focus: var(--accent);
+  --shade: rgba(19, 21, 26, .3);
+  --shade-solid: rgba(19, 21, 26, .38);
+  background: var(--page);
+  color: var(--ink);
+}
+body[data-accent="sunrise"] {
+  --page: #182826; --surface: #213632; --soft: #2c443d;
+  --muted: #adc8be; --line: #3c5b51; --accent: #b7dcca;
+  --backdrop: url('/scene-sunrise.svg');
+}
+body[data-accent="sunset"] {
+  --page: #302023; --surface: #3c292c; --soft: #4c3435;
+  --muted: #d5b5aa; --line: #664749; --accent: #ffb17e;
+  --backdrop: url('/scene-sunset.svg');
+}
+body[data-accent="moonlight"] {
+  --page: #151e32; --surface: #1f2b46; --soft: #2b3a59;
+  --muted: #b3c3e5; --line: #40567c; --accent: #b0caff;
+  --backdrop: url('/scene-moonlight.svg');
+}
+body[data-accent="sand"] {
+  --page: #2b2619; --surface: #383021; --soft: #473c27;
+  --muted: #cec09b; --line: #5b4e31; --accent: #e5ca83;
+  --backdrop: url('/scene-sand.svg');
+}
+body[data-accent="clay"] {
+  --page: #2d222d; --surface: #3b2c3b; --soft: #4b394a;
+  --muted: #d1b5c8; --line: #654c61; --accent: #edbdd5;
+  --backdrop: url('/scene-clay.svg');
+}
+body[data-accent="cats"] {
+  --page: #272139; --surface: #352c48; --soft: #433758;
+  --muted: #c7b9de; --line: #5e4a78; --accent: #d5baef;
+  --backdrop: url('/scene-cats.svg');
+}
+/* The default floral artwork uses the same disappearing strip. */
+body.planner .botanical-backdrop {
+  height: 180px;
+  mask-image: linear-gradient(#000 0, #000 48px, transparent 180px);
+  -webkit-mask-image: linear-gradient(#000 0, #000 48px, transparent 180px);
+}
+body.planner:not([data-accent]), body.planner[data-accent="sage"] {
+  --shade: rgba(25, 27, 25, .32);
+  --shade-solid: rgba(25, 27, 25, .28);
+}
+body:is(.planner, .garden-login)[data-accent]:not([data-accent="sage"]) .botanical-backdrop {
+  inset: 0 0 auto;
+  height: 210px;
+  background-image: var(--backdrop);
+  background-size: auto 210px;
+  background-position: center top;
+  image-rendering: auto;
+  mask-image: linear-gradient(#000 0, #000 68px, transparent 210px);
+  -webkit-mask-image: linear-gradient(#000 0, #000 68px, transparent 210px);
+}
+body:is(.planner, .garden-login)[data-accent]:not([data-accent="sage"]) .botanical-backdrop::after {
+  background: linear-gradient(90deg, var(--page), transparent 48%),
+    linear-gradient(var(--shade-solid), var(--shade));
+}
+body:is(.planner, .garden-login)[data-accent="cats"]:not([data-accent="sage"]) .botanical-backdrop { image-rendering: pixelated; }
+.brand-pixel { display: none; }
+.brand .brand-name { font: inherit; color: inherit; letter-spacing: inherit; }
+body[data-accent]:not([data-accent="sage"]) .brand {
+  position: relative; min-height: 32px; background: transparent;
+}
+body[data-accent]:not([data-accent="sage"]) .brand-mark { display: none; }
+body[data-accent]:not([data-accent="sage"]) .brand-name {
+  position: absolute; width: 1px; height: 1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+body[data-accent]:not([data-accent="sage"]) .brand-pixel {
+  display: block; width: 92px; height: 28px; image-rendering: pixelated;
+}
+body[data-accent="cats"] .brand::after {
+  content: ""; position: absolute; right: 2px; bottom: calc(100% - 8px);
+  width: 48px; height: 24px; pointer-events: none;
+  background: url('/anon-sleeping-cat.svg') center / contain no-repeat;
+  image-rendering: pixelated;
+}
+@media (min-width: 1000px) {
+  body.planner[data-accent]:not([data-accent="sage"]) .botanical-backdrop {
+    height: 240px; background-size: cover; background-position: center bottom;
+    mask-image: linear-gradient(#000 0, #000 58px, transparent 240px);
+    -webkit-mask-image: linear-gradient(#000 0, #000 58px, transparent 240px);
+  }
+  body.planner[data-accent]:not([data-accent="sage"]) .site-header { background: transparent; }
+}
+@media (max-width: 700px) {
+  body:is(.planner, .garden-login)[data-accent]:not([data-accent="sage"]) .botanical-backdrop {
+    height: 170px; background-size: auto 170px; background-position: 80% top;
+    mask-image: linear-gradient(#000 0, #000 42px, transparent 170px);
+    -webkit-mask-image: linear-gradient(#000 0, #000 42px, transparent 170px);
+  }
+  body[data-accent]:not([data-accent="sage"]) .brand-pixel { width: 69px; height: 21px; }
+  body[data-accent="cats"] .brand::after { width: 36px; height: 18px; bottom: calc(100% - 9px); }
+}
+@media (forced-colors: active) {
+  .botanical-backdrop, body .brand .brand-pixel { display: none !important; }
+  body .brand::after { display: none !important; }
+  body .brand .brand-name { position: static !important; width: auto !important; height: auto !important; clip-path: none !important; }
+}
