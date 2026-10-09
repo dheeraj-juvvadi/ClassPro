@@ -1,19 +1,19 @@
-/* Cats: original local pixel artwork above a quiet indigo reading surface. */
+/* Cats: original local pixel artwork above a dusk Tokyo reading surface. */
 body[data-accent="cats"] {
-  --page: #191e33;
-  --surface: #222940;
-  --soft: #2d3652;
-  --ink: #f1eee8;
-  --muted: #b4bdd4;
-  --line: #424e6b;
-  --accent: #c3c9ef;
-  --accent-hover: #dce0ff;
-  --on-accent: #232a43;
-  --focus: #edc58f;
-  --error: #f0b2a4;
-  --error-bg: #422d3b;
-  --planner-green: #c3c9ef;
-  --planner-muted: #b4bdd4;
+  --page: #1a1730;
+  --surface: #241f3c;
+  --soft: #2f2848;
+  --ink: #f6efe6;
+  --muted: #b8b0d0;
+  --line: #463a63;
+  --accent: #f0a55f;
+  --accent-hover: #ffc07a;
+  --on-accent: #2a1c28;
+  --focus: #ffd08a;
+  --error: #f2a898;
+  --error-bg: #43222f;
+  --planner-green: #f0a55f;
+  --planner-muted: #b8b0d0;
   background: var(--page);
   color: var(--ink);
 }
@@ -27,6 +27,19 @@ body.planner[data-accent="cats"] main::before {
   max-width: 1120px;
   margin: -16px auto 24px;
   background: url('/pixel-cats-desktop.svg') center bottom / contain no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+/* A cat sits on top of the Anon wordmark, the way one would on a shop sign. */
+body.planner[data-accent="cats"] .brand { position: relative; }
+body.planner[data-accent="cats"] .brand::after {
+  content: "";
+  position: absolute;
+  left: 42px;
+  bottom: calc(100% - 5px);
+  width: 26px;
+  height: 24px;
+  background: url('/pixel-cats-perched.svg') center bottom / contain no-repeat;
   image-rendering: pixelated;
   pointer-events: none;
 }
@@ -63,10 +76,10 @@ body.planner[data-accent="cats"] :is(.class-arrow, .next-class-calculate) {
   background: var(--on-accent);
   color: var(--ink);
 }
-body.planner[data-accent="cats"] .class-arrow:hover { background: #3c4767; }
+body.planner[data-accent="cats"] .class-arrow:hover { background: #3b3358; }
 body.planner[data-accent="cats"] .insight-card:not(.risk, .caution, .neutral, .insight-empty) {
-  background: #b8c8cd;
-  color: #23313d;
+  background: #eed3ae;
+  color: #382b21;
 }
 body.planner[data-accent="cats"] :is(.insight-card.neutral, .insight-card.insight-empty) {
   background: var(--surface);
@@ -86,7 +99,7 @@ body.planner[data-accent="cats"] :is(#calculate-attendance, #attendance-plan-res
   text-shadow: none;
 }
 body.planner[data-accent="cats"] :is(#refresh, #settings-sync) .sync-icon { filter: none; }
-body.planner[data-accent="cats"] :is(.attendance-course-heading h3, #marks-panel .course-title) { color: #d0d5e5; }
+body.planner[data-accent="cats"] :is(.attendance-course-heading h3, #marks-panel .course-title) { color: #e3d9ea; }
 body.planner[data-accent="cats"] :is(.attendance-record, .attendance-detail-body > p, .attendance-course-meta dt,
   .attendance-plan p, #marks-panel .course-code, #marks-panel .assessment-name, #marks-panel .mini-score small) { color: var(--muted); }
 body.planner[data-accent="cats"] .attendance-rail::before { background: var(--line); }
@@ -124,6 +137,12 @@ body.planner[data-accent="cats"] dialog select { background: var(--page); color:
   body.planner[data-accent="cats"] #planner-nav button[aria-current] { background: transparent; }
 }
 @media (max-width: 700px) {
+  body.planner[data-accent="cats"] .brand::after {
+    left: 38px;
+    width: 22px;
+    height: 20px;
+    bottom: calc(100% - 3px);
+  }
   body.planner[data-accent="cats"] main::before {
     height: 112px;
     max-width: 392px;

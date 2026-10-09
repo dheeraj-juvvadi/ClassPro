@@ -86,7 +86,8 @@ test('each appearance applies, survives reload, and clears without leaking into 
 });
 
 test('artwork stays local, static, lightweight, and has distinct mobile composition', () => {
-  const drawings = ['pixel-cats-desktop.svg', 'pixel-cats-mobile.svg'].map(name => source(name));
+  const drawings = ['pixel-cats-desktop.svg', 'pixel-cats-mobile.svg', 'pixel-cats-perched.svg']
+    .map(name => source(name));
   for (const drawing of drawings) {
     const $ = load(drawing, { xmlMode: true });
     assert.equal($('svg').attr('shape-rendering'), 'crispEdges');
@@ -96,6 +97,7 @@ test('artwork stays local, static, lightweight, and has distinct mobile composit
     assert.ok(Buffer.byteLength(drawing) < 40_000, 'each drawing has a bounded transfer size');
   }
   assert.notEqual(drawings[0], drawings[1]);
+  assert.notEqual(drawings[2], drawings[0]);
   assert.match(css, /max-width:\s*700px/);
   assert.match(css, /pointer-events:\s*none/);
   assert.doesNotMatch(css, /@import|(?:animation|transition)\s*:|https?:/);
@@ -103,6 +105,14 @@ test('artwork stays local, static, lightweight, and has distinct mobile composit
     if (selector.trim().startsWith('@')) continue;
     assert.ok(selector.includes('[data-accent="cats"]'), `theme rule must be scoped: ${selector.trim()}`);
   }
+});
+
+test('a pixel cat is perched on the Anon wordmark in the planner header', () => {
+  assert.match(css, /body\.planner\[data-accent="cats"\] \.brand \{ position: relative; \}/);
+  assert.match(css, /body\.planner\[data-accent="cats"\] \.brand::after \{[^}]*url\('\/pixel-cats-perched\.svg'\)/);
+  assert.match(css, /body\.planner\[data-accent="cats"\] \.brand::after \{[^}]*image-rendering: pixelated/);
+  const perched = source('pixel-cats-perched.svg');
+  assert.equal(load(perched, { xmlMode: true })('svg').attr('viewBox'), '0 0 30 28');
 });
 
 test('Cats reading colors and selected controls retain AA contrast', () => {
