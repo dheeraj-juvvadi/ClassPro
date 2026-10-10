@@ -1,9 +1,10 @@
 import { writeFile } from 'node:fs/promises';
+import { catSprite, catSvg } from './cat-sprites.mjs';
 
 // Static, locally generated panoramas: no canvas or animation work in the app.
 const root = new URL('../public/', import.meta.url);
 const width = 480, height = 84;
-const scene = { name: 'Catnap Alley', sky: ['#30244b', '#6d528b', '#b797b8'], moon: '#e8cfb4', warm: '#f1c292' };
+const scene = { name: 'Catnap Alley', sky: ['#383a40', '#696670', '#a29a9d'], moon: '#c6bdac', warm: '#baa589' };
 const rgb = hex => hex.slice(1).match(/../g).map(n => parseInt(n, 16));
 const hex = values => '#' + values.map(n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('');
 const mix = (a, b, t) => a.map((n, i) => n * (1 - t) + b[i] * t);
@@ -35,40 +36,36 @@ function sky() {
     rect(x, y, 13 + noise(i) * 33, 1, hex(mix(rgb(palette.sky[1]), rgb(palette.sky[2]), .3)));
   }
 }
-function cat(x, y, color, sitting = true) {
-  rect(x, y - 5, 5, 5, color);
-  rect(x, y - 7, 1, 3, color); rect(x + 4, y - 7, 1, 3, color);
-  rect(x + 1, y - 3, 1, 1, '#e8c9a3'); rect(x + 3, y - 3, 1, 1, '#e8c9a3');
-  rect(x, y, sitting ? 5 : 9, 4, color);
-  rect(x - 3, y + 3, 5, 1, color); rect(x - 3, y + 1, 1, 2, color);
-}
-function sleepingCat(x, y, color) {
-  rect(x + 2, y - 4, 7, 1, color); rect(x + 1, y - 3, 10, 3, color);
-  rect(x, y - 3, 4, 3, color); rect(x, y - 5, 1, 2, color);
-  rect(x + 3, y - 4, 1, 1, color); rect(x + 1, y - 1, 2, 1, '#4b374f');
-  rect(x + 7, y - 2, 6, 2, '#98738b'); rect(x + 10, y - 3, 3, 1, '#98738b');
+function cat(x, y, pose, colors, flip = false) {
+  const sprite = catSprite(pose, ...colors);
+  for (const [xx, yy, color] of sprite.pixels) {
+    rect(x + (flip ? sprite.width - 1 - xx : xx), y - sprite.height + yy, 1, 1, color);
+  }
 }
 function rooftops() {
   const perches = [];
   for (let layer = 0; layer < 2; layer++) {
     for (let x = -4, i = 0; x < width; i++) {
       const w = 17 + Math.floor(noise(i + 12) * 15), top = 43 + Math.floor(noise(i + 18) * 20) + layer * 8;
-      rect(x, top, w, height - top, layer ? '#343046' : '#5c4b62');
-      rect(x - 1, top, w + 2, 1, layer ? '#a1828d' : '#927181');
-      rect(x + w - 3, top + 1, 3, height - top, '#29293d');
+      rect(x, top, w, height - top, layer ? '#3b3c40' : '#57565c');
+      rect(x - 1, top, w + 2, 1, layer ? '#777175' : '#81797a');
+      rect(x + w - 3, top + 1, 3, height - top, '#34363a');
       for (let xx = x + 3; xx < x + w - 3; xx += 5) for (let yy = top + 4; yy < 80; yy += 6) {
-        rect(xx, yy, 2, 3, noise(xx + yy) > .7 ? palette.warm : '#4f4a62');
+        rect(xx, yy, 2, 3, noise(xx + yy) > .7 ? palette.warm : '#4b4d53');
       }
-      if (layer && [1, 3, 5, 7, 8, 9, 11, 12, 14, 16].includes(i)) perches.push([x + 7, top, i]);
-      if (i % 4 === 0) { rect(x + 5, top - 8, 1, 8, '#756580'); rect(x + 2, top - 6, 7, 1, '#756580'); }
+      if (layer && [1, 4, 7, 10, 13, 16].includes(i)) perches.push([x, top, i]);
+      if (i % 4 === 0) { rect(x + 5, top - 8, 1, 8, '#76727a'); rect(x + 2, top - 6, 7, 1, '#76727a'); }
       x += w + 2;
     }
   }
-  for (const [x, y, i] of perches) {
-    const color = ['#d9c6bc', '#e4b782', '#aea9c8', '#c79286'][i % 4];
-    if (i % 3 === 0) sleepingCat(x, y, color);
-    else cat(x, y - 4, color, i % 3 !== 1);
-  }
+  const coats = [
+    ['#bca88e', '#887b6c', '#d1c1aa'],
+    ['#96948e', '#6c6e6b', '#b3b0a7'],
+    ['#b3a79b', '#807a73', '#cdc1b3'],
+  ];
+  perches.forEach(([x, y], i) => {
+    cat(x, y, ['sleep', 'sit', 'loaf'][i % 3], coats[i % 3], i % 2 === 0);
+  });
 }
 function svg(name, x = 0, w = width) {
   const paths = new Map();
@@ -98,4 +95,5 @@ for (const letter of 'Anon') {
   offset += 6;
 }
 await writeFile(new URL('anon-pixel.svg', root), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 7" shape-rendering="crispEdges"><title>Anon</title><path fill="#f3ece0" d="${wordmark}"/></svg>\n`);
-console.log('Built Catnap Alley and the pixel Anon wordmark.');
+await writeFile(new URL('anon-sleeping-cat.svg', root), catSvg(catSprite('sleep'), 'A tabby sleeping with tucked paws on Anon'));
+console.log('Built Catnap Alley, the pixel Anon wordmark and its sleeping cat.');

@@ -1,34 +1,34 @@
 /* A shallow panorama in the flowers' masthead, fading into the reading surface. */
 body[data-accent="cats"] {
-  --page: #272139; --surface: #352c48; --soft: #433758;
-  --ink: #f3ece0; --muted: #c7b9de; --line: #5e4a78;
-  --accent: #d5baef; --accent-hover: #e4cffa; --on-accent: #2a2035;
-  --error: #edb3af; --error-bg: #493040; --focus: #e4cffa;
+  --page: #292a2c; --surface: #343536; --soft: #404043;
+  --ink: #e5e2dd; --muted: #bdb8c1; --line: #535056;
+  --accent: #bfb3c7; --accent-hover: #cec3d4; --on-accent: #29282c;
+  --error: #d6aaa5; --error-bg: #423638; --focus: #cec3d4;
   --planner-green: var(--accent); --planner-muted: var(--muted);
   --backdrop: url('/scene-cats.svg');
   --backdrop-mobile: var(--backdrop);
-  --shade: rgba(39, 33, 57, .3);
-  --shade-solid: rgba(39, 33, 57, .38);
+  --shade: rgba(41, 42, 44, .16);
+  --shade-solid: rgba(41, 42, 44, .22);
   --catnap-page: var(--page);
-  --catnap-inset: #2c253c;
+  --catnap-inset: #2e2f31;
   --catnap-surface: var(--surface);
-  --catnap-raised: #463955;
+  --catnap-raised: #414043;
   --catnap-line: var(--line);
   --catnap-ink: var(--ink);
   --catnap-muted: var(--muted);
   --catnap-accent: var(--accent);
   --catnap-accent-hover: var(--accent-hover);
   --catnap-on-accent: var(--on-accent);
-  --catnap-risk: #edb3bf;
-  --catnap-risk-card: #cc91aa;
-  --catnap-risk-surface: #493040;
-  --catnap-risk-line: #956079;
-  --catnap-on-risk: #2b1b30;
-  --catnap-warning: #e4c4a2;
-  --catnap-warning-card: #d9b992;
-  --catnap-warning-surface: #463644;
-  --catnap-on-warning: #2e2133;
-  --catnap-positive: #d3b9ed;
+  --catnap-risk: #d6aaa5;
+  --catnap-risk-card: #b99089;
+  --catnap-risk-surface: #423638;
+  --catnap-risk-line: #856e6c;
+  --catnap-on-risk: #2c2424;
+  --catnap-warning: #cebaa1;
+  --catnap-warning-card: #beab91;
+  --catnap-warning-surface: #413b35;
+  --catnap-on-warning: #2d2924;
+  --catnap-positive: #bdb5c4;
   --catnap-focus: var(--focus);
   --catnap-overlay-24322126: color-mix(in srgb, var(--catnap-on-accent) 15%, transparent);
   --catnap-overlay-191b19d9: color-mix(in srgb, var(--catnap-page) 85%, transparent);
@@ -50,16 +50,8 @@ body[data-accent="cats"] {
   --catnap-overlay-f1eee380: color-mix(in srgb, var(--catnap-ink) 50%, transparent);
   background: var(--page); color: var(--ink);
 }
-/* The default floral artwork uses the same disappearing strip. */
-body.planner .botanical-backdrop {
-  height: 180px;
-  mask-image: linear-gradient(#000 0, #000 48px, transparent 180px);
-  -webkit-mask-image: linear-gradient(#000 0, #000 48px, transparent 180px);
-}
-body.planner:not([data-accent]), body.planner[data-accent="sage"] {
-  --shade: rgba(25, 27, 25, .32);
-  --shade-solid: rgba(25, 27, 25, .28);
-}
+/* Wildflower uses the original floral cascade, including app-surface's fade.
+   Scene geometry and extra shading below belong only to Catnap Alley. */
 body:is(.planner, .garden-login)[data-accent="cats"] .botanical-backdrop {
   inset: 0 0 auto;
   height: 210px;
@@ -71,6 +63,7 @@ body:is(.planner, .garden-login)[data-accent="cats"] .botanical-backdrop {
   -webkit-mask-image: linear-gradient(#000 0, #000 68px, transparent 210px);
 }
 body:is(.planner, .garden-login)[data-accent="cats"] .botanical-backdrop::after {
+  content: ""; position: absolute; inset: 0;
   background: linear-gradient(90deg, var(--page), transparent 48%),
     linear-gradient(var(--shade-solid), var(--shade));
 }

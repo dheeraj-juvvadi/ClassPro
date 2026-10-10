@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { load } from 'cheerio';
 import express from 'express';
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 import { fileURLToPath } from 'node:url';
 
 const source = name => fs.readFileSync(new URL(`../public/${name}`, import.meta.url), 'utf8');
@@ -176,11 +176,11 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
     document.querySelector('#projection-dialog').close();
     return result;
   });
-  assert.equal(styles.home, 'rgb(213, 186, 239)');
-  for (const key of ['attendance', 'marks', 'assessment', 'settingsInput']) assert.equal(styles[key], 'rgb(53, 44, 72)', key);
-  assert.equal(styles.grade, 'rgb(44, 37, 60)');
-  assert.equal(styles.marksText, 'rgb(243, 236, 224)');
-  for (const key of ['dialog', 'plannerInput']) assert.equal(styles[key], 'rgb(39, 33, 57)', key);
+  assert.equal(styles.home, 'rgb(191, 179, 199)');
+  for (const key of ['attendance', 'marks', 'assessment', 'settingsInput']) assert.equal(styles[key], 'rgb(52, 53, 54)', key);
+  assert.equal(styles.grade, 'rgb(46, 47, 49)');
+  assert.equal(styles.marksText, 'rgb(229, 226, 221)');
+  for (const key of ['dialog', 'plannerInput']) assert.equal(styles[key], 'rgb(41, 42, 44)', key);
   assert.match(styles.plannerArt, /scene-cats\.svg/);
   for (const width of [320, 1280]) {
     await page.setViewportSize({ width, height: 900 });
@@ -208,4 +208,68 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
   assert.equal(reset.cat, 'none');
   assert.match(reset.scene, /floral-screenprint\.svg/);
   assert.deepEqual(errors, []);
+});
+
+test('Wildflower retains its original mobile crop across pages and appearance switches', { timeout: 30000 }, async t => {
+  const app = express(); app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  t.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+  t.after(() => browser.close());
+  const page = await browser.newPage({ ...devices['Pixel 7'] });
+  await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const backdrop = () => page.evaluate(() => {
+    const node = document.querySelector('.botanical-backdrop');
+    const style = getComputedStyle(node), box = node.getBoundingClientRect();
+    return {
+      image: style.backgroundImage, size: style.backgroundSize, position: style.backgroundPosition,
+      clip: style.clipPath, mask: style.maskImage, webkitMask: style.webkitMaskImage,
+      overlay: getComputedStyle(node, '::after').content,
+      height: box.height, width: box.width, viewportHeight: innerHeight, viewportWidth: innerWidth,
+      top: box.top, left: box.left, display: style.display,
+    };
+  });
+  await page.goto(origin);
+  const login = await backdrop();
+  assert.match(login.image, /floral-mobile\.svg/);
+  assert.equal(login.size, '100% 100%');
+  assert.equal(login.overlay, 'none');
+  assert.equal(login.height, login.viewportHeight);
+
+  await page.goto(`${origin}/?preview=home`);
+  for (const width of [320, 360, 393, 412, 700, 701, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const theme of ['sage', 'cats', 'sage']) {
+      await page.evaluate(() => anonHome.navigate('settings'));
+      await page.locator('#settings-theme').selectOption(theme);
+      for (const destination of ['home', 'attendance', 'marks', 'settings']) {
+        await page.evaluate(value => anonHome.navigate(value), destination);
+        const style = await backdrop();
+        const label = `${theme} ${destination} at ${width}px`;
+        assert.equal(style.display, 'block', label);
+        if (theme === 'cats') {
+          assert.match(style.image, /scene-cats\.svg/, label);
+          assert.equal(style.height, width <= 700 ? 170 : width >= 1000 ? 240 : 210, label);
+          assert.match(style.mask, /linear-gradient/, label);
+          assert.equal(style.clip, 'none', label);
+          continue;
+        }
+        assert.match(style.image, width <= 700 ? /floral-mobile\.svg/ : /floral-screenprint\.svg/, label);
+        assert.equal(style.size, width <= 700 ? '100% 100%' : 'cover', label);
+        assert.equal(style.position, '50% 50%', label);
+        // Effective app-surface.css cascade in the approved 4e7c3d2 version.
+        const originalFade = 'linear-gradient(rgb(0, 0, 0) 0px, rgb(0, 0, 0) 60px, rgba(0, 0, 0, 0) 150px)';
+        assert.equal(style.clip, 'none', label);
+        assert.equal(style.mask, originalFade, label);
+        assert.equal(style.webkitMask, originalFade, label);
+        assert.equal(style.overlay, 'none', label);
+        assert.equal(style.height, style.viewportHeight, label);
+        assert.equal(style.width, style.viewportWidth, label);
+        assert.equal(style.top, 0, label);
+        assert.equal(style.left, 0, label);
+      }
+    }
+  }
 });
