@@ -221,35 +221,6 @@ test('attendance changes expire independently without sync and cached reports ca
   assert.deepEqual(await badges(), []);
 });
 
-test('ticket preview keeps compact separate cards and removes the target rail', { timeout: 20000 }, async context => {
-  const app = express(); app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
-  const server = app.listen(0, '127.0.0.1');
-  await new Promise(resolve => server.once('listening', resolve));
-  context.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
-  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
-  context.after(() => browser.close());
-  const page = await browser.newPage();
-  await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
-  await page.route('**/api/**', route => route.fulfill({ json: {} }));
-  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home&attendance=tickets#attendance`);
-  assert.equal(await page.locator('.attendance-row').count(), 4);
-  assert.equal(await page.locator('.attendance-rail').count(), 0);
-  for (const width of [320, 390, 1280]) {
-    await page.setViewportSize({ width, height: 844 });
-    const metrics = await page.locator('.attendance-row').evaluateAll(rows => rows.map(row => ({
-      height: row.getBoundingClientRect().height, fits: row.scrollWidth <= row.clientWidth,
-      background: getComputedStyle(row).backgroundColor,
-    })));
-    assert.ok(metrics.every(row => row.height >= 94 && row.height <= 120 && row.fits), `compact cards at ${width}`);
-    assert.ok(metrics.every(row => row.background === 'rgb(61, 71, 53)'));
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-  }
-  await page.locator('.attendance-summary').first().focus();
-  await page.keyboard.press('Enter');
-  assert.equal(await page.locator('.attendance-details').first().getAttribute('open'), '');
-  assert.equal(await page.locator('.attendance-explanation').first().isVisible(), true);
-});
-
 test('home widgets advance at the minute after class ends without a reload', { timeout: 30000 }, async context => {
   const app = express(); app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
   const server = app.listen(0, '127.0.0.1');

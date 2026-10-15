@@ -1,8 +1,6 @@
 'use strict';
 
 globalThis.academicUI = (() => {
-  const tickets = new URLSearchParams(location.search).get('attendance') === 'tickets';
-  if (tickets) document.body.dataset.attendanceDesign = 'tickets';
   let courses = [];
   let selected = null;
   let attendanceView = null;
@@ -40,7 +38,7 @@ globalThis.academicUI = (() => {
     amount.append(create('strong', '', status.hours === null ? '—' : `${status.tone === 'risk' ? '−' : ''}${status.hours}`));
     if (status.hours !== null) amount.append(create('span', '', 'h'));
     metric.append(amount);
-    if (projected || tickets) metric.append(create('span', 'attendance-margin-caption',
+    if (projected) metric.append(create('span', 'attendance-margin-caption',
       status.hours === null ? 'Unconfirmed' : status.tone === 'risk' ? 'to reach 75%' : 'can still miss'));
     const record = create('div', 'attendance-record');
     const absent = Number.isInteger(course.present) && Number.isInteger(course.conducted) && course.conducted >= course.present
@@ -79,7 +77,7 @@ globalThis.academicUI = (() => {
     const details = create('details', 'attendance-details');
     const summary = create('summary', 'attendance-summary');
     summary.append(heading, record, metric);
-    if (status.percent !== undefined && !tickets) {
+    if (status.percent !== undefined) {
       const rail = create('span', 'attendance-rail');
       rail.setAttribute('role', 'meter');
       rail.setAttribute('aria-label', `${course.title || course.code || 'Course'} attendance`);

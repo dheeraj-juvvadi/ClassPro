@@ -81,8 +81,3 @@ dates. This works without a timetable and assumes no intervening classes. Leave
 adds to conducted hours, Attend adds to attended and conducted hours, and OD
 corrects existing absences without increasing conducted hours. Manual hours are
 kept when switching modes or visiting Schedule; sign-out clears the draft.
-
-An optional compact attendance-card preview is available with
-`?attendance=tickets#attendance`. Add `preview=home` to use sample data without
-signing in. The preview uses separate muted sage tickets and omits the target
-rail. It does not change the default attendance layout.

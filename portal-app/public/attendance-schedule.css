@@ -1,0 +1,17 @@
+/* Calculator schedule controls. */
+.projection-schedule-option { margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--catnap-inset, #282f24); }
+.projection-schedule-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.projection-schedule-row label { flex: 1; cursor: pointer; }
+.projection-schedule-row strong { display: block; font-size: 12px; font-weight: 500; }
+.projection-schedule-row label span { display: block; font-size: 10px; line-height: 1.6; margin-top: 4px; color: var(--catnap-muted, #adb4a4); }
+#projection-use-schedule { appearance: none; width: 42px; height: 44px; flex: 0 0 42px; margin: 0; border: 0; padding: 0; border-radius: 0; position: relative; background: transparent; cursor: pointer; }
+#projection-use-schedule::before { content: ''; position: absolute; inset: 10px 0; border-radius: 20px; background: var(--catnap-line, #606956); }
+#projection-use-schedule::after { content: ''; position: absolute; left: 3px; top: 13px; width: 18px; height: 18px; border-radius: 50%; background: var(--catnap-ink, #f1eee3); }
+#projection-use-schedule:checked::before { background: var(--catnap-accent, #c5d4a7); }
+#projection-use-schedule:checked::after { left: 21px; background: var(--catnap-on-accent, #233020); }
+#projection-edit-schedule, #schedule-calculator-back { display: inline-flex; align-items: center; min-height: 44px; font-size: 11px; color: var(--catnap-accent, #c5d4a7); text-underline-offset: 4px; }
+#schedule-calculator-back[hidden] { display: none; }
+#projection-manual > p { font-size: 11px; color: var(--catnap-muted, #adb4a4); line-height: 1.6; margin: 12px 0; }
+.projection-manual-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 8px 0; font-size: 12px; }
+.projection-manual-row input { width: 72px; min-height: 44px; padding: 8px; text-align: center; color: var(--catnap-ink, #f1eee3); background: var(--catnap-inset, #242a20); border: 1px solid var(--catnap-line, #56634b); border-radius: 8px; }
+#projection-use-schedule:focus-visible, #projection-edit-schedule:focus-visible, #schedule-calculator-back:focus-visible { outline: 2px solid var(--catnap-accent, #c5d4a7); outline-offset: 4px; }
