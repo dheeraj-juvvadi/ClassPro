@@ -27,6 +27,7 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
     { code: 'NOHISTORY', title: 'No previous record', present: 5, conducted: 6 },
     { code: 'BADHISTORY', title: 'Unconfirmed history', present: 5, conducted: 6, change24h: { points: '2' } },
     { code: 'RECENT', title: 'Recent sync', present: 9, conducted: 11, changeSinceSync: { points: 1.82 } },
+    { code: 'REPORTED', title: 'Reported attendance', present: 28, conducted: 38 },
   ] };
   await page.evaluate(report => renderAttendance(report), report);
   const ds = page.locator('.attendance-row[data-course="DS"]');
@@ -40,15 +41,16 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.locator('.attendance-recorded-hours').innerText(), '18 / 22h attended');
   assert.equal(await ds.locator('.attendance-percent').isVisible(), true);
   assert.equal(await cn.locator('.attendance-percent').innerText(), '68.4%');
-  assert.equal(await ds.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '−1.2pp');
-  assert.equal(await cn.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '+1.8pp');
+  assert.equal(await ds.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '−1.2');
+  assert.equal(await cn.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '+1.8');
+  assert.equal(await page.locator('.attendance-change-value small').count(), 0);
   assert.match(await ds.locator('.attendance-change .sr-only').textContent(), /-1.2 percentage points · past 24 hours/);
   const recent = page.locator('.attendance-row[data-course="RECENT"]');
-  assert.equal(await recent.locator('.attendance-change-value').textContent(), '+1.8pp');
+  assert.equal(await recent.locator('.attendance-change-value').textContent(), '+1.8');
   assert.match(await recent.locator('.attendance-change').getAttribute('title'), /since previous sync/);
   for (const code of ['ZERO', 'ROUND']) {
     const row = page.locator(`.attendance-row[data-course="${code}"]`);
-    assert.equal(await row.locator('.attendance-change.unchanged .attendance-change-value').textContent(), '0.0pp');
+    assert.equal(await row.locator('.attendance-change.unchanged .attendance-change-value').textContent(), '0.0');
     assert.equal(await row.locator('.attendance-change').evaluate(el => getComputedStyle(el).color), 'rgb(173, 180, 164)');
   }
   for (const code of ['NEW', 'UNKNOWN', 'NOHISTORY', 'BADHISTORY']) {
@@ -69,7 +71,14 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.match(await ds.locator('.attendance-course-meta').innerText(), /Dr. Test/);
   assert.match(await ds.locator('.attendance-course-meta').innerText(), /Hours missed\s+4/);
   assert.match(await ds.locator('.attendance-course-meta').innerText(), /Course code\s+DS/);
-  assert.equal(await page.locator('.attendance-explanation:not(.sr-only), .recovery-date:not(.sr-only), .recovery-assumption:not(.sr-only)').count(), 0);
+  assert.equal(await ds.locator('.attendance-explanation').isVisible(), true);
+  assert.equal(await page.locator('.recovery-date:not(.sr-only), .recovery-assumption:not(.sr-only)').count(), 0);
+  const reported = page.locator('.attendance-row[data-course="REPORTED"]');
+  assert.equal(await reported.locator('.attendance-margin-value strong').innerText(), '−2');
+  await reported.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  assert.match(await reported.locator('.attendance-explanation').innerText(), /Attend 2 more hours to reach 75% \(30 \/ 40h attended\)/);
+  await ds.locator('summary').focus();
   await page.evaluate(report => renderAttendance(report), report);
   assert.equal(await ds.locator('details').getAttribute('open'), '');
   assert.equal(await ds.locator('summary').evaluate(el => el === document.activeElement), true);
@@ -163,6 +172,82 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await page.locator('#home-insights').isVisible(), false);
   assert.equal(await page.locator('.timeline-row').count(), 0);
   assert.deepEqual(errors, []); assert.equal(calls, 0);
+});
+
+test('attendance changes expire independently without sync and cached reports cannot revive them', { timeout: 20000 }, async context => {
+  const app = express(); app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  context.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+  context.after(() => browser.close());
+  const page = await browser.newPage();
+  await page.clock.install({ time: new Date('2026-10-15T12:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-10-15T12:00:01Z'));
+  await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
+  await page.route('**/api/**', route => route.fulfill({ json: {} }));
+  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home#attendance`);
+  await page.evaluate(() => {
+    const now = Date.now(), day = 86400000;
+    globalThis.deltaReport = { data: [
+      { code: 'CS', title: 'Computing', present: 9, conducted: 11,
+        changeSinceSync: { points: 1.82, to: now - day + 2000, expiresAt: now + 2000 } },
+      { code: 'MA', title: 'Mathematics', present: 28, conducted: 38,
+        changeSinceSync: { points: -1.2, to: now - day + 4000, expiresAt: now + 4000 } },
+    ] };
+    renderAttendance(deltaReport);
+  });
+  const badges = () => page.locator('.attendance-change-value').allTextContents();
+  assert.deepEqual(await badges(), ['+1.8', '−1.2']);
+  await page.clock.runFor(1000);
+  await page.evaluate(() => renderAttendance(deltaReport));
+  assert.deepEqual(await badges(), ['+1.8', '−1.2']);
+  await page.clock.runFor(1000);
+  assert.deepEqual(await badges(), ['−1.2']);
+  await page.evaluate(() => {
+    deltaReport.data[0].present = 8;
+    deltaReport.data[0].changeSinceSync = { points: -9.09, to: Date.now(), expiresAt: Date.now() + 86400000 };
+    renderAttendance(deltaReport);
+  });
+  assert.deepEqual(await badges(), ['−9.1', '−1.2']);
+  await page.clock.runFor(2000);
+  assert.deepEqual(await badges(), ['−9.1']);
+  await page.clock.fastForward(86400000);
+  assert.deepEqual(await badges(), []);
+  await page.evaluate(() => {
+    renderAttendance(deltaReport);
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  assert.deepEqual(await badges(), []);
+});
+
+test('ticket preview keeps compact separate cards and removes the target rail', { timeout: 20000 }, async context => {
+  const app = express(); app.use(express.static(fileURLToPath(new URL('../public/', import.meta.url))));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => server.once('listening', resolve));
+  context.after(() => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }));
+  const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || undefined });
+  context.after(() => browser.close());
+  const page = await browser.newPage();
+  await page.addInitScript(() => localStorage.setItem('anon.analytics-choice.v1', 'decline'));
+  await page.route('**/api/**', route => route.fulfill({ json: {} }));
+  await page.goto(`http://127.0.0.1:${server.address().port}/?preview=home&attendance=tickets#attendance`);
+  assert.equal(await page.locator('.attendance-row').count(), 4);
+  assert.equal(await page.locator('.attendance-rail').count(), 0);
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    const metrics = await page.locator('.attendance-row').evaluateAll(rows => rows.map(row => ({
+      height: row.getBoundingClientRect().height, fits: row.scrollWidth <= row.clientWidth,
+      background: getComputedStyle(row).backgroundColor,
+    })));
+    assert.ok(metrics.every(row => row.height >= 94 && row.height <= 120 && row.fits), `compact cards at ${width}`);
+    assert.ok(metrics.every(row => row.background === 'rgb(61, 71, 53)'));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  }
+  await page.locator('.attendance-summary').first().focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('.attendance-details').first().getAttribute('open'), '');
+  assert.equal(await page.locator('.attendance-explanation').first().isVisible(), true);
 });
 
 test('home widgets advance at the minute after class ends without a reload', { timeout: 30000 }, async context => {

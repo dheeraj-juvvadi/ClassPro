@@ -54,6 +54,58 @@ async function setup(context) {
 }
 
 const day = (page, value) => page.locator(`#projection-calendar calendar-month button[part~="date-${value}"]`);
+
+test('schedule editor returns to the calculator draft and manual hours survive the round trip', { timeout: 30000 }, async context => {
+  const { page, errors } = await setup(context);
+  await selectRange(page, '2026-10-10', '2026-10-12');
+  await page.locator('#projection-use-schedule').uncheck();
+  await page.locator('#projection-manual-hours input[data-course="A"]').fill('3');
+  await page.locator('#projection-edit-schedule').click();
+  assert.equal(await page.locator('#projection-dialog').isVisible(), false);
+  await page.locator('#schedule-choices input').first().uncheck();
+  await page.locator('#schedule-calculator-back').click();
+  await page.locator('#projection-dialog').waitFor({ state: 'visible' });
+  assert.deepEqual(await selectedDates(page), ['10', '11', '12']);
+  assert.equal(await page.locator('#projection-use-schedule').isChecked(), false);
+  assert.equal(await page.locator('#projection-manual-hours input[data-course="A"]').inputValue(), '3');
+  assert.equal(await hours(page), '3h');
+  await page.locator('#projection-edit-schedule').click();
+  await page.goBack();
+  await page.locator('#projection-dialog').waitFor({ state: 'visible' });
+  assert.deepEqual(await selectedDates(page), ['10', '11', '12']);
+  await page.locator('#projection-use-schedule').check();
+  assert.equal(await page.locator('#projection-live-hours [data-course="A"]').count(), 0);
+  await page.locator('#projection-use-schedule').uncheck();
+  await page.locator('#projection-review-custom').click();
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '60 / 83h attended');
+  assert.match(await page.locator('#attendance-plan-summary').innerText(), /Entered hours/);
+  await page.locator('#calculate-attendance').click();
+  assert.equal(await page.locator('#projection-manual-hours input[data-course="A"]').inputValue(), '3');
+  await page.locator('#projection-manual-hours input[data-course="A"]').fill('0.5');
+  assert.equal(await page.locator('#projection-review-custom').isDisabled(), true);
+  assert.match(await page.locator('#projection-range-error').innerText(), /whole hours/);
+  await page.evaluate(() => dateAttendance.clear());
+  await page.locator('#calculate-attendance').click();
+  assert.equal(await page.locator('#projection-use-schedule').isChecked(), true);
+  assert.deepEqual(errors, []);
+});
+
+test('manual calculation works with an unavailable timetable and keeps OD totals fixed', { timeout: 20000 }, async context => {
+  const { page, errors } = await setup(context);
+  await page.evaluate(() => anonHome.update(quietReport.attendance, null));
+  await page.locator('#projection-use-schedule').uncheck();
+  await day(page, '2026-10-10').click();
+  await page.locator('#projection-manual-hours input[data-course="A"]').fill('2');
+  await page.locator('#projection-review-custom').click();
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '60 / 82h attended');
+  await page.locator('#calculate-attendance').click();
+  await page.locator('#date-actions [data-action="od"]').click();
+  await day(page, '2026-09-30').click();
+  await page.locator('#projection-manual-hours input[data-course="A"]').fill('2');
+  await page.locator('#projection-review-custom').click();
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '62 / 80h attended');
+  assert.deepEqual(errors, []);
+});
 const hours = (page, code = 'A') => page.locator(`#projection-live-hours [data-course="${code}"] strong`).innerText();
 async function selectRange(page, first = '2026-10-10', last = '2026-10-20') {
   await day(page, first).click(); await day(page, last).click();

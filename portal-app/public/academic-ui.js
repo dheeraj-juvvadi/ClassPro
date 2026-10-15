@@ -1,9 +1,13 @@
 'use strict';
 
 globalThis.academicUI = (() => {
+  const tickets = new URLSearchParams(location.search).get('attendance') === 'tickets';
+  if (tickets) document.body.dataset.attendanceDesign = 'tickets';
   let courses = [];
   let selected = null;
   let attendanceView = null;
+  let changeTimer = null;
+  const changeDay = 24 * 60 * 60 * 1000;
   const get = identifier => document.getElementById(identifier);
   function create(tag, className, text) {
     const element = document.createElement(tag);
@@ -20,7 +24,8 @@ globalThis.academicUI = (() => {
       tone: required ? 'risk' : prediction.canMiss === 0 ? 'caution' : 'healthy',
       percent: prediction.percentage,
       percentage: `${Number(prediction.percentage.toFixed(1))}%`,
-      detail: required ? `Attend ${required} consecutive hours to reach 75%.` : `You can miss ${prediction.canMiss} hours and remain at 75%.` };
+      detail: required ? `Attend ${required} more ${required === 1 ? 'hour' : 'hours'} to reach 75% (${present + required} / ${conducted + required}h attended). New classes add to both attended and total hours.`
+        : `You can miss ${prediction.canMiss} hours and remain at or above 75%.` };
   }
   function courseCard(course, status, schedule, projected = false) {
     const card = create('article', `attendance-row ${status.tone}`);
@@ -35,7 +40,7 @@ globalThis.academicUI = (() => {
     amount.append(create('strong', '', status.hours === null ? '—' : `${status.tone === 'risk' ? '−' : ''}${status.hours}`));
     if (status.hours !== null) amount.append(create('span', '', 'h'));
     metric.append(amount);
-    if (projected) metric.append(create('span', 'attendance-margin-caption',
+    if (projected || tickets) metric.append(create('span', 'attendance-margin-caption',
       status.hours === null ? 'Unconfirmed' : status.tone === 'risk' ? 'to reach 75%' : 'can still miss'));
     const record = create('div', 'attendance-record');
     const absent = Number.isInteger(course.present) && Number.isInteger(course.conducted) && course.conducted >= course.present
@@ -51,14 +56,19 @@ globalThis.academicUI = (() => {
     if (status.percent !== undefined) percentage.append(create('small', '', '%'));
     rate.append(percentage);
     const daily = Number.isFinite(course.change24h?.points);
-    const delta = daily ? course.change24h.points : course.changeSinceSync?.points;
-    if (status.hours !== null && Number.isFinite(delta)) {
+    const changeRecord = daily ? course.change24h : course.changeSinceSync;
+    const delta = changeRecord?.points;
+    const expiresAt = Number.isFinite(changeRecord?.expiresAt) ? changeRecord.expiresAt
+      : Number.isFinite(changeRecord?.to) ? changeRecord.to + changeDay : null;
+    if (status.hours !== null && Number.isFinite(delta) && (expiresAt === null || expiresAt > Date.now())) {
       const points = Number(delta.toFixed(1)) || 0;
       const change = create('span', `attendance-change ${points > 0 ? 'positive' : points < 0 ? 'negative' : 'unchanged'}`);
-      const description = `${points > 0 ? '+' : ''}${points} percentage points · ${daily ? 'past 24 hours' : 'since previous sync'}`;
+      const period = Number.isFinite(changeRecord?.expiresAt) ? 'last attendance update · visible for 24 hours'
+        : daily ? 'past 24 hours' : 'since previous sync';
+      const description = `${points > 0 ? '+' : ''}${points} percentage points · ${period}`;
       const value = create('span', 'attendance-change-value', `${points > 0 ? '+' : points < 0 ? '−' : ''}${Math.abs(points).toFixed(1)}`);
       value.setAttribute('aria-hidden', 'true');
-      value.append(create('small', '', 'pp'));
+      if (expiresAt !== null) change.dataset.expiresAt = String(expiresAt);
       change.title = description;
       change.append(value, create('span', 'sr-only', description));
       rate.append(change);
@@ -69,7 +79,7 @@ globalThis.academicUI = (() => {
     const details = create('details', 'attendance-details');
     const summary = create('summary', 'attendance-summary');
     summary.append(heading, record, metric);
-    if (status.percent !== undefined) {
+    if (status.percent !== undefined && !tickets) {
       const rail = create('span', 'attendance-rail');
       rail.setAttribute('role', 'meter');
       rail.setAttribute('aria-label', `${course.title || course.code || 'Course'} attendance`);
@@ -83,7 +93,7 @@ globalThis.academicUI = (() => {
       summary.append(rail);
     }
     const body = create('div', 'attendance-detail-body');
-    body.append(create('p', 'attendance-explanation sr-only', status.detail));
+    body.append(create('p', 'attendance-explanation', status.detail));
     const metadata = create('dl', 'attendance-course-meta');
     const fields = [['Course code', course.code], ['Hours attended', course.present], ['Hours missed', absent],
       ['Hours conducted', course.conducted], ['Faculty', course.faculty], ['Room', course.room],
@@ -121,8 +131,22 @@ globalThis.academicUI = (() => {
       list.append(courseCard(displayed, margin(displayed.present, displayed.conducted), schedule, !!projection));
     });
     container.append(list);
+    expireChanges();
     get('calculate-attendance').disabled = !data.length;
   }
+  function expireChanges() {
+    clearTimeout(changeTimer); changeTimer = null;
+    if (!attendanceView) return;
+    const now = Date.now();
+    let next = Infinity;
+    for (const badge of attendanceView.container.querySelectorAll('.attendance-change[data-expires-at]')) {
+      const expiry = Number(badge.dataset.expiresAt);
+      if (expiry <= now) badge.remove();
+      else next = Math.min(next, expiry - now);
+    }
+    if (Number.isFinite(next)) changeTimer = setTimeout(expireChanges, Math.min(next, changeDay));
+  }
+  document.addEventListener('visibilitychange', expireChanges);
   function renderRecovery(course, card, schedule, filters = {}, date = anonScheduleModel.clock('Asia/Kolkata')) {
     for (const old of card.querySelectorAll('.recovery-date, .recovery-assumption')) old.remove();
     if (card.dataset.projected === 'true') return;
@@ -150,5 +174,5 @@ globalThis.academicUI = (() => {
     dateAttendance.resetProjection(); get('calculate-attendance').focus({ preventScroll: true });
   });
   return { renderAttendance, refreshAttendance, renderRecovery, margin, plan,
-    clear() { courses = []; selected = null; attendanceView = null; get('attendance-plan').hidden = true; get('projection-dialog').close(); } };
+    clear() { clearTimeout(changeTimer); changeTimer = null; courses = []; selected = null; attendanceView = null; get('attendance-plan').hidden = true; get('projection-dialog').close(); } };
 })();

@@ -47,6 +47,7 @@
   <link rel="stylesheet" href="/workspace-pages.css?v=de150dc7f5">
   <link rel="stylesheet" href="/ascii-art.css?v=9f381fa0d3">
   <link rel="stylesheet" href="/attendance-page.css?v=a887ac0ad1">
+  <link rel="stylesheet" href="/attendance-tickets.css?v=e37a66819e">
   <link rel="stylesheet" href="/marks-page.css?v=65226f9531">
   <link rel="stylesheet" href="/grades-page.css?v=2ce91e7453">
   <link rel="stylesheet" href="/pixel-cats.css?v=ce088ae5d7">
@@ -65,15 +66,16 @@
   <script src="/course-details.js?v=d68ba23df7" defer></script>
   <script src="/greeting.js?v=68e7af92e7" defer></script>
   <script src="/schedule-preferences.js?v=3db9f39d36" defer></script>
-  <script src="/home.js?v=b31076fc7d" defer></script>
+  <script src="/home.js?v=6a63e89da4" defer></script>
   <script src="/quantity-stepper.js?v=5c20e8fa81" defer></script>
   <script src="/date-projection.js?v=4d20a96ca1" defer></script>
   <script src="/date-planner-calendar.js?v=e31651db2f" defer></script>
   <script src="/date-planner-results.js?v=8fb95a941c" defer></script>
   <script src="/date-planner-day.js?v=3630cdff9b" defer></script>
-  <script src="/leaves-page.js?v=8866db2c91" defer></script>
-  <script src="/date-attendance.js?v=bfe8995d25" defer></script>
-  <script src="/academic-ui.js?v=ef4562b024" defer></script>
+  <script src="/leaves-page.js?v=ea8f18cb24" defer></script>
+  <script src="/date-attendance.js?v=cd14088bb9" defer></script>
+  <script src="/manual-attendance.js?v=babbbc4260" defer></script>
+  <script src="/academic-ui.js?v=10e3bf6e4b" defer></script>
   <script src="/login-admission.js?v=b122a07aa7" defer></script>
   <script src="/provider-connections.js?v=7d4ac181f0" defer></script>
   <script src="/client-ocr.js?v=21050a80f0" defer></script>
@@ -284,6 +286,7 @@
     <p id="settings-message" role="status" aria-live="polite" class="quiet"></p>
   </section>
     <section id="schedule-view" class="workspace-page" aria-labelledby="schedule-page-title" hidden>
+      <a id="schedule-calculator-back" href="#attendance" hidden>← Back to calculator</a>
       <div class="schedule-page-heading"><div><h1 id="schedule-page-title" tabindex="-1">Schedule</h1><p>All periods are included by default. Uncheck optional hours you don’t take.</p></div><button id="schedule-include-all" type="button">Include all</button></div>
       <p id="schedule-choice-status" role="status"></p>
       <div id="schedule-choices"></div>
@@ -347,6 +350,10 @@
     </header>
     <div class="date-planner-layout">
       <section class="date-planner-input" aria-label="Plan your dates">
+        <div class="projection-schedule-option">
+          <div class="projection-schedule-row"><label for="projection-use-schedule"><strong>Use schedule</strong><span id="projection-schedule-help">Count classes from your included timetable periods.</span></label><input id="projection-use-schedule" type="checkbox" role="switch" checked aria-describedby="projection-schedule-help"></div>
+          <a id="projection-edit-schedule" href="#schedule">Edit schedule ↗</a>
+        </div>
         <form id="projection-range-form" hidden>
           <div class="date-planner-mode"><label for="projection-mode">Plan</label><select id="projection-mode"><option value="leave">Leave</option><option value="attend">Attend</option><option value="od">OD correction</option></select></div>
           <div class="date-planner-fields"><label for="projection-from">From<input id="projection-from" type="date" required></label><label for="projection-through">Through<input id="projection-through" type="date" required></label></div>
@@ -372,6 +379,7 @@
         <div class="date-planner-calendar-foot"><p id="projection-date-detail"></p><button id="projection-today" type="button">Today</button></div>
         </div>
         <section id="projection-day-editor" aria-label="Edit classes for a day" hidden></section>
+        <section id="projection-manual" aria-label="Manual attendance hours" hidden><p>Enter total hours across your selected dates. No other classes are assumed.</p><div id="projection-manual-hours"></div></section>
         <p id="projection-range-error" role="alert" hidden></p>
         <button id="projection-review-custom" type="button">Calculate<span aria-hidden="true">→</span></button>
         <p id="projection-live-meta" role="status"></p><div id="projection-live-hours"></div><details id="projection-class-options"><summary>Classes <span id="projection-count">0</span></summary>

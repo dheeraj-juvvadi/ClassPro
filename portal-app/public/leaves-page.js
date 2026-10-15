@@ -19,15 +19,19 @@ globalThis.anonLeaves = (() => {
       for (const field of ['attend', 'miss', 'od']) previous[field] += impact[field];
       totals.set(entry.code, previous);
     }
+    if (result.manual) {
+      totals.clear();
+      for (const course of result.courses) totals.set(course.code, course.impact);
+    }
     const field = mode === 'od' ? 'od' : mode === 'attend' ? 'attend' : 'miss';
-    const holidays = dates.filter(date => model.dayState(source, model.parse(date)).kind === 'holiday').length;
-    const unknown = dates.filter(date => model.dayState(source, model.parse(date)).kind === 'unknown').length;
+    const holidays = result.manual ? 0 : dates.filter(date => model.dayState(source, model.parse(date)).kind === 'holiday').length;
+    const unknown = result.manual ? 0 : dates.filter(date => model.dayState(source, model.parse(date)).kind === 'unknown').length;
     const short = date => model.parse(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     snapshot = {
       title: mode === 'od' ? 'OD corrections' : mode === 'attend' ? 'Attendance plan' : 'Leaves',
       hoursLabel: mode === 'od' ? 'OD hours' : mode === 'attend' ? 'Attended hours' : 'Missed hours',
       range: dates.length ? dates[0] === dates.at(-1) ? short(dates[0]) : `${short(dates[0])} – ${short(dates.at(-1))}` : '',
-      summary: dates.length ? `${dates.length} ${dates.length === 1 ? 'day' : 'days'} · ${holidays} ${holidays === 1 ? 'holiday' : 'holidays'}${unknown ? ` · ${unknown} unconfirmed` : ''}` : '',
+      summary: dates.length ? `${dates.length} ${dates.length === 1 ? 'day' : 'days'} · ${result.manual ? 'Entered hours' : `${holidays} ${holidays === 1 ? 'holiday' : 'holidays'}${unknown ? ` · ${unknown} unconfirmed` : ''}`}` : '',
       error: result.error || '',
       rows: result.courses.map(course => ({ ...course, hours: number(totals.get(course.code)?.[field] || 0),
         rate: dates.length && !result.error && !result.unknown.length && course.prediction?.valid

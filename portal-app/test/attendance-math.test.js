@@ -40,6 +40,30 @@ test('hours needed never over-counts on a boundary ratio', () => {
   assert.equal(exact.neededToTarget, 0);
 });
 
+test('28 of 38 requires two future hours, while one corrected absence keeps the total fixed', () => {
+  const current = predict({ present: 28, conducted: 38 });
+  assert.equal(current.percentage, 73.68);
+  assert.equal(current.neededToTarget, 2);
+  const next = predict({ present: 28, conducted: 38, attend: 1 });
+  assert.equal(next.percentage, 74.36);
+  assert.equal(next.neededToTarget, 1);
+  const recovered = predict({ present: 28, conducted: 38, attend: 2 });
+  assert.equal(recovered.percentage, 75);
+  assert.equal(recovered.neededToTarget, 0);
+  const corrected = predict({ present: 28, conducted: 38, od: 1 });
+  assert.equal(corrected.present, 29);
+  assert.equal(corrected.conducted, 38);
+  assert.equal(corrected.percentage, 76.32);
+  assert.equal(corrected.neededToTarget, 0);
+});
+
+test('fractional recovery hours round up to the next whole hour', () => {
+  // At 1/2 and a 60% target, the exact future requirement is half an hour.
+  const result = predict({ present: 1, conducted: 2, target: 60 });
+  assert.equal(result.neededToTarget, 1);
+  assert.ok(predict({ present: 1, conducted: 2, target: 60, attend: 1 }).percentage >= 60);
+});
+
 test('canMiss counts whole missable hours above target', () => {
   const result = predict({ present: 80, conducted: 100, target: 75 });
   assert.equal(result.canMiss, 6);

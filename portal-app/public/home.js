@@ -108,6 +108,7 @@ globalThis.anonHome = (() => {
     if (previousPage !== destination) anonFeedback.enter(get(view));
     if (focus) get(heading).focus();
     get('planner-menu').open = false;
+    dateAttendance.routeChanged(destination);
   }
 
   function render() {

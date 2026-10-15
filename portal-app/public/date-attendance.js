@@ -9,6 +9,13 @@ globalThis.dateAttendance = (() => {
   let step = 'dates', requestedRange = null, opener = null, excludedDates = new Set();
   let rangeComplete = false;
   let applied = null;
+  let useSchedule = true, manualHours = {}, scheduleReturn = null;
+  const estimate = (data = courses, plan = null) => {
+    const chosen = plan?.selected || selected, range = plan ? plan.range : requestedRange;
+    return (plan ? plan.useSchedule !== false : useSchedule)
+      ? dateProjection.calculate(data, source, chosen, today, filters, range)
+      : manualAttendance.calculate(data, chosen, plan?.mode || mode, plan?.manualHours || manualHours, today);
+  };
   const shortDate = key => key ? model.parse(key)?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) || '' : '';
   function showStep(value, focus = false) {
     step = value;
@@ -142,7 +149,7 @@ globalThis.dateAttendance = (() => {
       const date = model.parse(key);
       if (!date) return false;
       if (model.dayState(source, date).kind !== 'teaching') return key >= model.key(today) || planAction(value) === 'od';
-      if (value && typeof value === 'object') {
+      if (useSchedule && value && typeof value === 'object') {
         const entries = model.classes(source, date, filters);
         const valid = new Set(entries.map(entry => dateProjection.entryKey(entry)));
         for (const id of Object.keys(value.classes)) {
@@ -175,11 +182,19 @@ globalThis.dateAttendance = (() => {
     return { today, source, action, selected: Object.fromEntries(Object.entries(selected).map(([key, value]) => [key, planAction(value)])) };
   }
   function render() {
+    get('projection-use-schedule').checked = useSchedule;
+    get('projection-schedule-help').textContent = useSchedule
+      ? 'Count classes from your included timetable periods.' : 'Enter hours yourself. Your selected dates stay the same.';
+    get('projection-manual').hidden = useSchedule;
+    get('projection-class-options').hidden = !useSchedule;
+    if (!useSchedule) manualAttendance.render(get('projection-manual-hours'), courses, manualHours, mode, (code, hours) => {
+      manualHours[code] = hours; render();
+    });
     calendar.update(calendarState());
-    get('projection-date-picker').hidden = !!editedDay;
-    get('projection-day-editor').hidden = !editedDay;
-    if (editedDay) dayEditor.render({ key: editedDay, plan: selected[editedDay], entries: model.classes(source, model.parse(editedDay), filters), past: editedDay < model.key(today) });
-    const result = dateProjection.calculate(courses, source, selected, today, filters, requestedRange);
+    get('projection-date-picker').hidden = useSchedule && !!editedDay;
+    get('projection-day-editor').hidden = !useSchedule || !editedDay;
+    if (useSchedule && editedDay) dayEditor.render({ key: editedDay, plan: selected[editedDay], entries: model.classes(source, model.parse(editedDay), filters), past: editedDay < model.key(today) });
+    const result = estimate();
     const selectedCount = Object.keys(selected).length;
     if (!selectedCount && !requestedRange) { rangeStart = ''; rangeEnd = ''; rangeAnchor = ''; }
     if (step === 'results') {
@@ -222,7 +237,8 @@ globalThis.dateAttendance = (() => {
       group.append(edit, remove); selections.append(group);
     }
     if (focusKey) (selections.querySelector(`[data-date="${focusKey}"]`) || selections.querySelector('button') || get('projection-today')).focus();
-    get('projection-period').textContent = !source ? 'Timetable unavailable. Refresh reports to load it.'
+    get('projection-period').textContent = !useSchedule ? 'Using entered hours only; no timetable or intervening classes are assumed.'
+      : !source ? 'Timetable unavailable. Refresh reports to load it.'
       : !source.entries.length ? 'No included classes. Review your optional periods in Schedule.'
       : result.unknown.length ? `${result.unknown.length} dates have no verified calendar. Incomplete estimates are shown as —.`
       : selectedCount ? `${selectedCount} ${selectedCount === 1 ? 'date' : 'dates'} selected. Open a date to customize its classes.` : '';
@@ -230,13 +246,14 @@ globalThis.dateAttendance = (() => {
     if (changedClasses) get('projection-period').textContent += ` ${changedClasses} class edits were reset after the timetable changed.`;
     renderDatePlannerResults(result, focusCode, selectedCount);
     anonLeaves.update({ result, selected, source, today, filters, mode });
+    if (!useSchedule) rangeError(result.error || '');
   }
   function calculate() {
     if (!Object.keys(selected).length) return;
     rangeComplete = true; rangeAnchor = ''; syncBounds(); render();
-    const result = dateProjection.calculate(courses, source, selected, today, filters, requestedRange);
+    const result = estimate();
     if (result.error) { rangeError(result.error); return; }
-    applied = structuredClone({ selected, range: requestedRange, mode });
+    applied = structuredClone({ selected, range: requestedRange, mode, useSchedule, manualHours });
     academicUI.refreshAttendance(courses);
     opener = null; get('projection-dialog').close(); anonHome.navigate('attendance');
   }
@@ -258,12 +275,29 @@ globalThis.dateAttendance = (() => {
       }
     }
     const range = { start, end, action: mode };
-    const result = dateProjection.calculate(courses, source, proposed, today, filters, range);
+    const result = useSchedule ? dateProjection.calculate(courses, source, proposed, today, filters, range)
+      : manualAttendance.calculate(courses, proposed, mode, manualHours, today);
     if (result.error) { rangeError(result.error); return; }
     if (changed) excludedDates.clear();
     selected = proposed; requestedRange = range; rangeStart = start; rangeEnd = end;
     editedDay = ''; rangeAnchor = ''; removedCount = 0; changedClasses = 0;
     rangeError(); setAction(mode); rangeComplete = true; calculate();
+  });
+  get('projection-use-schedule').addEventListener('change', () => {
+    useSchedule = get('projection-use-schedule').checked;
+    editedDay = ''; rangeError(); render();
+  });
+  get('projection-edit-schedule').addEventListener('click', event => {
+    event.preventDefault();
+    scheduleReturn = { page: document.body.dataset.page || 'attendance', opener };
+    opener = null;
+    get('schedule-calculator-back').hidden = false;
+    get('projection-dialog').close();
+    anonHome.navigate('schedule');
+  });
+  get('schedule-calculator-back').addEventListener('click', event => {
+    event.preventDefault();
+    if (scheduleReturn) anonHome.navigate(scheduleReturn.page);
   });
   get('projection-mode').addEventListener('change', () => {
     selected = {}; requestedRange = null; excludedDates.clear();
@@ -297,22 +331,33 @@ globalThis.dateAttendance = (() => {
   get('close-projection').addEventListener('click', () => get('projection-dialog').close());
   get('projection-done').addEventListener('click', () => get('projection-dialog').close());
   return {
+    routeChanged(destination) {
+      if (!scheduleReturn || destination === 'schedule') return;
+      const saved = scheduleReturn; scheduleReturn = null;
+      get('schedule-calculator-back').hidden = true;
+      if (destination !== saved.page) return;
+      opener = saved.opener;
+      render(); get('projection-dialog').showModal();
+      calendar.open(model.parse(rangeStart) || today);
+      get('projection-edit-schedule').focus({ preventScroll: true });
+    },
     projection(data) {
       if (!applied) return null;
       if (applied.mode !== 'od' && applied.range?.end < model.key(today)) {
         applied = null; return null;
       }
-      const result = dateProjection.calculate(data, source, applied.selected, today, filters, applied.range);
+      const result = estimate(data, applied);
       const range = applied.range;
       const label = { leave: 'After planned leave', attend: 'After planned attendance', od: 'After OD correction' }[applied.mode];
       const dates = range ? `${shortDate(range.start)}–${shortDate(range.end)}` : '';
-      return { result, summary: `${label}${dates ? ` · ${dates}` : ''}` };
+      return { result, summary: `${label}${dates ? ` · ${dates}` : ''}${applied.useSchedule === false ? ' · Entered hours' : ''}` };
     },
     resetProjection() {
       applied = null; selected = {}; requestedRange = null; excludedDates.clear();
       rangeComplete = false; removedCount = 0; changedClasses = 0;
       editedDay = ''; rangeAnchor = ''; rangeStart = ''; rangeEnd = ''; focusCode = '';
       step = 'dates'; setMode('leave'); rangeError(); syncRangeInputs();
+      manualHours = {}; delete get('projection-manual-hours').dataset.signature;
       get('projection-class-options').open = false;
       render(); academicUI.refreshAttendance(courses);
     },
@@ -353,6 +398,9 @@ globalThis.dateAttendance = (() => {
       calendar.open(date || model.parse(rangeStart) || (mode === 'od' ? model.parse(yesterdayKey()) : today));
     },
     clear() {
+      useSchedule = true; manualHours = {}; scheduleReturn = null;
+      get('schedule-calculator-back').hidden = true;
+      delete get('projection-manual-hours').dataset.signature;
       applied = null; academicUI.refreshAttendance(courses);
       courses = []; source = null; selected = {}; removedCount = 0; changedClasses = 0; editedDay = ''; rangeAnchor = ''; rangeStart = ''; rangeEnd = ''; focusCode = ''; filters = {};
       requestedRange = null; excludedDates.clear(); opener = null; step = 'dates'; rangeError();

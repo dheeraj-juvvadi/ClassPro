@@ -8,6 +8,27 @@ from session_store import SessionStore, lifetime, REMEMBER_SECONDS
 
 
 class SessionStoreTests(unittest.TestCase):
+    def test_attendance_change_and_expiry_survive_encrypted_restart(self):
+        from attendance_trends import observe, decorate, DAY
+        with tempfile.TemporaryDirectory() as directory:
+            entry = self.entry()
+            now = time.time()
+            def report(present, total):
+                return {'attendance': {'data': [{'code': 'CS', 'present': present, 'conducted': total}]}}
+            entry.update(report=report(8, 10), synced_at=now - 60)
+            observe(entry, now - 60)
+            entry.update(report=report(9, 11), synced_at=now)
+            observe(entry, now)
+            entry['synced_at'] = now + 10
+            observe(entry, now + 10)
+            store = SessionStore(directory)
+            store.save({'test-token': entry})
+            restored = SessionStore(directory).load()['test-token']
+            change = decorate(restored, now + 3600)['attendance']['data'][0]['changeSinceSync']
+            self.assertEqual(change['points'], 1.82)
+            self.assertEqual(change['expiresAt'], (now + DAY) * 1000)
+            self.assertNotIn('changeSinceSync', decorate(restored, now + DAY)['attendance']['data'][0])
+
     def test_unchanged_payload_reuses_ciphertext_but_persists_activity_and_mutations(self):
         import sqlite3
         from contextlib import closing

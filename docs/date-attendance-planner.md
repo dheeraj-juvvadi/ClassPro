@@ -68,3 +68,21 @@ Verification covers ranges, partial hours, OD caps, refresh/rollover, keyboard
 navigation, offline calendar loading, 320–1440px layout, full-page navigation,
 optional-period persistence, and local sign-out clearing. Physical-device frame
 rate/battery use and live SRM login latency are not established by these checks.
+# Schedule choice and calculator return
+
+The calculator's **Use schedule** switch defaults on and counts the included
+periods from Schedule. **Edit schedule** opens that app page. Its **Back to
+calculator** link and browser Back restore the open calculator with its selected
+dates, action, class edits and switch setting. Schedule changes recalculate the
+included hours without clearing the draft.
+
+With **Use schedule** off, users enter whole hours per subject across the selected
+dates. This works without a timetable and assumes no intervening classes. Leave
+adds to conducted hours, Attend adds to attended and conducted hours, and OD
+corrects existing absences without increasing conducted hours. Manual hours are
+kept when switching modes or visiting Schedule; sign-out clears the draft.
+
+An optional compact attendance-card preview is available with
+`?attendance=tickets#attendance`. Add `preview=home` to use sample data without
+signing in. The preview uses separate muted sage tickets and omits the target
+rail. It does not change the default attendance layout.
