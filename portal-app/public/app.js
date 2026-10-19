@@ -275,40 +275,77 @@ function renderMarks(report, courses = {}) {
     credits: course.credits ?? courses[course.code]?.credits ?? courses[course.code]?.credit,
   }));
   anonMarksTarget.update(data);
-  const list = node('div', 'marks-list');
+  const list = node('div', 'm2-list');
   const plans = node('div', 'grade-course-list');
-  const scoreParts = item => {
-    const output = node('span', 'mini-score');
-    if (item.scoreLabel) { output.textContent = String(item.scoreLabel); return output; }
-    const pending = item.scored === null || item.scored === undefined || item.scored === '';
-    output.append(node('strong', '', pending ? 'Pending' : String(item.scored)));
-    if (item.total !== null && item.total !== undefined && item.total !== '') {
-      output.append(node('small', '', ` / ${item.total}`));
-    }
-    output.dataset.pending = String(pending);
-    return output;
+  const num = input => input === null || input === undefined || input === ''
+    ? null : Number.isFinite(Number(input)) ? Number(input) : null;
+  const percent = item => {
+    const scored = num(item.scored); const total = num(item.total);
+    return scored !== null && total !== null && total > 0
+      ? Math.max(0, Math.min(100, scored / total * 100)) : null;
   };
-  for (const course of data) {
+  const toneOf = pct => pct === null ? 'neutral' : pct >= 80 ? 'good' : pct >= 65 ? 'edge' : 'risk';
+  const bestIndex = data.reduce((best, course, index) => {
+    const pct = percent(course);
+    return pct !== null && (best < 0 || pct > percent(data[best])) ? index : best;
+  }, -1);
+  const badge = (pct, top) => {
+    const [glyph, label] = top ? ['star', 'Top course'] : pct >= 80 ? ['check', 'Strong'] : pct >= 65 ? ['dash', 'Steady'] : ['alert', 'Needs a push'];
+    const chip = node('span', 'm-chip');
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const icon = document.createElementNS(svgNs, 'svg');
+    icon.setAttribute('viewBox', '0 0 12 12'); icon.setAttribute('role', 'img'); icon.setAttribute('aria-label', label);
+    icon.setAttribute('fill', 'none'); icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('stroke-width', '2'); icon.setAttribute('stroke-linecap', 'round'); icon.setAttribute('stroke-linejoin', 'round');
+    const path = document.createElementNS(svgNs, 'path');
+    path.setAttribute('d', { star: 'M6 1.8l1.3 2.7 2.9.4-2.1 2 .5 2.9L6 8.4 3.4 9.8l.5-2.9-2.1-2 2.9-.4z', check: 'M2.5 6.2 5 8.6 9.5 3.6', dash: 'M2.75 6h6.5', alert: 'M6 2.5v4M6 9.2v.1' }[glyph]);
+    icon.append(path); chip.append(icon, pct === null ? '—' : `${pct.toFixed(0)}%`);
+    chip.setAttribute('aria-label', label); chip.title = label;
+    return chip;
+  };
+  for (const [index, course] of data.entries()) {
     const id = String(course.code || course.title);
-    const card = node('article', 'mark-course'); card.dataset.course = id;
-    const header = node('header', 'mark-course-header');
-    const scoreBlock = node('span', 'marks-score-block');
-    scoreBlock.setAttribute('aria-label', `Recorded total: ${score(course)}`);
-    scoreBlock.append(scoreParts(course));
-    header.append(courseHeading(course), scoreBlock);
-    const content = node('div', 'assessments');
-    if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
+    const pct = percent(course);
+    const card = node('article', `m2 ${toneOf(pct)}`); card.dataset.course = id;
+    const head = node('div', 'm-head');
+    const info = node('div');
     const components = Array.isArray(course.components) ? course.components : [];
-    if (!components.length && !course.detailsError) content.append(node('p', 'quiet', 'No assessment details are available yet.'));
+    info.append(node('h3', '', course.title || course.code || 'Untitled course'));
+    const subtitle = node('p', '', `${course.code || 'Course'} · ${components.length} ${components.length === 1 ? 'assessment' : 'assessments'}`);
+    if (pct !== null) subtitle.append(badge(pct, index === bestIndex));
+    info.append(subtitle);
+    const scoreBlock = node('p', 'm-score');
+    const dashOnly = text => /^[\s—–-]+$/.test(String(text ?? ''));
+    if (course.scoreLabel && !(num(course.scored) === null && dashOnly(course.scoreLabel))) {
+      scoreBlock.textContent = String(course.scoreLabel);
+    } else if (num(course.scored) === null) {
+      scoreBlock.classList.add('is-pending');
+      scoreBlock.textContent = '—';
+      scoreBlock.setAttribute('aria-label', 'No score yet');
+    } else scoreBlock.append(String(value(course.scored)), node('span', '', `/${value(course.total)}`));
+    head.append(info, scoreBlock); card.append(head);
+    if (course.detailsError) card.append(node('p', 'message error', course.detailsError));
+    if (!components.length && !course.detailsError) card.append(node('p', 'quiet', 'No assessment details are available yet.'));
+    const blocks = node('div', `m-blocks${components.length <= 2 ? ' is-split' : ''}`);
     for (const component of components) {
-      const row = node('div', 'assessment-row');
-      const info = node('div');
-      info.append(node('div', 'assessment-name', component.name || 'Assessment'));
-      if (component.enteredOn) row.title = `Entered ${component.enteredOn}`;
-      row.append(info, scoreParts(component));
-      content.append(row);
+      const total = num(component.total); const scored = num(component.scored);
+      const filled = scored !== null && total !== null && total > 0 ? Math.max(0, Math.min(100, scored / total * 100)) : 0;
+      const block = node('div', 'm-block assessment-row');
+      // Keep proportional bar widths only for one or two assessments; larger
+      // sets use evenly sized grid cells so long names and scores stay legible.
+      block.style.setProperty('--w', String(total !== null && total > 0 ? total : 1));
+      const fullName = String(component.name || 'Assessment');
+      block.title = component.enteredOn ? `${fullName} · Entered ${component.enteredOn}` : fullName;
+      const fill = node('div', 'm-fill'); const bar = node('i'); bar.style.width = `${filled}%`; fill.append(bar);
+      const scoreText = node('b', 'assessment-score');
+      scoreText.dataset.pending = String(scored === null);
+      if (component.scoreLabel) scoreText.textContent = String(component.scoreLabel);
+      else scoreText.append(String(value(component.scored)), node('small', '', `/${value(component.total)}`));
+      const nameEl = node('span', 'assessment-name', fullName); nameEl.title = fullName;
+      block.append(fill, nameEl, scoreText);
+      blocks.append(block);
     }
-    card.append(header, content);
+    if (components.length) card.append(blocks);
     list.append(card);
     const planning = node('article', 'grade-course'); planning.dataset.course = id;
     planning.append(courseHeading(course), anonMarksTarget.create(course));

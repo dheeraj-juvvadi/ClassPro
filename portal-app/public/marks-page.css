@@ -1,25 +1,227 @@
-/* Mini scores share the compact attendance surface. */
-body.planner[data-page="marks"] #reports-view{max-width:960px;margin-inline:auto}
-body.planner[data-page="marks"] #reports-title{font-size:32px;font-weight:500;line-height:1.2}
-body.planner #marks-panel{margin-top:0}
-body.planner #marks-panel .marks-list{display:block;margin-top:0;padding:0 14px;background:var(--catnap-surface, #232720);border:0;border-radius:20px}
-body.planner #marks-panel .mark-course{padding:14px 0;min-width:0;border:0;border-radius:0;background:transparent;box-shadow:none}
-body.planner #marks-panel .mark-course+.mark-course{border-top:1px solid var(--catnap-line, #3b4235)}
-body.planner #marks-panel .mark-course-header{display:flex;align-items:center;gap:10px;min-height:0;padding:0;margin:0 0 10px}
-body.planner #marks-panel .course-heading{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
-body.planner #marks-panel .mark-course .course-title{order:-1;font-size:13px;font-weight:450;line-height:1.45;color:var(--catnap-muted, #bbc1b4);letter-spacing:0;text-wrap:balance;overflow-wrap:anywhere}
-body.planner #marks-panel .course-code{font-size:10px;line-height:1.4;letter-spacing:0;color:var(--catnap-muted, #adb4a4)}
-body.planner #marks-panel .marks-score-block{display:block;flex:none;margin:0;padding:0}
-#marks-panel .mini-score{display:inline-flex;align-items:baseline;gap:2px;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--catnap-ink, #f1eee3)}
-#marks-panel .mini-score strong{font-size:14px;font-weight:550;line-height:16px;letter-spacing:0}
-#marks-panel .mini-score small{font-size:11px;font-weight:400;line-height:16px;color:var(--catnap-muted, #adb4a4)}
-#marks-panel .marks-score-block .mini-score strong{font-size:22px;font-weight:500;line-height:1.1}
-#marks-panel .marks-score-block .mini-score[data-pending="true"] strong{font-size:12px}
-body.planner #marks-panel .mark-course .assessments{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;padding:0;margin:0;border:0;background:none}
-body.planner #marks-panel .mark-course .assessment-row{display:inline-flex;align-items:baseline;gap:6px;min-width:0;max-width:100%;min-height:32px;padding:7px 8px;margin:0;border:1px solid var(--catnap-line, #414a3b);border-radius:7px;background:var(--catnap-surface, #232720)}
-body.planner #marks-panel .mark-course .assessment-row>div{min-width:0}
-body.planner #marks-panel .mark-course .assessment-name{font-size:11px;font-weight:450;line-height:16px;letter-spacing:0;color:var(--catnap-muted, #adb4a4);overflow-wrap:anywhere}
-body.planner #marks-panel .mark-course .assessment-row .mini-score{flex:none}
-body.planner #marks-panel .mark-course .assessment-row .mini-score[data-pending="true"] strong{font-size:12px}
-body.planner #marks-panel .mark-course .assessments>.quiet,body.planner #marks-panel .mark-course .assessments>.message{flex-basis:100%;font-size:12px;line-height:1.5;margin:0}
-@media(max-width:380px){body.planner #marks-panel .marks-list{padding-inline:12px}#marks-panel .marks-score-block .mini-score strong{font-size:20px}body.planner #marks-panel .mark-course .assessments{gap:5px}}
+/* Marks tiles use the same status variables as the home insight cards. */
+body.planner[data-page="marks"] #reports-view { max-width: 960px; margin-inline: auto; }
+body.planner[data-page="marks"] #reports-title { font-size: 32px; font-weight: 500; line-height: 1.2; }
+body.planner #marks-panel { margin-top: 0; }
+body.planner #marks-panel .m2-list {
+  display: grid;
+  gap: 10px;
+  margin: 0 -10px;
+}
+body.planner #marks-panel .m2 {
+  --tile: var(--catnap-surface, #2b3029);
+  --ink: var(--catnap-ink, #f1eee3);
+  position: relative;
+  min-width: 0;
+  padding: 17px 18px 18px;
+  border: 0;
+  border-radius: 20px;
+  color: var(--ink);
+  background: var(--tile);
+  box-shadow: inset 0 1px 0 #ffffff2e, inset 0 -1px 0 #00000014, 0 1px 1px #0000002e, 0 10px 24px -14px #000c;
+  overflow: hidden;
+}
+body.planner #marks-panel .m2.good {
+  --tile: var(--planner-green, #c5d4a7);
+  --ink: var(--catnap-on-accent, #233020);
+}
+body.planner #marks-panel .m2.edge {
+  --tile: var(--catnap-warning-card);
+  --ink: var(--catnap-on-warning);
+}
+body.planner #marks-panel .m2.risk {
+  --tile: var(--catnap-risk-card, #bb6450);
+  --ink: var(--catnap-on-risk, #211b17);
+}
+body.planner #marks-panel .m2.neutral {
+  --tile: var(--catnap-surface, #2b3029);
+  --ink: var(--catnap-ink, #f1eee3);
+}
+body.planner #marks-panel .m-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+body.planner #marks-panel .m-head > div { min-width: 0; }
+body.planner #marks-panel .m-head h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -.3px;
+  overflow-wrap: anywhere;
+}
+body.planner #marks-panel .m-head > div > p {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 5px 0 0;
+  color: color-mix(in srgb, var(--ink) 70%, var(--tile));
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+body.planner #marks-panel .m-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 4px;
+  height: 21px;
+  padding: 0 8px 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 11%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+body.planner #marks-panel .m-chip svg {
+  display: block;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body.planner #marks-panel .m-score {
+  flex: none;
+  margin: 0;
+  color: var(--ink);
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -.06em;
+  line-height: .95;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+body.planner #marks-panel .m-score span {
+  margin-left: 2px;
+  color: color-mix(in srgb, var(--ink) 62%, var(--tile));
+  font-size: 18px;
+  font-weight: 550;
+  letter-spacing: -.01em;
+}
+body.planner #marks-panel .m-blocks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px 14px;
+  margin-top: 14px;
+}
+body.planner #marks-panel .m-blocks.is-split {
+  display: flex;
+  gap: 14px;
+}
+body.planner #marks-panel .m-blocks.is-split > .m-block {
+  flex: var(--w, 1) 1 0;
+  min-width: 0;
+}
+body.planner #marks-panel .m-score.is-pending {
+  color: color-mix(in srgb, var(--ink) 62%, var(--tile));
+  font-size: 16px;
+  font-weight: 550;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+body.planner #marks-panel .m-block {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0 6px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+body.planner #marks-panel .m2 .m-block.assessment-row,
+body.planner #marks-panel .m2 .m-block.assessment-row + .m-block.assessment-row {
+  border: 0;
+  border-top: 0;
+  padding: 0;
+}
+body.planner #marks-panel .m-fill {
+  grid-column: 1 / -1;
+  position: relative;
+  height: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 13%, transparent);
+  overflow: hidden;
+}
+body.planner #marks-panel .m-fill i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 86%, var(--tile));
+}
+body.planner #marks-panel .m-block > span {
+  display: block;
+  grid-column: 1;
+  min-width: 0;
+  margin-top: 7px;
+  color: color-mix(in srgb, var(--ink) 70%, var(--tile));
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.planner #marks-panel .m-block > b {
+  display: inline-flex;
+  grid-column: 2;
+  justify-content: flex-end;
+  align-items: baseline;
+  justify-self: end;
+  max-width: none;
+  min-width: max-content;
+  margin-top: 7px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+body.planner #marks-panel .m-block > b small {
+  color: color-mix(in srgb, var(--ink) 62%, var(--tile));
+  font-size: 10px;
+  font-weight: 450;
+}
+body.planner #marks-panel .m2 > .message.error,
+body.planner #marks-panel .m2 > .quiet {
+  margin: 10px 0 0;
+  color: color-mix(in srgb, var(--ink) 70%, var(--tile));
+  font-size: 12px;
+  line-height: 1.5;
+}
+body.planner #marks-panel .m2 > .message.error { color: var(--ink); }
+body.planner #marks-panel .m2 .assessment-row:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+@media (max-width: 700px) {
+  body.planner[data-page="marks"] main { padding-inline: 26px; }
+  body.planner #marks-panel .m2-list { margin-inline: -10px; }
+}
+@media (max-width: 380px) {
+  body.planner #marks-panel .m2 { padding-inline: 16px; }
+  body.planner #marks-panel .m-head { gap: 10px; }
+  body.planner #marks-panel .m-score { font-size: 38px; }
+  body.planner #marks-panel .m-score span { font-size: 16px; }
+  body.planner #marks-panel .m-blocks { gap: 10px; }
+}

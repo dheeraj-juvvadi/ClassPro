@@ -13,6 +13,12 @@ body.planner #planner-nav button { border-radius: 0; min-height: 52px; backgroun
 body.planner #planner-nav button[aria-current] { background: transparent; color: var(--catnap-accent, #d5dda9); }
 body.planner #planner-nav button[aria-current] svg { stroke-width: 2; }
 body.planner #planner-nav button:active { transform: none; }
+/* Mobile tab bar: a soft pill sits behind the active icon; the label stays plain. */
+body.planner #planner-nav { padding-top: 6px; background: color-mix(in srgb, var(--catnap-page, #191b19) 90%, transparent); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); }
+body.planner #planner-nav button { gap: 4px; min-height: 56px; font-size: 11.5px; font-weight: 550; letter-spacing: .01em; }
+body.planner #planner-nav .nav-icon { box-sizing: content-box; flex: none; padding: 4px 18px; border-radius: 999px; transition: background-color .2s ease, color .2s ease; }
+body.planner #planner-nav button[aria-current] .nav-icon { background: color-mix(in srgb, var(--catnap-accent, #d5dda9) 16%, transparent); }
+body.planner #planner-nav button[aria-current] svg { stroke-width: 1.9; }
 .sidebar-tools { display: none; }
 .report-title-row #refresh, #settings-sync {
   color: var(--catnap-accent, #d5e4bb); text-shadow: 0 0 9px var(--catnap-overlay-c5d4a740, #c5d4a740);
@@ -46,6 +52,8 @@ body.planner #planner-nav button:active { transform: none; }
   body.planner #planner-nav button[aria-current] { background: var(--catnap-raised, #2c3526); color: var(--catnap-accent, #d5dda9); box-shadow: none; }
   body.planner #planner-nav button:hover { background: var(--catnap-surface, #232a20); }
   body.planner #planner-nav svg { flex: none; width: 19px; height: 19px; }
+  body.planner #planner-nav .nav-icon { padding: 0; border-radius: 0; background: none !important; }
+  body.planner #planner-nav button { font-weight: 500; letter-spacing: 0; }
   .sidebar-tools { display: flex; flex-direction: column; gap: 6px; margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--catnap-line, #343b30); }
   .sidebar-label { padding: 0 12px 8px; font-size: 11px; color: var(--planner-muted); }
   body.planner #home-view:not([hidden]) {

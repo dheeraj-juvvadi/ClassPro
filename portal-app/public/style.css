@@ -1,5 +1,8 @@
 :root {
   color-scheme: light dark;
+  /* Status tiles (home, attendance, marks): one muted honey for "at the line". */
+  --catnap-warning-card: #cdb68a;
+  --catnap-on-warning: #2e2617;
   --page: #f5f6f2;
   --surface: #ffffff;
   --soft: #edf2eb;

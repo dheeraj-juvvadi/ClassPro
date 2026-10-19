@@ -36,9 +36,11 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.locator('.attendance-margin-value strong').innerText(), '2');
   assert.equal(await cn.locator('.attendance-main-metric').getAttribute('aria-label'), 'Required: 5 hours');
   assert.equal(await cn.locator('.attendance-margin-value strong').innerText(), '−5');
-  assert.equal(await cn.locator('.attendance-margin-value').evaluate(el => getComputedStyle(el).color), 'rgb(237, 166, 143)');
+  assert.equal(await cn.locator('.attendance-margin-value').evaluate(el => getComputedStyle(el).color),
+    await cn.evaluate(el => getComputedStyle(el).color));
+  assert.equal(await cn.evaluate(el => el.classList.contains('risk')), true);
   assert.equal(await page.locator('.attendance-metric-label, .attendance-margin-action').count(), 0);
-  assert.equal(await ds.locator('.attendance-recorded-hours').innerText(), '18 / 22h attended');
+  assert.equal(await ds.locator('.attendance-recorded-hours').innerText(), '18/22 hrs');
   assert.equal(await ds.locator('.attendance-percent').isVisible(), true);
   assert.equal(await cn.locator('.attendance-percent').innerText(), '68.4%');
   assert.equal(await ds.locator('.attendance-recorded-rate .attendance-change-value').textContent(), '−1.2');
@@ -51,7 +53,8 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   for (const code of ['ZERO', 'ROUND']) {
     const row = page.locator(`.attendance-row[data-course="${code}"]`);
     assert.equal(await row.locator('.attendance-change.unchanged .attendance-change-value').textContent(), '0.0');
-    assert.equal(await row.locator('.attendance-change').evaluate(el => getComputedStyle(el).color), 'rgb(173, 180, 164)');
+    assert.equal(await row.locator('.attendance-change').evaluate(el => getComputedStyle(el).color),
+      await row.locator('.attendance-record').evaluate(el => getComputedStyle(el).color));
   }
   for (const code of ['NEW', 'UNKNOWN', 'NOHISTORY', 'BADHISTORY']) {
     assert.equal(await page.locator(`.attendance-row[data-course="${code}"] .attendance-change`).count(), 0);
@@ -87,9 +90,12 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.locator('details').getAttribute('open'), null);
   await page.keyboard.press('Space');
   assert.equal(await ds.locator('details').getAttribute('open'), '');
-  assert.equal(await page.locator('#attendance-panel .attendance-rows').evaluate(el => getComputedStyle(el).borderRadius), '22px');
-  assert.equal(await ds.evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
-  assert.equal(await cn.evaluate(el => getComputedStyle(el).borderTopWidth), '1px');
+  // Each course is its own status tile: separate rounded cards, no list dividers.
+  assert.equal(await page.locator('#attendance-panel .attendance-rows').evaluate(el => getComputedStyle(el).rowGap), '10px');
+  for (const row of [ds, cn]) {
+    assert.equal(await row.evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
+    assert.equal(await row.evaluate(el => getComputedStyle(el).borderRadius), '20px');
+  }
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `overflow at ${width}`);
@@ -102,7 +108,8 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
       const rate = row.querySelector('.attendance-recorded-rate');
       const change = rate.querySelector('.attendance-change-value');
       const alignedRate = !change || Math.abs(change.getBoundingClientRect().top - rate.querySelector('.attendance-percent').getBoundingClientRect().top) < 3;
-      return Math.abs(bounds.right - amount.right) < 1 && heading.right < amount.left && record.right < amount.left && alignedRate;
+      const contentRight = bounds.right - parseFloat(getComputedStyle(row).paddingRight);
+      return Math.abs(contentRight - amount.right) < 1 && heading.right < amount.left && record.right < amount.left && alignedRate;
     }));
     assert.equal(alignment, true, `hours aligned at right without overlap at ${width}`);
     const railAlignment = await page.locator('.attendance-rail').evaluateAll(rails => rails.every(rail => {
@@ -113,7 +120,7 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
     assert.equal(railAlignment, true, `target remains at 75% at ${width}`);
     if (width >= 390) {
       const height = await ds.locator('summary').evaluate(el => el.getBoundingClientRect().height);
-      assert.ok(height >= 99.9 && height < 120, `comfortable row at ${width}: ${height}`);
+      assert.ok(height >= 88 && height < 140, `comfortable row at ${width}: ${height}`);
     }
   }
   assert.equal(await page.locator('#attendance-panel button:visible').count(), 0);

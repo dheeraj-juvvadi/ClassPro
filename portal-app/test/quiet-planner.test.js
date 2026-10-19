@@ -77,7 +77,7 @@ test('schedule editor returns to the calculator draft and manual hours survive t
   assert.equal(await page.locator('#projection-live-hours [data-course="A"]').count(), 0);
   await page.locator('#projection-use-schedule').uncheck();
   await page.locator('#projection-review-custom').click();
-  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '60 / 83h attended');
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '60/83 hrs');
   assert.match(await page.locator('#attendance-plan-summary').innerText(), /Entered hours/);
   await page.locator('#calculate-attendance').click();
   assert.equal(await page.locator('#projection-manual-hours input[data-course="A"]').inputValue(), '3');
@@ -97,13 +97,13 @@ test('manual calculation works with an unavailable timetable and keeps OD totals
   await day(page, '2026-10-10').click();
   await page.locator('#projection-manual-hours input[data-course="A"]').fill('2');
   await page.locator('#projection-review-custom').click();
-  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '60 / 82h attended');
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '60/82 hrs');
   await page.locator('#calculate-attendance').click();
   await page.locator('#date-actions [data-action="od"]').click();
   await day(page, '2026-09-30').click();
   await page.locator('#projection-manual-hours input[data-course="A"]').fill('2');
   await page.locator('#projection-review-custom').click();
-  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '62 / 80h attended');
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '62/80 hrs');
   assert.deepEqual(errors, []);
 });
 const hours = (page, code = 'A') => page.locator(`#projection-live-hours [data-course="${code}"] strong`).innerText();
@@ -150,10 +150,11 @@ test('Calculate applies recovery hours to attendance after date selection', { ti
   await page.locator('#attendance-panel').waitFor({ state: 'visible' });
   assert.equal(await page.locator('#leaves-view').isVisible(), false);
   const projected = page.locator('#attendance-content [data-course="A"]');
-  assert.equal(await projected.locator('.attendance-margin-value').textContent(), '−62h');
+  assert.equal(await projected.locator('.attendance-margin-value').textContent(), '−62hrs');
   assert.equal(await projected.locator('.attendance-percent').innerText(), '63.1%');
-  assert.equal(await projected.locator('.attendance-recorded-hours').innerText(), '82 / 130h attended');
-  assert.equal(await projected.locator('.attendance-margin-value').evaluate(node => getComputedStyle(node).color), 'rgb(237, 166, 143)');
+  assert.equal(await projected.locator('.attendance-recorded-hours').innerText(), '82/130 hrs');
+  // Risk tiles print the margin in the risk card's ink, like the home risk card.
+  assert.equal(await projected.locator('.attendance-margin-value').evaluate(node => getComputedStyle(node).color), 'rgb(33, 27, 23)');
   assert.match(await page.locator('#attendance-plan-summary').innerText(), /10 Oct.*25 Oct/);
   assert.equal(await page.evaluate(() => quietReport.attendance.data[0].present), 60);
   await page.locator('#calculate-attendance').click();
@@ -161,10 +162,10 @@ test('Calculate applies recovery hours to attendance after date selection', { ti
   await page.locator('#projection-clear').click();
   await selectRange(page, '2026-10-20', '2026-10-10');
   assert.equal(await hours(page), '22h');
-  assert.equal(await projected.locator('.attendance-margin-value').textContent(), '−62h', 'draft edits do not change applied results');
+  assert.equal(await projected.locator('.attendance-margin-value').textContent(), '−62hrs', 'draft edits do not change applied results');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Reset plan', exact: true }).click();
-  assert.equal(await projected.locator('.attendance-margin-value').textContent(), '0h');
+  assert.equal(await projected.locator('.attendance-margin-value').textContent(), '0hrs');
   assert.equal(await page.locator('#attendance-plan').isVisible(), false);
   await page.locator('#calculate-attendance').click();
   assert.deepEqual(await selectedDates(page), []);
@@ -216,8 +217,8 @@ test('native keyboard, responsive controls, Attend and past OD keep records unch
   assert.equal(await hours(page), '4h');
   await page.locator('#projection-review-custom').click();
   assert.match(await page.locator('#attendance-plan-summary').innerText(), /After planned attendance/);
-  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-margin-value').textContent(), '7h');
-  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '82 / 102h attended');
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-margin-value').textContent(), '7hrs');
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-recorded-hours').innerText(), '82/102 hrs');
   await page.locator('#calculate-attendance').click();
   await page.evaluate(() => {
     quietReport.schedule.calendar.push({ date: '2026-09-30', kind: 'teaching', dayOrder: '1' });
@@ -229,7 +230,7 @@ test('native keyboard, responsive controls, Attend and past OD keep records unch
   await page.locator('#projection-review-custom').click();
   assert.match(await page.locator('#attendance-plan-summary').innerText(), /After OD correction/);
   assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-percent').innerText(), '77.5%');
-  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-margin-value').textContent(), '2h');
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-margin-value').textContent(), '2hrs');
   await page.locator('#calculate-attendance').click();
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await day(page, '2026-09-30').click(); await page.keyboard.press('PageUp');
@@ -254,7 +255,7 @@ test('refresh and rollover preserve class overrides, removed dates, and sign-out
     dateAttendance.clock(new Date(2026, 9, 17));
     anonHome.update(quietReport.attendance, quietReport.schedule);
   });
-  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-margin-value').textContent(), '−42h');
+  assert.equal(await page.locator('#attendance-content [data-course="A"] .attendance-margin-value').textContent(), '−42hrs');
   await page.locator('#calculate-attendance').click();
   assert.equal(await day(page, '2026-10-20').getAttribute('aria-pressed'), 'false');
   await page.getByRole('button', { name: 'Edit classes for Oct 18', exact: true }).click();

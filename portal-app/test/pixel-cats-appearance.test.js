@@ -165,9 +165,9 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
   const styles = await page.evaluate(() => {
     const read = (selector, property = 'backgroundColor') => getComputedStyle(document.querySelector(selector))[property];
     const result = {
-      home: read('.next-class-card'), attendance: read('.attendance-rows'), marks: read('.marks-list'),
-      assessment: read('.assessment-row'), grade: read('.grade-course'),
-      marksText: read('.mini-score', 'color'), settingsInput: read('#settings-display-name'),
+      home: read('.next-class-card'), attendance: read('.attendance-row.good'), marks: read('#marks-panel .m2.good'),
+      grade: read('.grade-course'),
+      marksText: read('#marks-panel .m2.good .m-score', 'color'), settingsInput: read('#settings-display-name'),
     };
     dateAttendance.open();
     result.dialog = read('#projection-dialog');
@@ -177,9 +177,11 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
     return result;
   });
   assert.equal(styles.home, 'rgb(191, 179, 199)');
-  for (const key of ['attendance', 'marks', 'assessment', 'settingsInput']) assert.equal(styles[key], 'rgb(52, 53, 54)', key);
+  // Status tiles share the home card colour, so they follow the theme with it.
+  for (const key of ['attendance', 'marks']) assert.equal(styles[key], styles.home, key);
+  assert.equal(styles.settingsInput, 'rgb(52, 53, 54)');
   assert.equal(styles.grade, 'rgb(46, 47, 49)');
-  assert.equal(styles.marksText, 'rgb(229, 226, 221)');
+  assert.equal(styles.marksText, 'rgb(41, 40, 44)');
   for (const key of ['dialog', 'plannerInput']) assert.equal(styles[key], 'rgb(41, 42, 44)', key);
   assert.match(styles.plannerArt, /scene-cats\.svg/);
   for (const width of [320, 1280]) {
@@ -198,13 +200,13 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
   const reset = await page.evaluate(() => ({
     body: getComputedStyle(document.body).backgroundColor,
     card: getComputedStyle(document.querySelector('.next-class-card')).backgroundColor,
-    marks: getComputedStyle(document.querySelector('.marks-list')).backgroundColor,
+    marks: getComputedStyle(document.querySelector('#marks-panel .m2.good')).backgroundColor,
     cat: getComputedStyle(document.querySelector('.brand'), '::after').content,
     scene: getComputedStyle(document.querySelector('.botanical-backdrop')).backgroundImage,
   }));
   assert.equal(reset.body, 'rgb(25, 27, 25)');
   assert.equal(reset.card, 'rgb(197, 212, 167)');
-  assert.equal(reset.marks, 'rgb(35, 39, 32)');
+  assert.equal(reset.marks, reset.card);
   assert.equal(reset.cat, 'none');
   assert.match(reset.scene, /floral-screenprint\.svg/);
   assert.deepEqual(errors, []);

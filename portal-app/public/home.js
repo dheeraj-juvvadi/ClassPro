@@ -350,10 +350,10 @@ globalThis.anonHome = (() => {
         courses: { DS: { credits: 4 }, CN: { credits: 3 }, OS: { credits: 4 } },
         monthly: [{ month: 'Aug-2026', present: 49, absent: 11 }, { month: 'Sep-2026', present: 21, absent: 5 }],
         attendance: { data: [
-        { code: 'DS', title: 'Data Structures', present: 18, conducted: 22, absent: 4, percentage: 82 },
-        { code: 'CN', title: 'Computer Networks', present: 13, conducted: 19, absent: 6, percentage: 68 },
-        { code: 'OS', title: 'Operating Systems', present: 20, conducted: 22, absent: 2, percentage: 91 },
-        { code: 'DM', title: 'Discrete Mathematics', present: 19, conducted: 25, absent: 6, percentage: 76 },
+        { code: 'DS', title: 'Data Structures', present: 18, conducted: 22, absent: 4, percentage: 82, faculty: 'Dr. Meera Iyer', room: 'TP 402', slot: 'A', change24h: { points: 0.8, expiresAt: Date.now() + 864e5 } },
+        { code: 'CN', title: 'Computer Networks', present: 13, conducted: 19, absent: 6, percentage: 68, faculty: 'Prof. Arjun Rao', room: 'UB 1105', slot: 'B', change24h: { points: -2.1, expiresAt: Date.now() + 864e5 } },
+        { code: 'OS', title: 'Operating Systems', present: 20, conducted: 22, absent: 2, percentage: 91, faculty: 'Dr. Kavya Nair', room: 'TP 310', slot: 'C', change24h: { points: 1.2, expiresAt: Date.now() + 864e5 } },
+        { code: 'DM', title: 'Discrete Mathematics', present: 19, conducted: 25, absent: 6, percentage: 76, faculty: 'Prof. S. Menon', room: 'UB 604', slot: 'D' },
       ] }, marks: { data: [
         { code: 'DS', title: 'Data Structures', scored: 43, total: 50, components: [{ name: 'Cycle test 1', scored: 18, total: 20 }, { name: 'Lab evaluation', scored: 25, total: 30 }] },
         { code: 'CN', title: 'Computer Networks', scored: 32, total: 50, components: [{ name: 'Cycle test 1', scored: 12, total: 20 }, { name: 'Lab evaluation', scored: 20, total: 30 }] },

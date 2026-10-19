@@ -13,6 +13,24 @@ globalThis.academicUI = (() => {
     if (text !== undefined) element.textContent = text;
     return element;
   }
+  function svgPath(path) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 12 12');
+    svg.setAttribute('aria-hidden', 'true');
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', path);
+    svg.append(line);
+    return svg;
+  }
+  function tileTone(tone) {
+    return tone === 'healthy' ? 'good' : tone === 'caution' ? 'edge' : tone;
+  }
+  function verdict(course, status, schedule, projected) {
+    if (status.tone !== 'risk' || projected) return null;
+    const recovery = courseDetails.recovery(course, schedule, anonScheduleModel.clock('Asia/Kolkata'), {});
+    if (!recovery?.date) return null;
+    return `Attend every class until ${recovery.date.toLocaleDateString('en', { day: 'numeric', month: 'short' })}`;
+  }
   function margin(present, conducted) {
     const prediction = attendanceMath.predict({ present, conducted });
     if (!prediction.valid || prediction.percentage === null) return { text: 'No hours yet', label: 'Not recorded', hours: null, tone: 'neutral', percentage: '—', detail: 'Your margin appears once attendance is recorded.' };
@@ -26,8 +44,10 @@ globalThis.academicUI = (() => {
         : `You can miss ${prediction.canMiss} hours and remain at or above 75%.` };
   }
   function courseCard(course, status, schedule, projected = false) {
-    const card = create('article', `attendance-row ${status.tone}`);
+    const card = create('article', `attendance-row ${status.tone} ${tileTone(status.tone)} v2`);
     card.dataset.course = course.code || course.title;
+    card.dataset.attendanceTone = status.tone;
+    if (status.percent !== undefined) card.style.setProperty('--fill', `${status.percent.toFixed(2)}%`);
     if (projected) card.dataset.projected = 'true';
     const heading = create('div', 'attendance-course-heading');
     heading.append(create('h3', '', course.title || course.code || 'Course'));
@@ -36,16 +56,16 @@ globalThis.academicUI = (() => {
     metric.setAttribute('aria-label', status.hours === null ? status.label : `${status.label}: ${status.hours} hours`);
     const amount = create('div', 'attendance-margin-value');
     amount.append(create('strong', '', status.hours === null ? '—' : `${status.tone === 'risk' ? '−' : ''}${status.hours}`));
-    if (status.hours !== null) amount.append(create('span', '', 'h'));
+    if (status.hours !== null) amount.append(create('span', '', 'hrs'));
     metric.append(amount);
-    if (projected) metric.append(create('span', 'attendance-margin-caption',
-      status.hours === null ? 'Unconfirmed' : status.tone === 'risk' ? 'to reach 75%' : 'can still miss'));
+    metric.append(create('span', 'attendance-margin-caption', status.hours === null ? (projected ? 'Unconfirmed' : '')
+      : status.tone === 'risk' ? 'to attend' : status.tone === 'caution' ? 'at 75%' : 'can skip'));
     const record = create('div', 'attendance-record');
     const absent = Number.isInteger(course.present) && Number.isInteger(course.conducted) && course.conducted >= course.present
       ? course.conducted - course.present : course.absent;
     if (status.hours !== null) {
       const counts = create('span', 'attendance-recorded-hours');
-      counts.append(create('strong', '', `${course.present} / ${course.conducted}h`), document.createTextNode(' attended'));
+      counts.append(create('strong', '', `${course.present}/${course.conducted}`), document.createTextNode(' hrs'));
       record.append(counts);
     }
     const rate = create('span', 'attendance-recorded-rate');
@@ -68,7 +88,8 @@ globalThis.academicUI = (() => {
       value.setAttribute('aria-hidden', 'true');
       if (expiresAt !== null) change.dataset.expiresAt = String(expiresAt);
       change.title = description;
-      change.append(value, create('span', 'sr-only', description));
+      change.prepend(svgPath(points > 0 ? 'M6 9.5V2.5M2.75 5.5 6 2.25 9.25 5.5' : points < 0 ? 'M6 2.5v7M2.75 6.5 6 9.75 9.25 6.5' : 'M2.75 6h6.5'));
+      change.append(value, create('small', '', '24h'), create('span', 'sr-only', description));
       rate.append(change);
     }
     record.append(rate);
@@ -89,6 +110,23 @@ globalThis.academicUI = (() => {
       fill.style.width = `${status.percent}%`;
       rail.append(fill, create('span', 'attendance-rail-target'));
       summary.append(rail);
+    }
+    // Bottom row: only facts the tile doesn't already say (recovery date, faculty, room, slot).
+    const facts = [];
+    const verdictText = verdict(course, status, anonScheduleModel.normalize(schedule), projected);
+    if (verdictText) facts.push(['attendance-fact attendance-verdict-text', 'M6 2.5v4M6 9.2v.1', verdictText, 'Plan']);
+    const clean = value => value == null ? '' : courseDetails.clean(String(value));
+    if (clean(course.faculty)) facts.push(['attendance-fact', 'M6 5.6a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM2.3 10.6a3.8 3.8 0 0 1 7.4 0', clean(course.faculty), 'Faculty']);
+    if (clean(course.room) && !/unavailable/i.test(course.room)) facts.push(['attendance-fact', 'M6 10.6s3.4-3 3.4-5.6a3.4 3.4 0 0 0-6.8 0c0 2.6 3.4 5.6 3.4 5.6ZM6 6.1a1.1 1.1 0 1 0 0-2.2 1.1 1.1 0 0 0 0 2.2Z', clean(course.room), 'Room']);
+    if (clean(course.slot)) facts.push(['attendance-fact', 'M6 10.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM6 3.6V6l1.6 1', `Slot ${clean(course.slot)}`, 'Slot']);
+    if (facts.length) {
+      const row = create('div', 'attendance-verdict attendance-facts');
+      for (const [className, path, text, label] of facts) {
+        const item = create('span', className); item.title = label;
+        item.append(svgPath(path), create('span', 'sr-only', `${label}: `), create('span', 'attendance-fact-text', text));
+        row.append(item);
+      }
+      summary.append(row);
     }
     const body = create('div', 'attendance-detail-body');
     body.append(create('p', 'attendance-explanation', status.detail));
