@@ -36,7 +36,7 @@ globalThis.anonSyncControl = (() => {
   function reset() {
     clearTimeout(settleTimer); clearTimeout(hideTimer);
     active = 0; pending = false; notifying = false; outcome = null;
-    lastSynced = 0; baseline = 0;
+    lastSynced = 0; baseline = 0; retryOwnText = null;
     notice.hidden = true;
     label.textContent = '';
     paint(false);
@@ -46,13 +46,35 @@ globalThis.anonSyncControl = (() => {
     pending = false;
     outcome = navigator.onLine ? ['error', 'Couldn’t sync · try again'] : ['offline', 'Offline · showing saved data'];
   }
+  let retryOwnText = null;
+  // Source-specific retry notices. `retryWait` stays on screen until recovery,
+  // exhaustion or the next sync outcome replaces it; Sync stays enabled.
+  function retryWait(text) {
+    if (active || pending) return;
+    retryOwnText = text;
+    show('retry', text);
+  }
+  function retryExhausted(text) {
+    if (active || pending) return false;
+    retryOwnText = text;
+    show('error', text);
+    hideTimer = setTimeout(dismiss, 6000);
+    return true;
+  }
+  function retryClear() {
+    if (retryOwnText === null || active || pending) return;
+    if (label.textContent === retryOwnText) dismiss();
+    retryOwnText = null;
+  }
   function end() {
     active = Math.max(0, active - 1);
     if (active || pending) return;
     clearTimeout(settleTimer);
     settleTimer = setTimeout(() => {
       paint(false);
-      if (notifying && outcome) {
+      // A retry-owned notice (waiting/exhausted) says more than a generic
+      // outcome; don't stamp over it for this cycle.
+      if (notifying && outcome && !retryOwnText) {
         show(...outcome);
         hideTimer = setTimeout(dismiss, outcome[0] === 'success' ? 2600 : 5000);
       }
@@ -70,7 +92,7 @@ globalThis.anonSyncControl = (() => {
     if (!active) end();
   });
   return {
-    observe, reset, fail, end,
+    observe, reset, fail, end, retryWait, retryExhausted, retryClear,
     offline() {
       if (active || pending) return;
       show('offline', 'Offline · showing saved data');
@@ -78,6 +100,7 @@ globalThis.anonSyncControl = (() => {
     },
     begin({ notify = true } = {}) {
       clearTimeout(settleTimer); clearTimeout(hideTimer);
+      retryOwnText = null;
       if (!active && !pending) {
         baseline = lastSynced; notifying = notify;
       }

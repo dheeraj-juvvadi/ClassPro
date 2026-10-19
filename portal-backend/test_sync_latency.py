@@ -31,22 +31,42 @@ class SyncLatencyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['attendance']['data'][0]['code'], 'portal')
         self.assertEqual(entry['providers']['academia']['cookies'], {'provider': 'academia'})
 
-    async def test_provider_failure_cancels_and_drains_other_request(self):
-        started, cancelled = asyncio.Event(), asyncio.Event()
-        entry = {'providers': {name: {'username': 'student', 'cookies': {}} for name in ('portal', 'academia')}}
+    async def test_provider_failure_keeps_other_provider_result(self):
+        started = asyncio.Event()
+        entry = {'providers': {name: {'username': 'student', 'cookies': {}, 'report': {}}
+                               for name in ('portal', 'academia')}}
 
         async def invoke(request, path, payload):
             if path == '/portal/refresh':
                 await started.wait()
                 raise RuntimeError('synthetic')
             started.set()
+            await asyncio.sleep(0)
+            return httpx.Response(200), {'success': True, 'attendance': {'data': [{'code': 'C1'}]}}
+
+        failures = {}
+        result, success = await asyncio.wait_for(
+            refresh(None, entry, invoke, lambda data, previous: data, failures=failures), 1)
+        self.assertTrue(success)
+        self.assertEqual(result['attendance']['data'], [{'code': 'C1'}])
+        self.assertEqual(failures, {'portal': False, 'academia': True})
+
+    async def test_cancelled_refresh_drains_other_requests(self):
+        started, cancelled = asyncio.Event(), asyncio.Event()
+        entry = {'providers': {name: {'username': 'student', 'cookies': {}} for name in ('portal', 'academia')}}
+
+        async def invoke(request, path, payload):
+            if path == '/portal/refresh':
+                await started.wait()
+                raise asyncio.CancelledError
+            started.set()
             try:
                 await asyncio.Event().wait()
             finally:
                 cancelled.set()
 
-        with self.assertRaises(RuntimeError):
-            await refresh(None, entry, invoke, lambda data, previous: data)
+        with self.assertRaises(asyncio.CancelledError):
+            await asyncio.wait_for(refresh(None, entry, invoke, lambda data, previous: data), 1)
         self.assertTrue(cancelled.is_set())
 
     async def test_attendance_is_shared_only_within_one_refresh(self):

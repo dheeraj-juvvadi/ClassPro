@@ -6,10 +6,18 @@ let busy = false;
 let reportLoad = null;
 let nextAutoSync = 0;
 let pendingSyncTimer = null, pendingSyncChecks = 0;
-let pendingExamSync = false;
 let syncGeneration = 0;
 let reportFingerprint = {};
 let manualChallengeAt = 0;
+// Server-owned one-shot report retry metadata (sync.retry). The browser only
+// observes the deadline, defers while hidden/offline/busy and fires the
+// allowance once; allowance resetting stays on the server.
+const retrying = { reports: null };
+const retryInFlight = new Set();
+const retryBackoff = new Map();
+const retryExhaustedSeen = new Set();
+let retryTimer = null;
+let queuePending = false;
 const designPreview = new URLSearchParams(location.search).get('preview') === 'home';
 const REPORTS_CACHE = 'anon-reports-cache';
 // One-time upgrade: keep existing offline reports until the new key is written.
@@ -118,10 +126,10 @@ function showLogin(text = '', error = false) {
   anonSettings.clear();
   anonFeedback.clear();
   anonSyncControl.reset();
+  resetRetryState();
   reportFingerprint = {};
   nextAutoSync = 0;
   clearTimeout(pendingSyncTimer); pendingSyncChecks = 0;
-  pendingExamSync = false;
   syncGeneration++;
   authenticated = false;
   dismissStartup();
@@ -316,14 +324,110 @@ function renderMarks(report, courses = {}) {
   }
 }
 
+const retryName = id => id === 'portal' ? 'Student Portal' : id === 'academia' ? 'Academia' : 'Providers';
+function retryLabel(meta) {
+  const names = (meta?.sources || []).filter(item => item === 'portal' || item === 'academia');
+  if (!names.length) return 'Providers';
+  return names.length > 1 ? `${names.slice(0, -1).map(retryName).join(', ')} and ${retryName(names.at(-1))}`
+    : retryName(names[0]);
+}
+const reportWarnings = list => (Array.isArray(list) ? list : []).filter(text => !/^Endsem dates/.test(String(text)));
+function observeRetry(kind, meta) {
+  const valid = meta && typeof meta === 'object' && typeof meta.id === 'string' && meta.id
+    && Number.isFinite(Number(meta.at)) && Number(meta.at) > 0 && Array.isArray(meta.sources);
+  // Server truth always wins: every poll replaces what the browser knows,
+  // including pending:false/exhausted:true arriving for an ID still held as
+  // armed. Never keep a stale pending allowance past settled metadata.
+  retrying[kind] = valid ? { ...meta, at: Number(meta.at) } : null;
+  refreshRetryNotice();
+  scheduleRetryCheck();
+  return retrying[kind];
+}
+function refreshRetryNotice() {
+  const metas = [retrying.reports].filter(meta => meta);
+  for (const meta of metas) if (meta.pending && !meta.exhausted) retryExhaustedSeen.delete(meta.id);
+  const waiting = metas.filter(meta => meta.pending && !meta.exhausted);
+  const names = new Set(waiting.map(retryLabel));
+  if (names.size) {
+    const soon = Math.min(...waiting.map(meta => Number(meta.at))) > Date.now();
+    anonSyncControl.retryWait(`Retrying ${[...names].join(' and ')}${soon ? ' in 1 minute' : ''}…`);
+    return;
+  }
+  const exhausted = metas.filter(meta => meta.exhausted && !retryExhaustedSeen.has(meta.id));
+  if (exhausted.length) {
+    const labels = [...new Set(exhausted.map(retryLabel))].join(' and ');
+    const text = `${labels} retry didn’t recover · will try again at the next scheduled sync.`;
+    // Only mark seen when the notice actually showed; a suppressed show (e.g.
+    // a sync in flight) retries on the next metadata refresh.
+    if (anonSyncControl.retryExhausted(text)) {
+      for (const meta of exhausted) retryExhaustedSeen.add(meta.id);
+    }
+    return;
+  }
+  if (!metas.length) { retryExhaustedSeen.clear(); anonSyncControl.retryClear(); }
+}
+function scheduleRetryCheck() {
+  clearTimeout(retryTimer);
+  retryTimer = null;
+  const at = Math.min(...[retrying.reports]
+    .filter(meta => meta?.pending && !meta.exhausted && !retryInFlight.has(meta.id))
+    .map(meta => Number(meta.at)));
+  if (Number.isFinite(at)) {
+    // Past-due checks wait for the next interval tick to avoid a busy loop
+    // while a deferred retry (queue/Portal recovery) is outstanding.
+    const delay = at > Date.now() ? at + 250 - Date.now() : 15000;
+    retryTimer = setTimeout(() => { retryTimer = null; checkDueRetries(); }, Math.max(1000, delay));
+  }
+}
+function retryAllowed(meta) {
+  return meta?.pending && !meta.exhausted && !retryInFlight.has(meta.id)
+    && Date.now() >= Number(meta.at) && Date.now() >= (retryBackoff.get(meta.id) || 0);
+}
+function appActive() {
+  return authenticated && !designPreview && !busy && !reportLoad && !document.hidden
+    && navigator.onLine && !$('connect-dialog').open;
+}
+function checkDueRetries() {
+  if (!retrying.reports) return;
+  if (!appActive()) return;
+  if (retryAllowed(retrying.reports) && !queuePending) fireReportsRetry(retrying.reports);
+  scheduleRetryCheck();
+}
+
 function loadReports(options = {}) {
-  if (options.includeExams && !designPreview) pendingExamSync = true;
   if (reportLoad) return reportLoad;
   reportLoad = fetchReports(options).finally(() => { reportLoad = null; });
   return reportLoad;
 }
 
-async function fetchReports({ cacheOnly = false, force = false, silent = false, followup = false, waitForCompletion = false } = {}) {
+async function fireReportsRetry(meta) {
+  const generation = syncGeneration;
+  retryInFlight.add(meta.id);
+  const before = retrying.reports;
+  try {
+    await loadReports({ retryId: meta.id });
+    if (generation !== syncGeneration) return;
+    // A failed attempt may still have been consumed server-side while its
+    // response never arrived; only the next authoritative metadata settles
+    // that. Back off whenever the attempt produced no fresh metadata —
+    // thrown or swallowed — so it never spins on the same deadline.
+    if (retrying.reports === before) retryBackoff.set(meta.id, Date.now() + 120000);
+  } catch {
+    if (retrying.reports === before) retryBackoff.set(meta.id, Date.now() + 120000);
+  } finally {
+    retryInFlight.delete(meta.id);
+    if (generation === syncGeneration) { refreshRetryNotice(); scheduleRetryCheck(); }
+  }
+}
+
+function resetRetryState() {
+  clearTimeout(retryTimer);
+  retryTimer = null;
+  retrying.reports = null;
+  retryInFlight.clear(); retryBackoff.clear(); retryExhaustedSeen.clear(); queuePending = false;
+}
+
+async function fetchReports({ cacheOnly = false, force = false, silent = false, followup = false, waitForCompletion = false, retryId = null } = {}) {
   if (designPreview) return;
   const generation = syncGeneration;
   clearTimeout(pendingSyncTimer);
@@ -340,10 +444,12 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     }
   }
   try {
-    const query = force ? '?force=1&wait=1' : cacheOnly
-      ? `?cache=only${waitForCompletion ? '&wait=1' : ''}` : '?wait=1';
+    const query = force ? '?force=1&wait=1' : retryId
+      ? `?retry=${encodeURIComponent(retryId)}&wait=1` : cacheOnly
+        ? `?cache=only${waitForCompletion ? '&wait=1' : ''}` : '?wait=1';
     const reports = await api(`/api/reports${query}`);
     if (generation !== syncGeneration) return;
+    reports.warnings = reportWarnings(reports.warnings);
     const changed = (key, data, update) => {
       const fingerprint = JSON.stringify(data);
       if (reportFingerprint[key] !== fingerprint) { update(); reportFingerprint[key] = fingerprint; }
@@ -354,28 +460,16 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
     changed('home', [reports.attendance, reports.schedule, reports.exams], () => anonHome.update(reports.attendance, reports.schedule));
     anonSettings.update(reports);
     changed('connections', [reports.connections, reports.warnings], () => providerConnections.update(reports));
-    $('refresh').title = 'Sync attendance, marks and endsem dates';
+    $('refresh').title = 'Sync attendance and marks';
     nextAutoSync = reports.sync?.pending ? reports.sync.nextAt : reports.sync?.due && cacheOnly ? 0 : reports.sync?.nextAt || reportSyncSchedule.next();
     const date = new Date(reports.updatedAt);
     $('updated-at').textContent = Number.isNaN(date.getTime()) ? 'Reports loaded.' : `Updated ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)}`;
     message('reports-message', !reports.sync?.pending && (reports.attendance?.error || reports.marks?.error) ? 'Some reports could not be loaded. Try Sync.' : '');
     writeReportsCache(reports);
-    // Wait for report recovery first, including queued follow-ups, so exams use
-    // the refreshed Portal cookies. Automatic sync never sets this flag.
-    if (!reports.sync?.pending && pendingExamSync) {
-      pendingExamSync = false;
-      if (reports.connections?.portal?.connected) {
-        const result = await anonExamDates.refresh(true);
-        if (generation !== syncGeneration) return;
-        if (result?.exams) {
-          reports.exams = result.exams;
-          anonHome.update(reports.attendance, reports.schedule);
-        }
-        if (!result?.ok) reports.warnings = [...(reports.warnings || []),
-          'Endsem dates could not refresh. Open Endsem dates to retry.'];
-        writeReportsCache(reports);
-      }
-    }
+    // Observe server-owned retry truth; cache-only and cache reads never touch
+    // the allowance, they only re-sync what the browser knows.
+    queuePending = !!reports.sync?.pending;
+    observeRetry('reports', reports.sync?.retry ?? null);
     anonSyncControl.complete(reports);
     if (reports.sync?.pending) {
       // At low load, wait on the existing job so completion is returned as
@@ -387,27 +481,31 @@ async function fetchReports({ cacheOnly = false, force = false, silent = false, 
       pendingSyncTimer = setTimeout(() => {
         if (!authenticated || busy || document.hidden || !navigator.onLine || $('connect-dialog').open) return;
         const retryAdmission = reports.sync.state === 'busy';
-        loadReports({ cacheOnly: !retryAdmission, force: retryAdmission, silent: true,
-          followup: true, waitForCompletion }).catch(() => {});
+        // A retry-origin followup keeps its retry ID so a busy queue never
+        // escalates a scoped retry into a full manual cycle.
+        loadReports({ cacheOnly: !retryAdmission, force: retryAdmission && !retryId, retryId,
+          silent: true, followup: true, waitForCompletion }).catch(() => {});
       }, delay);
     } else pendingSyncChecks = 0;
     return reports;
   } catch (error) {
     if (generation !== syncGeneration) return;
-    pendingExamSync = false;
     anonSyncControl.fail(error);
     for (const kind of ['attendance', 'marks']) {
       const container = $(`${kind}-content`);
       if (container.firstElementChild?.classList.contains('report-placeholder')) container.replaceChildren(node('div', 'empty-state', 'Report not loaded. Use Sync to try again.'));
     }
-    nextAutoSync = Date.now() + 30000 + Math.random() * 30000;
+    // A failed retry keeps the normal next slot: scheduling an ordinary
+    // sync here would bypass the retry backoff with a full sync.
+    if (!retryId) nextAutoSync = Date.now() + 30000 + Math.random() * 30000;
+    queuePending = false;
     if (silent && !error.expired) {
       $('refresh').title = 'Could not sync. Your last data is still available. Select Sync to retry.';
       return;
     }
     throw error;
   } finally {
-    if (generation === syncGeneration) anonSyncControl.end();
+    if (generation === syncGeneration) { anonSyncControl.end(); refreshRetryNotice(); }
   }
 }
 
@@ -498,14 +596,15 @@ function resumeSync() {
   nextAutoSync = reportSyncSchedule.next();
   loadReports({ silent: true }).catch(() => {});
 }
-window.addEventListener('focus', resumeSync);
-window.addEventListener('online', resumeSync);
-document.addEventListener('visibilitychange', resumeSync);
+const resumeChecks = () => { checkDueRetries(); resumeSync(); };
+window.addEventListener('focus', resumeChecks);
+window.addEventListener('online', resumeChecks);
+document.addEventListener('visibilitychange', resumeChecks);
 // This timer only checks the clock. Requests occur at the scheduled IST slots.
-setInterval(resumeSync, 15000);
+setInterval(resumeChecks, 15000);
 
 $('refresh').addEventListener('click', () => run(async () => {
-  await loadReports({ force: true, includeExams: true });
+  await loadReports({ force: true });
 }));
 $('logout').addEventListener('click', () => run(async () => {
   if (designPreview) { location.href = '/'; return; }
@@ -518,7 +617,11 @@ $('logout').addEventListener('click', () => run(async () => {
 function paintCachedReports() {
   const cached = readReportsCache();
   if (!cached) return false;
+  cached.warnings = reportWarnings(cached.warnings);
   anonSyncControl.observe(cached);
+  // Show server retry truth even before the first network response; the
+  // cache-only startup refresh replaces it with live metadata.
+  if (cached.sync && 'retry' in cached.sync) observeRetry('reports', cached.sync.retry ?? null);
   showReports();
   renderAttendance(cached.attendance, cached.schedule);
   renderMarks(cached.marks, cached.courses);

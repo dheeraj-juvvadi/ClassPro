@@ -42,6 +42,31 @@ test('proxy rejects internal routes, traversal, wrong methods and oversized bodi
   assert.equal(fetch.mock.callCount(), 0);
 });
 
+test('report and exam retry IDs survive the proxy without losing retry scope', async t => {
+  process.env.BACKEND_URL = 'https://backend.test'; process.env.BACKEND_TOKEN = 'server-only-secret';
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    calls.push(new URL(url));
+    return new Response('{}', { headers: { 'content-type': 'application/json' } });
+  });
+  for (const path of ['reports', 'exams']) {
+    for (const id of ['0123456789abcdef', '', 'stale/invalid']) {
+      const req = request(path); req.url += `&retry=${encodeURIComponent(id)}&wait=1&year=2025`;
+      await proxy(req, response());
+      const target = calls.at(-1);
+      assert.equal(target.pathname, `/api/${path}`);
+      assert.equal(target.searchParams.get('retry'), id);
+      assert.equal(target.searchParams.get('wait'), path === 'reports' ? '1' : null);
+      assert.equal(target.searchParams.has('token'), false);
+      assert.equal(target.searchParams.has('year'), false);
+      assert.equal(target.searchParams.has('force'), false);
+    }
+  }
+  const req = request('session'); req.url += '&retry=0123456789abcdef';
+  await proxy(req, response());
+  assert.equal(calls.at(-1).searchParams.has('retry'), false);
+});
+
 test('proxy replaces forged gateway headers and never relays redirect or debug headers', async t => {
   process.env.BACKEND_URL = 'https://backend.test'; process.env.BACKEND_TOKEN = 'server-only-secret';
   const calls = [];

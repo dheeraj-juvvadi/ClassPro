@@ -82,10 +82,10 @@
   <script src="/auth-client.js?v=11b6bc9c7a" defer></script>
   <script src="/login-flow.js?v=67ccf8ae8f" defer></script>
   <script src="/report-sync.js?v=baa9e679ac" defer></script>
-  <script src="/sync-control.js?v=e9711364ec" defer></script>
-  <script src="/settings.js?v=b3c51e7117" defer></script>
-  <script src="/exam-dates.js?v=d7883d67b6" defer></script>
-  <script src="/app.js?v=13b30e66e0" defer></script>
+  <script src="/sync-control.js?v=28e1a3258c" defer></script>
+  <script src="/settings.js?v=be5515a9d5" defer></script>
+  <script src="/exam-dates.js?v=d2b876d302" defer></script>
+  <script src="/app.js?v=b6fe6e09a7" defer></script>
   <script src="/credential-integrity.js?v=fbfd4079df" defer></script>
   <script src="/offline-shell.js?v=183c619836" defer></script>
   <script src="/login-effects.js?v=e6fe094e1b" defer></script>
@@ -234,7 +234,8 @@
       </div>
     </section>
   <section id="exams-view" class="workspace-page" hidden aria-labelledby="exams-title">
-    <div class="exam-heading"><h1 id="exams-title" tabindex="-1">View your endsem dates</h1><button id="exam-sync" type="button">Sync</button></div>
+    <div class="exam-heading"><h1 id="exams-title" tabindex="-1">View your endsem dates</h1><button id="exam-sync" type="button">Check dates</button></div>
+    <p class="exam-weekly quiet">Dates are checked at most once a week. Saved dates stay available.</p>
     <p id="exam-status" role="status" aria-live="polite"></p>
     <p id="exam-checked"></p><p id="exam-source"></p>
     <label id="exam-period-field" hidden>Exam session<select id="exam-period"><option value="">All upcoming sessions</option></select></label>
@@ -277,7 +278,7 @@
     <label class="settings-row" for="settings-haptics"><span>Touch feedback<small>Gentle taps on supported devices.</small></span><input id="settings-haptics" type="checkbox" role="switch" checked></label>
     <label class="settings-row" for="settings-notifications"><span>Update notifications<small>When a sync finds new attendance or marks while Anon is open.</small></span><input id="settings-notifications" type="checkbox" role="switch"></label>
     <label class="settings-row" for="settings-reminders"><span>Class reminders<small>15 and 5 minutes before class while Anon is open. Uses your selected batch.</small></span><input id="settings-reminders" type="checkbox" role="switch"></label>
-    <div class="settings-row"><span>Sync data<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg> Sync</button></div>
+    <div class="settings-row"><span>Sync reports<small id="settings-last-sync">Your cached data stays available.</small></span><button id="settings-sync" type="button"><svg class="sync-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1L20 8M4 16l1.5 2a8 8 0 0 0 13-1" stroke-linecap="round" stroke-linejoin="round"/></svg> Sync</button></div>
     <details class="settings-detail"><summary>Privacy &amp; storage</summary><p>Remembered sessions and portal credentials are encrypted on the server and expire after 7 days of inactivity. Signing out deletes that session.</p><p>Your latest reports and display preferences stay in this browser. Signing out clears the report cache. Optional class reminders include course names and rooms.</p><button id="settings-reset" type="button">Reset local preferences</button></details>
     <details class="settings-detail"><summary>What’s new</summary><p>Academic calendar, date-based attendance projections, recovery dates and scheduled background sync.</p></details>
 

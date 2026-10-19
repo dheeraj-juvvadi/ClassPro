@@ -28,7 +28,8 @@ test('cache-first boot paints cached reports without waiting for /api/session', 
     setTimeout(() => response.json({ authenticated: sessionValid, authMode: 'http', provider: 'academia' }), 2500);
   });
   app.get('/api/reports', (request, response) => {
-    if (request.query.cache === 'only') return response.json(reportsPayload);
+    // Cache polling sees the current completed job, just like the backend.
+    // Returning the original fixture here could overwrite a fresh completion.
     response.json({ ...reportsPayload, sync: { ...reportsPayload.sync, syncedAt,
       pending, nextAt: pending ? Date.now() + 1000 : reportsPayload.sync.nextAt } });
   });

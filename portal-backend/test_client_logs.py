@@ -8,6 +8,13 @@ from client_logs import ClientLogStore, clean_event
 
 
 class ClientLogTests(unittest.TestCase):
+    def test_exam_failures_keep_route_and_page_without_sensitive_fields(self):
+        event = clean_event({"kind": "api_error", "page": "exams", "route": "/api/exams",
+                             "source": "exam-dates.js", "code": "HTTP_ERROR", "status": 502,
+                             "cookies": "private", "query": "private"})
+        self.assertEqual(event, {"kind": "api_error", "page": "exams", "route": "/api/exams",
+                                 "source": "exam-dates.js", "code": "HTTP_ERROR", "status": 502})
+
     def test_allowlist_discards_sensitive_fields_and_arbitrary_values(self):
         event = clean_event({"kind": "api_error", "page": "marks", "code": "HTTP_ERROR",
             "route": "/api/reports", "status": 502, "release": "a" * 10,

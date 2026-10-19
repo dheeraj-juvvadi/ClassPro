@@ -152,7 +152,7 @@ globalThis.anonSettings = (() => {
   get('settings-sync').addEventListener('click', async () => {
     if (get('settings-sync').disabled) return;
     tell('');
-    try { const data = await loadReports({ force: true, includeExams: true });
+    try { const data = await loadReports({ force: true });
       if (data?.sync?.pending) tell('');
       else if (data?.warnings?.length || data?.attendance?.error || data?.marks?.error) tell('Some data could not refresh. Your last data is still available.');
       else tell('Your data is up to date.');

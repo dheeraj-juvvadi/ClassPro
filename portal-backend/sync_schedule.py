@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from attendance_trends import decorate
+import sync_retry
 
 HOURS = (*range(8, 20), 21, 23)
 IST = ZoneInfo("Asia/Kolkata")
@@ -40,6 +41,7 @@ def due(entry, timestamp):
     # active visit, including Sundays, through the existing bounded queue.
     if (portal.get("cookies") and not portal.get("expired")
             and "academicHistory" not in portal.get("report", {})
+            and not entry.get("sync_retry")
             and timestamp - entry.get("sync_attempted_at", 0) >= 60):
         return True
     if datetime.fromtimestamp(timestamp, IST).weekday() == 6:
@@ -57,4 +59,6 @@ def response(entry, timestamp):
         "nextAt": next_at * 1000,
         "due": due(entry, timestamp),
         "syncedAt": entry.get("synced_at", 0) * 1000,
+        "retry": sync_retry.view(entry.get("sync_retry"), timestamp),
+        "examRetry": None,
     }}

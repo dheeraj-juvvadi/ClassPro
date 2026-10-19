@@ -27,6 +27,21 @@ The upstream SRM client comes from the upstream client revision
   categories. Upstream prints and temporary cookie/network evidence are removed.
 - GET /health is the local health endpoint; /api/session validates public routing.
 
+## Sync recovery
+A failed manual or scheduled report sync retains cached data and offers one
+retry, 60 seconds after the failed attempt finishes. Only failed providers are
+retried. A second failure stops automatic recovery until a new manual or
+scheduled sync; cache reads and queue polling never reset the allowance.
+
+The active, online browser requests the retry using the server-issued cycle ID.
+Retry state stays in the encrypted session, so tabs share the same allowance.
+Hidden/offline browsers defer until they resume; there is no retry daemon.
+Endsem dates are checked at most once every seven days per Portal account,
+including failed attempts. Opening the dates page may make a due check; manual
+report Sync does not. Force requests and old retry IDs cannot bypass the week.
+The encrypted account cache shares saved dates and the deadline across sessions,
+devices, logout and server restarts. Existing attempt timestamps seed the limit.
+
 ## Release
 Use scripts/release.mjs after staging a completed agenda. GitHub Actions validates
 frontend and backend, then sends the exact commit to the VM through a restricted

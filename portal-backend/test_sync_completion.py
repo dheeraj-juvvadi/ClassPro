@@ -100,39 +100,6 @@ class CompletionTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn("exams", response.json())
             exams.assert_not_awaited()
 
-    async def test_exam_page_fetches_only_connected_students_and_retains_cache(self):
-        data = {"status": "published", "entries": [{"code": "SYN001", "title": "Sample course",
-                "date": "2026-11-26", "period": "11_2026", "session": "AN"}],
-                "lastAttemptAt": "2026-10-07T06:00:00+00:00", "stale": False}
-        with patch.object(server, "refresh_exams", new_callable=AsyncMock, return_value=data) as fetch:
-            response = await self.client.get("/api/exams")
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json()["exams"], data)
-            self.assertEqual(fetch.await_args.args[0], {"JSESSIONID": "synthetic"})
-            self.assertFalse(fetch.await_args.kwargs["force"])
-            self.assertEqual(self.entry["report"]["exams"], data)
-            self.assertFalse(server.report({}, {"exams": data})["exams"]["stale"])
-            await self.client.get("/api/exams?force=1")
-            self.assertTrue(fetch.await_args.kwargs["force"])
-            self.entry["providers"]["portal"]["expired"] = True
-            response = await self.client.get("/api/exams")
-            self.assertTrue(response.json()["exams"]["stale"])
-            self.assertTrue(response.json()["exams"]["entries"][0]["stale"])
-            self.assertEqual(response.json()["exams"]["entries"][0]["date"], "2026-11-26")
-            self.assertFalse(data["stale"])
-            self.assertEqual(fetch.await_count, 2)
-            server.sessions.clear()
-            self.assertEqual((await self.client.get("/api/exams")).status_code, 401)
-
-    async def test_exam_refresh_honors_recent_attempt_cooldown(self):
-        data = {"entries": [], "lastAttemptAt": "2026-10-07T06:00:00+00:00"}
-        self.entry["providers"]["portal"]["report"]["exams"] = data
-        with patch.object(server, "refresh_exams", new_callable=AsyncMock, return_value=data) as fetch, \
-             patch.object(server.time, "time", return_value=1791352801):
-            response = await self.client.get("/api/exams?force=1")
-            self.assertEqual(response.status_code, 200)
-            self.assertFalse(fetch.await_args.kwargs["force"])
-
     async def test_exam_waiters_do_not_occupy_workers_or_block_cached_reports(self):
         lock = server.session_locks.setdefault("synthetic", asyncio.Lock())
         await lock.acquire()

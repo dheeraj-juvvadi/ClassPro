@@ -122,7 +122,11 @@ class DiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(second.json()["sync"]["pending"])
                 self.assertTrue((await self.client.get("/api/session")).json()["authenticated"])
                 self.assertEqual(work.call_count, 1)
-                self.assertEqual(len(work.call_args.args), 4)
+                # (request, entry, invoke, report) plus the optional retry
+                # source filter and per-provider failure flags.
+                self.assertEqual(work.call_args.args[1], entry)
+                self.assertIsNone(work.call_args.args[4])
+                self.assertEqual(len(work.call_args.args), 7)
             finally:
                 finish.set()
                 await server.app.state.refresh_queue.queue.join()

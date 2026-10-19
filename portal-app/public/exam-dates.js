@@ -26,8 +26,10 @@ globalThis.anonExamDates = (() => {
     return element;
   };
   const safeText = (value, max = 240) => typeof value === 'string' ? value.slice(0, max) : '';
-  function normalize(data) {
+  function normalize(data, fallbackNext = null) {
     if (!data || !Array.isArray(data.entries) || data.entries.length > 160) return null;
+    const nextCheckAt = Number.isFinite(Number(data.nextCheckAt)) ? Number(data.nextCheckAt)
+      : Number.isFinite(Number(fallbackNext)) ? Number(fallbackNext) : null;
     const entries = data.entries.filter(item => item && safeText(item.code) && safeText(item.title))
       .map(item => ({ code: safeText(item.code, 80), title: safeText(item.title),
         date: model.parse(item.date) ? item.date : null, session: safeText(item.session, 40),
@@ -35,6 +37,7 @@ globalThis.anonExamDates = (() => {
         provisional: item.provisional !== false, stale: item.stale === true }));
     return { entries, stale: data.stale === true, provisional: data.provisional !== false,
       checkedAt: Number.isFinite(Date.parse(data.checkedAt)) ? data.checkedAt : null,
+      nextCheckAt,
       source: safeText(data.source, 120) || 'Student Portal',
       sessions: Array.isArray(data.sessions) ? data.sessions.slice(0, 20).filter(item =>
         item && typeof item.value === 'string' && /^\d{1,2}_\d{4}$/.test(item.value)).map(item =>
@@ -43,11 +46,11 @@ globalThis.anonExamDates = (() => {
   function status(entries) {
     if (!report) {
       if (connection?.expired) return 'Reconnect Student Portal to check dates.';
-      if (connection?.connected) return 'Dates have not been checked yet. Try Sync.';
+      if (connection?.connected) return 'Dates have not been checked yet. Try Check dates.';
       return 'Connect Student Portal to check dates.';
     }
     if (connection?.expired) return 'Reconnect Student Portal to refresh saved dates.';
-    if (report.stale) return report.checkedAt ? 'Cached dates · latest check unavailable.' : 'Dates unavailable. Try Sync.';
+    if (report.stale) return report.checkedAt ? 'Showing saved dates · dates are checked weekly.' : 'Dates unavailable. Try Check dates.';
     if (!entries.some(item => item.date)) return entries.length
       ? 'Subjects loaded · exam dates have not been published yet.'
       : 'Student Portal returned no exam subjects for this session.';
@@ -55,8 +58,10 @@ globalThis.anonExamDates = (() => {
   }
   function render() {
     const root = get('exam-list'); root.replaceChildren();
+    const nextCheck = report?.nextCheckAt && report.nextCheckAt > Date.now()
+      ? ` · next check after ${new Intl.DateTimeFormat('en', { timeZone: 'Asia/Kolkata', dateStyle: 'medium' }).format(new Date(report.nextCheckAt))}` : '';
     get('exam-checked').textContent = report?.checkedAt ? `Last checked ${new Intl.DateTimeFormat('en', {
-      timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(report.checkedAt))} IST` : 'Not checked yet';
+      timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(report.checkedAt))} IST · checked weekly${nextCheck}` : 'Not checked yet · dates are checked weekly';
     get('exam-source').textContent = report ? report.source : '';
     const select = get('exam-period');
     const options = new Map((report?.sessions || []).map(item => [item.value, item.label]));
@@ -97,15 +102,15 @@ globalThis.anonExamDates = (() => {
     try {
       const data = await api(`/api/exams${force ? '?force=1' : ''}`);
       if (current !== generation) return;
-      report = normalize(data.exams); connection = data.connections?.portal || null;
+      report = normalize(data.exams, data.nextCheckAt); connection = data.connections?.portal || null;
       render();
       const cached = readReportsCache();
       if (cached) writeReportsCache({ ...cached, exams: data.exams });
       return { exams: data.exams, ok: !!report && !report.stale && !connection?.expired };
     } catch {
       if (current === generation) get('exam-status').textContent = report
-        ? 'Sync unavailable · showing saved dates. Try Sync again.'
-        : 'Could not check dates. Try Sync again.';
+        ? 'Check unavailable · showing saved dates. Try Check dates again.'
+        : 'Could not check dates. Try Check dates again.';
       return { ok: false };
     } finally {
       if (current === generation) button.disabled = false;

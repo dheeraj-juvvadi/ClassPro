@@ -28,8 +28,10 @@ from academic_data import extras
 from provider_flow import providers, combined, same_student, normalize_account, refresh as refresh_providers
 from session_store import SessionStore, lifetime
 from report_response import ReportResponse
-from portal_exams import refresh_exams
+from portal_exams import refresh_exams, unavailable as unavailable_exams
+from weekly_exams import ExamCache, account_key
 import sync_schedule
+import sync_retry
 import attendance_trends
 from client_logs import ClientLogStore
 from presence import Presence
@@ -92,6 +94,7 @@ waiters = 0
 admission_waiters = 0
 client_log_slots = asyncio.Semaphore(2)
 session_locks = weakref.WeakValueDictionary()
+exam_cache = ExamCache()
 
 
 class AdmissionTimeout(Exception):
@@ -202,6 +205,7 @@ async def persist_activity():
         if session_store:
             try:
                 session_store.touch(sessions)
+                exam_cache.prune(time.time())
             except Exception as error:
                 print(json.dumps({"event": "session_persist_failed",
                                   "exception_type": type(error).__name__}), flush=True)
@@ -209,12 +213,20 @@ async def persist_activity():
 
 @asynccontextmanager
 async def lifespan(app):
-    global session_store
+    global session_store, exam_cache
     if os.environ.get("SESSION_STORE_DIR"):
         session_store = SessionStore(os.environ["SESSION_STORE_DIR"])
         sessions.update(session_store.load())
         for entry in sessions.values():
             entry.setdefault("sync_offset", secrets.randbelow(300))
+            entry.pop("exam_retry", None)
+    exam_cache = ExamCache(session_store)
+    # Seed the per-user cap from pre-upgrade remembered sessions, so a new
+    # login cannot refetch dates already checked by another session this week.
+    for token, entry in sessions.items():
+        portal = providers(entry).get("portal")
+        if portal and portal.get("report", {}).get("exams"):
+            exam_cache.reserve(account_key(portal, token), portal["report"]["exams"], time.time(), False)
     log_dir = os.environ.get("CLIENT_LOG_DIR")
     app.state.client_logs = ClientLogStore(log_dir) if log_dir else None
     app.state.presence = Presence(log_dir)
@@ -641,6 +653,7 @@ async def login(request: Request):
         return failure("ACCOUNT_MISMATCH", "Connect the same student's account for both providers.", 409)
     states[provider] = {"cookies": data["cookies"], "username": login_payload["username"],
                         "password": payload["password"], "report": report(data), "expired": False}
+    _prune_retry_source(entry, provider)
     entry["remember"] = payload.get("remember", entry.get("remember", True)) is not False
     entry["last_seen"] = time.time()
     sessions.pop(token, None)
@@ -657,10 +670,66 @@ async def login(request: Request):
     return result
 
 
+def job_context(request, retry_id=None):
+    """Queue workers receive a request-like object; retries carry their claim ID."""
+    return SimpleNamespace(app=app, state=SimpleNamespace(
+        diagnostic_id=getattr(getattr(request, "state", None), "diagnostic_id", secrets.token_hex(12)),
+        queued_at=time.monotonic(), retry_id=retry_id))
+
+
+def _persist_entry(token, entry):
+    if session_store and sessions.get(token) is entry:
+        session_store.save_changes({token: entry})
+
+
+def _retry_failed(entry, failed, retried, now):
+    """Arm a fresh cycle, or settle the consumed one; never clear an allowance."""
+    state = sync_retry.settle(entry.get("sync_retry"), failed) if retried \
+        else sync_retry.arm(failed, now)
+    if state:
+        entry["sync_retry"] = state
+    else:
+        entry.pop("sync_retry", None)
+
+
+def _set_report_warnings(entry, failed):
+    """Warnings describe remaining failures, never a stale success or a cleared one."""
+    report = entry.get("report")
+    if not isinstance(report, dict):
+        return
+    if failed:
+        report["warnings"] = [f"{name.title()} could not refresh. Showing its last loaded data; reconnect if needed."
+                              for name in failed]
+    else:
+        report.pop("warnings", None)
+
+
+def _prune_retry_source(entry, provider):
+    """A successful reconnect heals one source; keep the sibling allowance."""
+    state = entry.get("sync_retry")
+    if not isinstance(state, dict) or provider not in (state.get("sources") or []):
+        return
+    remaining = [name for name in state["sources"] if name != provider]
+    if remaining:
+        state["sources"] = remaining
+    else:
+        entry.pop("sync_retry", None)
+    entry["sync_failed"] = bool(remaining)
+    _set_report_warnings(entry, remaining)
+
+
+def _consumed_state(entry):
+    state = entry.get("sync_retry")
+    return isinstance(state, dict) and state.get("consumed")
+
+
 async def refresh_job(token, entry, request):
     state = getattr(request, "state", None)
     queued_at = getattr(state, "queued_at", time.monotonic())
+    retry_id = getattr(state, "retry_id", None)
     started = None
+    claimed = False
+    sources = None
     outcome = "discarded"
     exception_type = None
     lock = session_locks.setdefault(token, asyncio.Lock())
@@ -687,35 +756,73 @@ async def refresh_job(token, entry, request):
                 lock.release()
                 acquired = False
         started = time.monotonic()
+        # Revalidate the claim under the lock: a queued or manual attempt may
+        # have replaced the cycle since this job was admitted. Consume and
+        # persist before any upstream work so a crash cannot repeat it.
+        if retry_id is not None:
+            claim = entry.get("sync_retry")
+            if not sync_retry.matches(claim, retry_id) or not sync_retry.due(claim, time.time()):
+                return False
+            sync_retry.consume(claim)
+            sources = list(claim.get("sources") or [])
+            claimed = True
+            _persist_entry(token, entry)
         entry["sync_attempted_at"] = time.time()
+        failures = {}
         try:
             data, succeeded = await asyncio.wait_for(
-                refresh_providers(request, entry, invoke, report), timeout=90)
+                refresh_providers(request, entry, invoke, report, None, sources, failures), timeout=90)
         except Exception as error:
-            entry["sync_failed"] = True
             exception_type = type(error).__name__
-            outcome = "failed"
-            return False
-        entry["sync_failed"] = not succeeded
+            # A timeout can leave one provider complete and another cancelled.
+            # Keep completed data and retry every source not known to succeed.
+            attempted = sources if sources is not None else list(providers(entry))
+            for name in attempted:
+                failures.setdefault(name, False)
+            succeeded = any(failures.values())
+            data = combined(entry)
+        failed = [name for name, ok in failures.items() if not ok]
+        if not succeeded and not failed:
+            failed = list(sources) if sources is not None else [name for name in providers(entry)]
+        entry["sync_failed"] = bool(failed)
         entry.update({"report": data, "cached": time.monotonic()})
+        _set_report_warnings(entry, failed)
         if succeeded:
             entry["synced_at"] = time.time()
             attendance_trends.observe(entry, entry["synced_at"])
-        outcome = "success" if succeeded else "failed"
-        if session_store and sessions.get(token) is entry:
-            session_store.save_changes({token: entry})
+        _retry_failed(entry, failed, claimed, time.time())
+        outcome = "success" if not failed else "partial" if succeeded else "failed"
+        _persist_entry(token, entry)
         return succeeded
     except TimeoutError:
         if sessions.get(token) is entry:
             entry.update({"sync_failed": True, "sync_attempted_at": time.time()})
+            now = time.time()
+            retry_state = entry.get("sync_retry")
+            if retry_id is not None:
+                # Queued before the claim: postpone the same unconsumed
+                # allowance instead of minting a fresh cycle.
+                if sync_retry.matches(retry_state, retry_id) and not retry_state.get("consumed"):
+                    retry_state["at"] = now + REFRESH_COOLDOWN
+            else:
+                pending = [name for name in providers(entry)]
+                _retry_failed(entry, pending, False, now)
+                _set_report_warnings(entry, pending)
+            _persist_entry(token, entry)
         outcome = "queue_timeout"
         return False
     except asyncio.CancelledError:
         outcome = "cancelled"
+        if claimed and _consumed_state(entry):
+            _retry_failed(entry, sources or [], True, time.time())
+            _persist_entry(token, entry)
         raise
     except Exception as error:
         outcome = "failed"
         exception_type = type(error).__name__
+        if claimed and _consumed_state(entry):
+            _retry_failed(entry, sources or [], True, time.time())
+            _persist_entry(token, entry)
         raise
     finally:
         if acquired:
@@ -736,27 +843,47 @@ async def exams(request: Request):
         return failure("SESSION_EXPIRED", "Please sign in again.")
     if sessions.get(token) is not entry:
         return failure("SESSION_EXPIRED", "Please sign in again.")
-    portal = providers(entry).get("portal")
-    if not portal or portal.get("expired"):
-        saved = portal.get("report", {}).get("exams") if portal else None
-        cached = {**saved, "stale": True,
-                  "entries": [{**row, "stale": True} for row in saved.get("entries", [])]} if saved else None
-        return {"exams": cached, "connections": combined(entry)["connections"]}
-    if not can_admit(MEMORY_RESERVE_MB):
-        return admission_failure(wait=15)
-    previous = portal.get("report", {}).get("exams")
     now = time.time()
-    try:
-        attempted = datetime.fromisoformat((previous or {}).get("lastAttemptAt", "")).timestamp()
-    except (ValueError, TypeError):
-        attempted = 0
-    force = request.query_params.get("force") == "1" and now - attempted >= REFRESH_COOLDOWN
-    result = await refresh_exams(portal["cookies"], previous, now, force=force)
+    entry.pop("exam_retry", None)
+    portal = providers(entry).get("portal")
+    if not portal:
+        return {"exams": None, "connections": combined(entry)["connections"], "retry": None}
+    previous = portal.get("report", {}).get("exams")
+    key = account_key(portal, token)
+    # Retired retry requests only read cache. Manual force cannot bypass the
+    # account-wide week, which also survives logout, another device and restart.
+    may_fetch = "retry" not in request.query_params and not portal.get("expired")
+    if may_fetch and not can_admit(MEMORY_RESERVE_MB):
+        return admission_failure(wait=15)
+    saved, next_at, claimed = exam_cache.reserve(key, previous, now, may_fetch)
+    result = saved
+    if claimed:
+        started = time.monotonic()
+        try:
+            result = await refresh_exams(portal["cookies"], saved, now, force=True)
+        except asyncio.CancelledError:
+            # The persisted claim stays consumed for the week.
+            raise
+        except Exception:
+            result = unavailable_exams(saved, now)
+        if not isinstance(result, dict):
+            result = unavailable_exams(saved, now)
+        result = {**result, "nextCheckAt": next_at * 1000}
+        exam_cache.finish(key, next_at, result)
+        print(json.dumps({"event": "exam_refresh_finished",
+                          "request_id": getattr(getattr(request, "state", None), "diagnostic_id", None),
+                          "outcome": "stale" if result.get("stale") else "success",
+                          "duration_ms": round((time.monotonic() - started) * 1000)}), flush=True)
+    elif isinstance(result, dict):
+        result = {**result, "nextCheckAt": next_at * 1000}
     if sessions.get(token) is not entry:
         return failure("SESSION_EXPIRED", "Please sign in again.")
-    portal.setdefault("report", {})["exams"] = result
-    entry["report"] = combined(entry)
-    return {"exams": result, "connections": entry["report"]["connections"]}
+    if isinstance(result, dict):
+        portal.setdefault("report", {})["exams"] = result
+        entry["report"] = combined(entry)
+    _persist_entry(token, entry)
+    return {"exams": result, "connections": combined(entry)["connections"],
+            "retry": None, "nextCheckAt": next_at * 1000}
 
 
 @app.get("/api/reports", response_model=ReportResponse)
@@ -769,6 +896,7 @@ async def reports(request: Request):
     now = time.time()
     force = request.query_params.get("force") == "1"
     cache_only = request.query_params.get("cache") == "only"
+    retry_id = request.query_params.get("retry")
     queue = getattr(app.state, "refresh_queue", None)
     pending = queue and token in queue.jobs
     # Only a few requests may briefly await work. Large bursts still return
@@ -778,12 +906,20 @@ async def reports(request: Request):
                  and refresh_response_waiters < REFRESH_CONCURRENCY)
     recent = now - entry.get("sync_attempted_at", 0) < REFRESH_COOLDOWN
     wanted = force or sync_schedule.due(entry, now)
-    if not cache_only and wanted and not pending and not recent:
+    retry_state = entry.get("sync_retry")
+    if retry_id is not None:
+        # An explicit retry never falls through to ordinary scheduled or manual
+        # work: stale, early, or consumed IDs only return current data/cache.
+        sources = list(retry_state.get("sources") or []) if sync_retry.matches(retry_state, retry_id) else []
+        if sources and not cache_only and not pending and sync_retry.due(retry_state, now):
+            context = job_context(request, retry_id)
+            if queue:
+                pending = queue.submit(token, entry, context) is not None
+            else:
+                await refresh_job(token, entry, context)
+    elif not cache_only and wanted and not pending and not recent:
         if queue:
-            context = SimpleNamespace(app=app, state=SimpleNamespace(
-                diagnostic_id=getattr(getattr(request, "state", None), "diagnostic_id", secrets.token_hex(12)),
-                queued_at=time.monotonic()))
-            pending = queue.submit(token, entry, context) is not None
+            pending = queue.submit(token, entry, job_context(request)) is not None
         else:
             await refresh_job(token, entry, request)
     if wait_fast and pending:
@@ -801,10 +937,19 @@ async def reports(request: Request):
     if sessions.get(token) is not entry:
         return failure("SESSION_EXPIRED", "Please sign in again.")
     result = sync_schedule.response(entry, time.time())
-    if entry.get("sync_failed"):
-        result["warnings"] = [*result.get("warnings", []), "Sync could not finish. Your last data is still available; try again shortly."]
+    warnings = list(result.get("warnings") or [])
+    state = entry.get("sync_retry")
+    remaining = sync_retry.sources(state.get("sources", [])) if isinstance(state, dict) else []
+    for source in remaining:
+        message = f"{source.title()} could not refresh. Showing its last loaded data; reconnect if needed."
+        if message not in warnings:
+            warnings.append(message)
+    if entry.get("sync_failed") and not remaining:
+        warnings.append("Sync could not finish. Your last data is still available; try again shortly.")
+    if warnings:
+        result["warnings"] = warnings
     recent = time.time() - entry.get("sync_attempted_at", 0) < REFRESH_COOLDOWN
-    if queue and (pending or (wanted and not recent and not cache_only)):
+    if queue and (pending or (retry_id is None and wanted and not recent and not cache_only)):
         light = len(queue.jobs) <= REFRESH_CONCURRENCY
         result["sync"].update({"pending": True, "state": "queued" if pending else "busy",
                                "waitForCompletion": bool(pending and light and refresh_response_waiters < REFRESH_CONCURRENCY),

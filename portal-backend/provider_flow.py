@@ -58,13 +58,30 @@ def same_student(states, provider, data, account):
     return True
 
 
-async def refresh(request, entry, invoke, report, exam_refresh=None):
+async def refresh(request, entry, invoke, report, exam_refresh=None, sources=None, failures=None):
     states = providers(entry)
     warnings = []
+    names = [name for name in ("portal", "academia")
+             if name in states and (sources is None or name in sources)]
     async def refresh_one(name):
         state = states.get(name)
         if not state:
             return False
+        try:
+            return await refresh_provider(name, state)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # One provider's transport error must not erase its sibling's
+            # completed work or make the healthy source look failed.
+            if name == "portal" and state.get("report", {}).get("exams"):
+                state["report"]["exams"] = {**state["report"]["exams"], "stale": True}
+            if failures is not None:
+                failures[name] = False
+            warnings.append(f"{name.title()} could not refresh. Showing its last loaded data; reconnect if needed.")
+            return False
+
+    async def refresh_provider(name, state):
         payload = {"cookies": state["cookies"]}
         if name == "academia":
             payload["username"] = state["username"]
@@ -83,6 +100,8 @@ async def refresh(request, entry, invoke, report, exam_refresh=None):
             state["expired"] = response.status_code == 401
             if name == "portal" and state.get("report", {}).get("exams"):
                 state["report"]["exams"] = {**state["report"]["exams"], "stale": True}
+            if failures is not None:
+                failures[name] = False
             warnings.append(f"{name.title()} could not refresh. Showing its last loaded data; reconnect if needed.")
             return False
         if name == "portal" and exam_refresh:
@@ -90,10 +109,12 @@ async def refresh(request, entry, invoke, report, exam_refresh=None):
                                                state.get("report", {}).get("exams"))
         state.update({"cookies": data.get("cookies", state["cookies"]),
                       "report": report(data, state.get("report")), "expired": False})
+        if failures is not None:
+            failures[name] = True
         return True
     # Separate cookie jars and provider records can refresh concurrently. The
     # existing per-session lock and global refresh queue still bound this work.
-    tasks = [asyncio.create_task(refresh_one(name)) for name in ("portal", "academia")]
+    tasks = [asyncio.create_task(refresh_one(name)) for name in names]
     try:
         succeeded = any(await asyncio.gather(*tasks))
     except BaseException:

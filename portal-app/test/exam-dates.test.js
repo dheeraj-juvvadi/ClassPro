@@ -32,7 +32,8 @@ test('endsem dates handle new sessions, unpublished dates, cached fallback and c
   await page.locator('#exams-view').waitFor();
   assert.equal(await page.locator('#exams-title').innerText(), 'View your endsem dates');
   assert.match(await page.locator('#exam-status').innerText(), /Connect Student Portal/);
-  const report = { status: 'published', checkedAt: '2026-10-02T06:00:00Z', stale: false,
+  const report = { status: 'published', checkedAt: '2026-10-02T06:00:00Z',
+    nextCheckAt: Date.parse('2026-10-09T06:00:00Z'), stale: false,
     provisional: true, source: 'Student Portal · Scribe Request', sessions: [
       { value: '11_2026', label: 'Nov 2026' }, { value: '12_2026', label: 'Dec 2026' },
       { value: '4_2027', label: 'Apr 2027' }, { value: '5_2027', label: 'May 2027' },
@@ -47,6 +48,8 @@ test('endsem dates handle new sessions, unpublished dates, cached fallback and c
   assert.equal(await page.locator('.exam-pending').innerText(), 'Not published');
   assert.equal(await page.locator('#exam-list img').count(), 0);
   assert.match(await page.locator('#exam-status').innerText(), /Provisional/);
+  assert.match(await page.locator('.exam-weekly').innerText(), /once a week/);
+  assert.match(await page.locator('#exam-checked').innerText(), /checked weekly · next check after/);
   assert.equal(await page.locator('#exam-period option').count(), 5);
   for (const width of [320,390,430,1280]) {
     await page.setViewportSize({ width, height: 844 });
@@ -60,7 +63,7 @@ test('endsem dates handle new sessions, unpublished dates, cached fallback and c
   await page.selectOption('#exam-period', '4_2027');
   assert.equal(await page.locator('#exam-status').innerText(), 'Student Portal timetable');
   await page.evaluate(data => anonExamDates.update({ ...data, stale: true }), report);
-  assert.match(await page.locator('#exam-status').innerText(), /Cached dates/);
+  assert.match(await page.locator('#exam-status').innerText(), /Showing saved dates/);
   assert.equal(await page.locator('.exam-row').count(), 1);
   await page.evaluate(data => anonExamDates.update({ ...data, sessions: [], entries: [] }), report);
   assert.equal(await page.locator('#exam-period').inputValue(), '');
@@ -102,7 +105,7 @@ test('endsem dates handle new sessions, unpublished dates, cached fallback and c
   assert.match(await page.locator('#exam-status').innerText(), /showing saved dates/);
   await page.evaluate(() => anonExamDates.clear());
   await page.evaluate(() => anonExamDates.refresh(true));
-  assert.equal(await page.locator('#exam-status').innerText(), 'Could not check dates. Try Sync again.');
+  assert.equal(await page.locator('#exam-status').innerText(), 'Could not check dates. Try Check dates again.');
   await page.evaluate(() => showLogin());
   assert.equal(await page.locator('#exams-view').isVisible(), false);
   assert.equal(await page.locator('.exam-row').count(), 0);

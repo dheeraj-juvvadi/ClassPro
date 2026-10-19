@@ -61,6 +61,11 @@ async function handler(request, response) {
     if (value !== null) target.searchParams.set(key, value);
   }
   if (path === 'exams' && incoming.searchParams.get('force') === '1') target.searchParams.set('force', '1');
+  if ((path === 'reports' || path === 'exams') && incoming.searchParams.has('retry')) {
+    // Preserve explicit retry scope, even for an invalid/empty ID: the backend
+    // must reject that claim rather than treat it as a new ordinary sync.
+    target.searchParams.set('retry', incoming.searchParams.get('retry'));
+  }
   let upstream;
   try {
     upstream = await fetch(target, { method: request.method, headers,

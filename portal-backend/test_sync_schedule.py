@@ -28,6 +28,17 @@ class SyncScheduleTests(unittest.TestCase):
         self.assertEqual(next_slot(stamp(16, 21)), stamp(16, 23))
         self.assertEqual(next_slot(stamp(16, 23)), stamp(17, 8))
 
+    def test_history_upgrade_cannot_bypass_pending_or_exhausted_retry(self):
+        now = stamp(16, 12)
+        entry = {"providers": {"portal": {"cookies": {"s": "synthetic"}, "report": {}}},
+                 "sync_attempted_at": now, "sync_retry": {"consumed": False}}
+        self.assertFalse(due(entry, now + 61))
+        entry["sync_retry"] = {"consumed": True, "exhausted": True}
+        self.assertFalse(due(entry, now + 300))
+        self.assertTrue(due(entry, stamp(16, 13)))
+        entry["sync_attempted_at"] = stamp(20, 12)
+        self.assertFalse(due(entry, stamp(20, 12, 5)))
+
     def test_session_offset_spreads_scheduled_refresh(self):
         entry = {"synced_at": stamp(16, 8), "sync_offset": 120}
         self.assertFalse(due(entry, stamp(16, 9, 1)))
