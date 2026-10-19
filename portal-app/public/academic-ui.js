@@ -19,51 +19,66 @@ globalThis.academicUI = (() => {
       percentage: `${Number(prediction.percentage.toFixed(1))}%`,
       detail: required ? `Attend ${required} consecutive hours to reach 75%.` : `You can miss ${prediction.canMiss} hours and remain at 75%.` };
   }
+  const TONES = { risk: 'risk', caution: 'edge', healthy: 'good', neutral: 'good' };
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function verdictFor(prediction) {
+    if (!prediction.valid || prediction.percentage === null) return 'No hours yet';
+    if (prediction.neededToTarget) return `Attend the next ${prediction.neededToTarget} hours`;
+    if (prediction.canMiss) return `${prediction.canMiss} hours to spare`;
+    return "Right at 75% · don't miss the next one";
+  }
   function renderAttendance(data, container, schedule) {
     courses = data;
+    const pctOf = course => attendanceMath.predict(course).percentage ?? Infinity;
+    const sorted = [...data].sort((a, b) => pctOf(a) - pctOf(b));
+    const legend = create('div', 'v2-legend');
+    legend.setAttribute('aria-hidden', 'true');
+    for (const [cls, label] of [['p', 'Present'], ['a', 'Absent'], ['s', 'Can skip'], ['n', 'Must attend']]) {
+      const item = create('span');
+      item.append(create('i', `d ${cls}`), document.createTextNode(label));
+      legend.append(item);
+    }
     const list = create('div', 'attendance-rows');
-    for (const course of data) {
+    for (const course of sorted) {
       const status = margin(course.present, course.conducted);
-      const card = create('article', `attendance-row ${status.tone}`);
-      const heading = create('div', 'attendance-row-heading');
-      const name = create('div');
-      name.append(create('h3', '', course.title || course.code), create('p', 'course-code', course.code));
-      const badge = create('button', `margin-badge ${status.tone}`, status.text);
-      badge.type = 'button';
-      badge.title = status.detail;
-      badge.setAttribute('aria-label', `${course.title}: ${status.detail} Calculate attendance`);
-      badge.addEventListener('click', () => open(course));
-      heading.append(name, badge);
-      const bottom = create('div', 'attendance-row-bottom');
-      const counts = create('dl', 'attendance-counts');
-      for (const [label, value] of [['Present', course.present], ['Absent', course.absent], ['Total', course.conducted]]) {
-        const pair = create('div', label === 'Absent' ? 'count-absent' : '');
-        pair.append(create('dt', '', label), create('dd', '', value ?? '—'));
-        counts.append(pair);
-      }
-      const percentage = create('div', 'attendance-percentage-group');
-      percentage.append(create('strong', 'attendance-percent', status.percentage));
+      const prediction = attendanceMath.predict(course);
+      const card = create('article', `attendance-row v2 ${TONES[status.tone] || 'good'}`);
+      const details = [course.faculty, course.room, course.type, course.credits && `${course.credits} credits`].map(value => courseDetails.clean(value)).filter(Boolean);
+      if (details.length) card.title = details.join(' · ');
+      let verdict = verdictFor(prediction);
+      const recovery = courseDetails.recovery(course, classproScheduleModel.normalize(schedule), classproScheduleModel.clock('Asia/Kolkata'));
+      if (recovery?.date) verdict += ` · back by ${recovery.date.getDate()} ${MONTHS[recovery.date.getMonth()]}`;
+      card.setAttribute('aria-label', `${course.title || course.code}: ${status.percentage}, ${course.present} of ${course.conducted} hours present. ${status.detail} ${verdict}`);
+      const head = create('div', 'v2-head');
+      const left = create('div');
+      const sub = create('p');
+      sub.append(document.createTextNode(`${course.present}/${course.conducted} hours`));
       const delta = course.change24h?.points;
       if (Number.isFinite(delta)) {
         const amount = Number(delta.toFixed(1));
-        const change = create('span', `attendance-change ${amount > 0 ? 'positive' : amount < 0 ? 'negative' : 'unchanged'}`, `${amount > 0 ? '+' : ''}${amount}%`);
-        change.append(create('small', '', ' · 24h'));
+        const change = create('span', `attendance-change delta ${amount > 0 ? 'positive up' : amount < 0 ? 'negative down' : 'unchanged'}`, `${amount > 0 ? '▲ +' : amount < 0 ? '▼ ' : ''}${amount}% · 24h`);
         change.title = `${delta > 0 ? '+' : ''}${delta} percentage points since the saved reading near 24 hours ago`;
-        change.setAttribute('aria-label', change.title);
-        percentage.append(change);
+        sub.append(change);
       }
-      bottom.append(counts, percentage);
-      card.append(heading, bottom);
-      const details = [course.faculty, course.room, course.type, course.credits && `${course.credits} credits`].map(value => courseDetails.clean(value)).filter(Boolean);
-      if (details.length) card.append(create('p', 'course-metadata', details.join(' · ')));
-      const recovery = courseDetails.recovery(course, classproScheduleModel.normalize(schedule), classproScheduleModel.clock('Asia/Kolkata'));
-      if (recovery?.date) {
-        const date = recovery.date.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' });
-        card.append(create('p', 'recovery-date', `Can be recovered by ${date}`), create('p', 'recovery-assumption', 'If you attend every upcoming class.'));
-      } else if (recovery?.unavailable) card.append(create('p', 'recovery-assumption', 'Recovery date needs a confirmed timetable and calendar.'));
+      left.append(create('h3', '', course.title || course.code), sub);
+      const pct = create('p', 'v2-pct');
+      const pctText = prediction.valid && prediction.percentage !== null ? `${Number(prediction.percentage.toFixed(1))}` : '—';
+      pct.append(document.createTextNode(pctText));
+      if (pctText !== '—') pct.append(create('span', '', '%'));
+      head.append(left, pct);
+      const dots = create('div', 'v2-dots');
+      dots.setAttribute('aria-hidden', 'true');
+      for (let i = 0; i < (course.present || 0); i++) dots.append(create('i', 'd p'));
+      for (let i = 0, absent = Math.max(0, (course.conducted || 0) - (course.present || 0)); i < absent; i++) dots.append(create('i', 'd a'));
+      const extra = prediction.neededToTarget ? ['n', prediction.neededToTarget] : ['s', prediction.canMiss || 0];
+      for (let i = 0; i < extra[1]; i++) dots.append(create('i', `d ${extra[0]}`));
+      const button = create('button', 'v2-verdict', verdict);
+      button.type = 'button';
+      button.addEventListener('click', () => open(course));
+      card.append(head, dots, button);
       list.append(card);
     }
-    container.append(list);
+    container.append(legend, list);
     get('calculate-attendance').disabled = !data.length;
   }
   get('calculate-attendance').addEventListener('click', () => dateAttendance.open());

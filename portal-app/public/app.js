@@ -183,31 +183,70 @@ function renderAttendance(report, schedule) {
 
 function renderMarks(report) {
   const { container, data } = reportState('marks', report);
-  const list = node('div', 'marks-list');
-  for (const course of data) {
-    const details = node('details', 'course-details');
-    const summary = node('summary');
-    const scoreBlock = node('span', 'marks-score-block');
-    scoreBlock.append(node('span', 'course-score', score(course)), node('span', 'marks-score-caption', 'Total score'));
-    summary.append(courseHeading(course), scoreBlock);
-    const content = node('div', 'assessments');
-    content.append(node('h3', 'assessment-heading', 'Assessments'));
-    if (course.detailsError) content.append(node('p', 'message error', course.detailsError));
+  const num = (item) => item === null || item === undefined || item === '' ? null : Number.isFinite(Number(item)) ? Number(item) : null;
+  const percent = (item) => {
+    const scored = num(item.scored);
+    const total = num(item.total);
+    return scored !== null && total !== null && total > 0 ? Math.max(0, Math.min(100, scored / total * 100)) : null;
+  };
+  const toneOf = (pct) => pct === null || pct >= 80 ? 'good' : pct >= 65 ? 'edge' : 'risk';
+  const badge = (pct, top) => {
+    const [glyph, label] = top ? ['★', 'Top course'] : pct >= 80 ? ['✓', 'Strong'] : pct >= 65 ? ['–', 'Steady'] : ['!', 'Needs a push'];
+    const icon = node('i', 'm-ico', glyph);
+    icon.setAttribute('role', 'img');
+    icon.setAttribute('aria-label', label);
+    icon.title = label;
+    return icon;
+  };
+  const entries = data.map((course) => ({ course, pct: percent(course) })).sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
+  const list = node('div', 'm2-list');
+  entries.forEach(({ course, pct }, index) => {
+    const card = node('article', `m2 ${toneOf(pct)}`);
+    const head = node('div', 'm-head');
+    const info = node('div');
     const components = Array.isArray(course.components) ? course.components : [];
-    const metadata = node('span', 'course-result-count', `${components.length} ${components.length === 1 ? 'assessment' : 'assessments'}`);
-    summary.querySelector('.course-heading').append(metadata);
-    if (!components.length && !course.detailsError) content.append(node('p', 'quiet', 'No assessment details are available yet.'));
-    for (const component of components) {
-      const row = node('div', 'assessment-row');
-      const info = node('div');
-      info.append(node('div', 'assessment-name', component.name || 'Assessment'));
-      if (component.enteredOn) info.append(node('div', 'quiet assessment-date', `Entered ${component.enteredOn}`));
-      row.append(info, node('span', 'assessment-score', score(component)));
-      content.append(row);
+    info.append(node('h3', '', course.title || course.code || 'Untitled course'));
+    info.append(node('p', '', `${course.code || 'Course'} · ${components.length} ${components.length === 1 ? 'assessment' : 'assessments'}`));
+    const scoreBlock = node('p', 'm-score');
+    if (pct === null) {
+      scoreBlock.textContent = '—';
+    } else {
+      scoreBlock.append(String(value(course.scored)), node('span', '', `/${value(course.total)}`));
+      const summary = node('em');
+      summary.append(badge(pct, index === 0), `${pct.toFixed(0)}%`);
+      scoreBlock.append(summary);
     }
-    details.append(summary, content);
-    list.append(details);
-  }
+    head.append(info, scoreBlock);
+    card.append(head);
+    if (course.detailsError) card.append(node('p', 'message error', course.detailsError));
+    if (!components.length) {
+      if (!course.detailsError) card.append(node('p', 'quiet', 'No assessment details are available yet.'));
+    } else {
+      const blocks = node('div', 'm-blocks');
+      for (const component of components) {
+        const total = num(component.total);
+        const scored = num(component.scored);
+        const filled = scored !== null && total !== null && total > 0 ? Math.max(0, Math.min(100, scored / total * 100)) : 0;
+        const block = node('div', 'm-block');
+        block.style.flex = String(total !== null && total > 0 ? total : 1);
+        if (component.enteredOn) block.title = component.enteredOn;
+        const fill = node('div', 'm-fill');
+        const bar = node('i');
+        bar.style.width = `${filled}%`;
+        fill.append(bar);
+        const scoreText = node('b');
+        if (component.scoreLabel) {
+          scoreText.textContent = String(component.scoreLabel);
+        } else {
+          scoreText.append(String(value(component.scored)), node('small', '', `/${value(component.total)}`));
+        }
+        block.append(fill, node('span', '', component.name || 'Assessment'), scoreText);
+        blocks.append(block);
+      }
+      card.append(blocks);
+    }
+    list.append(card);
+  });
   if (data.length) container.append(list);
 }
 

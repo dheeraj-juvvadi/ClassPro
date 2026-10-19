@@ -1,0 +1,142 @@
+/* Marks redesign: colored course tiles. All rules scoped to the planner marks panel. */
+
+.planner #marks-panel .section-heading,
+.planner #marks-panel .section-help { display: none; }
+
+/* status tones: ink only, card fill comes from the tile block below */
+.planner #marks-panel .m2.good { --tone: #c5d4a7; }
+.planner #marks-panel .m2.edge { --tone: #dcc07f; }
+.planner #marks-panel .m2.risk { --tone: #ec9a80; }
+
+.planner #marks-panel .m2-list { display: grid; gap: 8px; }
+
+.planner #marks-panel .m2 {
+  border: 0;
+  background: #1e211d;
+  padding: 13px 14px 14px;
+  border-radius: 17px;
+  color: var(--ink);
+}
+
+.planner #marks-panel .m2.good { background: #c5d4a7; --ink: #233020; }
+.planner #marks-panel .m2.edge { background: #cfb77a; --ink: #302815; }
+.planner #marks-panel .m2.risk { background: #c97059; --ink: #1d1512; }
+
+.planner #marks-panel .m-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.planner #marks-panel .m-head h3 {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -.25px;
+  color: var(--ink);
+}
+
+.planner #marks-panel .m-head > div > p {
+  font-size: 11px;
+  margin-top: 3px;
+  color: var(--ink);
+  opacity: .75;
+}
+
+.planner #marks-panel .m-score {
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -.06em;
+  line-height: 1;
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.planner #marks-panel .m-score span {
+  font-size: 15px;
+  color: var(--ink);
+  opacity: .6;
+  letter-spacing: -.02em;
+}
+
+.planner #marks-panel .m-score em {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-top: 5px;
+  color: var(--ink);
+}
+
+.planner #marks-panel .m-ico {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #f1eee3;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.planner #marks-panel .m-blocks {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.planner #marks-panel .m-block { min-width: 0; }
+
+.planner #marks-panel .m-fill {
+  position: relative;
+  height: 7px;
+  border-radius: 6px;
+  background: #0000001c;
+  overflow: hidden;
+}
+
+.planner #marks-panel .m-fill i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--ink);
+  border-radius: 6px;
+}
+
+.planner #marks-panel .m-block > span {
+  display: inline-block;
+  margin-top: 7px;
+  font-size: 10px;
+  color: var(--ink);
+  opacity: .75;
+}
+
+.planner #marks-panel .m-block > b {
+  float: right;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.planner #marks-panel .m-block b small {
+  font-size: 10px;
+  font-weight: 450;
+  color: var(--ink);
+  opacity: .75;
+}
+
+.planner #marks-panel .m2 > .message.error,
+.planner #marks-panel .m2 > .quiet {
+  margin-top: 10px;
+  color: var(--ink);
+}
+
+.planner #marks-panel .m2 > .quiet { opacity: .75; font-size: 11px; }
