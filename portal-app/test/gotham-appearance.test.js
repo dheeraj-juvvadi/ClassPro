@@ -58,10 +58,10 @@ test('Gotham recolors home, attendance and marks, then clears back to Wildflower
   assert.equal(home.rendering, 'pixelated');
   assert.equal(home.height, 132);
   assert.match(home.mask, /linear-gradient/);
-  assert.equal(home.card, 'rgb(201, 58, 51)');
+  assert.equal(home.card, 'rgb(168, 70, 63)');
   assert.ok(home.risk.length > 0, 'a risk insight card is present');
   assert.ok(home.healthy.length > 0, 'a healthy insight card is present');
-  for (const color of home.risk) assert.equal(color, 'rgb(201, 58, 51)');
+  for (const color of home.risk) assert.equal(color, 'rgb(168, 70, 63)');
   for (const color of home.healthy) assert.equal(color, 'rgb(20, 20, 22)');
   assert.equal(home.cat, 'none');
 
@@ -78,9 +78,9 @@ test('Gotham recolors home, attendance and marks, then clears back to Wildflower
   });
   assert.equal(attendance.sheet, 'rgb(20, 20, 22)');
   assert.equal(attendance.alert, 'rgb(42, 13, 16)');
-  assert.match(attendance.alertHair, /rgba\(255, 90, 79, 0\.27\)/);
+  assert.match(attendance.alertHair, /rgba\(217, 102, 92, 0\.27\)/);
   assert.equal(attendance.good, 'rgb(236, 230, 230)');
-  assert.equal(attendance.risk, 'rgb(255, 90, 79)');
+  assert.equal(attendance.risk, 'rgb(217, 102, 92)');
   const marks = await page.evaluate(() => {
     anonHome.navigate('marks');
     return getComputedStyle(document.querySelector('#marks-panel .m2-list')).backgroundColor;

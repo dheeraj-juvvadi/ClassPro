@@ -4,14 +4,14 @@ body[data-accent="cats"][data-scene="gotham"] {
   --backdrop: url('/scene-gotham.svg');
   --page: #0b0b0c; --surface: #141416; --soft: #1d1c1f;
   --ink: #f1eded; --muted: #a39b9c; --line: #2b2628;
-  --accent: #e23b3b; --accent-hover: #f05a50; --on-accent: #160505;
-  --planner-green: #c93a33; --planner-muted: #a39b9c;
+  --accent: #c25750; --accent-hover: #cf6a62; --on-accent: #160505;
+  --planner-green: #a8463f; --planner-muted: #a39b9c;
   --catnap-page: #0b0b0c; --catnap-inset: #111113; --catnap-surface: #141416; --catnap-raised: #1f1d20;
   --catnap-line: #2b2628; --catnap-ink: #f1eded; --catnap-muted: #a39b9c;
-  --catnap-accent: #e23b3b; --catnap-accent-hover: #f05a50; --catnap-on-accent: #160505;
+  --catnap-accent: #c25750; --catnap-accent-hover: #cf6a62; --catnap-on-accent: #160505;
   --catnap-positive: #ece6e6;
   --catnap-warning: #f2c14e; --catnap-warning-card: #f2c14e; --catnap-on-warning: #1c1405;
-  --catnap-risk: #ff5a4f; --catnap-risk-card: #c42a25; --catnap-risk-surface: #2a0d10; --catnap-on-risk: #fff1ef;
+  --catnap-risk: #d9665c; --catnap-risk-card: #c42a25; --catnap-risk-surface: #2a0d10; --catnap-on-risk: #fff1ef;
 }
 /* The pixel scene keeps Catnap's pixel rendering; only tint and crop change. */
 body:is(.planner, .garden-login)[data-accent="cats"][data-scene="gotham"] .botanical-backdrop::after {
@@ -29,13 +29,13 @@ body.planner[data-accent="cats"][data-scene="gotham"] .insight-card {
   color: #141416;
   box-shadow: none;
 }
-body.planner[data-accent="cats"][data-scene="gotham"] .insight-card.risk .insight-percentage { color: #c93a33; }
+body.planner[data-accent="cats"][data-scene="gotham"] .insight-card.risk .insight-percentage { color: #a8463f; }
 body[data-accent="cats"][data-scene="gotham"] #attendance-panel {
-  --att-good: #ece6e6; --att-edge: #f2c14e; --att-risk: #ff5a4f;
-  --att-alert: #2a0d10; --att-alert-hair: #ff5a4f26;
+  --att-good: #ece6e6; --att-edge: #f2c14e; --att-risk: #d9665c;
+  --att-alert: #2a0d10; --att-alert-hair: #d9665c26;
 }
 body[data-accent="cats"][data-scene="gotham"] #attendance-panel .attendance-rows.alert {
-  box-shadow: inset 0 0 0 1px #ff5a4f45;
+  box-shadow: inset 0 0 0 1px #d9665c45;
 }
 @media (max-width: 700px) {
   body:is(.planner, .garden-login)[data-accent="cats"][data-scene="gotham"] .botanical-backdrop {
