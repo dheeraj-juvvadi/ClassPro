@@ -155,8 +155,7 @@ globalThis.academicUI = (() => {
     const predictions = new Map((projection?.result.courses || []).map(course => [course.code, course]));
     const unconfirmed = projection && (projection.result.error || projection.result.unknown.length);
     if (unconfirmed) get('attendance-plan-summary').textContent += ' · Calendar incomplete';
-    const list = create('div', 'attendance-rows');
-    data.forEach(course => {
+    const cards = data.map(course => {
       let displayed = course;
       if (projection) {
         const planned = predictions.get(course.code), prediction = planned?.prediction;
@@ -164,9 +163,18 @@ globalThis.academicUI = (() => {
           present: !unconfirmed && prediction?.valid ? prediction.present + planned.impact.attend : null,
           conducted: !unconfirmed && prediction?.valid ? prediction.conducted : null };
       }
-      list.append(courseCard(displayed, margin(displayed.present, displayed.conducted), schedule, !!projection));
+      return courseCard(displayed, margin(displayed.present, displayed.conducted), schedule, !!projection);
     });
-    container.append(list);
+    // Rows needing action open the red sheet: risk first, then caution. Everything else stays calm.
+    const rank = card => card.classList.contains('risk') ? 0 : card.classList.contains('edge') ? 1 : 2;
+    const alert = cards.filter(card => rank(card) < 2).sort((a, b) => rank(a) - rank(b));
+    const calm = cards.filter(card => rank(card) === 2);
+    for (const [className, rows] of [['attendance-rows alert', alert], ['attendance-rows', calm]]) {
+      if (!rows.length) continue;
+      const list = create('div', className);
+      list.append(...rows);
+      container.append(list);
+    }
     expireChanges();
     get('calculate-attendance').disabled = !data.length;
   }

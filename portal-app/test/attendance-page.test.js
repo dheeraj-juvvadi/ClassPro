@@ -36,8 +36,9 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.locator('.attendance-margin-value strong').innerText(), '2');
   assert.equal(await cn.locator('.attendance-main-metric').getAttribute('aria-label'), 'Required: 5 hours');
   assert.equal(await cn.locator('.attendance-margin-value strong').innerText(), '−5');
-  assert.equal(await cn.locator('.attendance-margin-value').evaluate(el => getComputedStyle(el).color),
-    await cn.evaluate(el => getComputedStyle(el).color));
+  // Colour only carries status: the risk number and its progress fill share the risk tone.
+  assert.equal(await cn.locator('.attendance-margin-value').evaluate(el => getComputedStyle(el).color), 'rgb(228, 143, 120)');
+  assert.equal(await cn.locator('.attendance-rail-fill').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(228, 143, 120)');
   assert.equal(await cn.evaluate(el => el.classList.contains('risk')), true);
   assert.equal(await page.locator('.attendance-metric-label, .attendance-margin-action').count(), 0);
   assert.equal(await ds.locator('.attendance-recorded-hours').innerText(), '18/22 hrs');
@@ -90,12 +91,22 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await ds.locator('details').getAttribute('open'), null);
   await page.keyboard.press('Space');
   assert.equal(await ds.locator('details').getAttribute('open'), '');
-  // Each course is its own status tile: separate rounded cards, no list dividers.
-  assert.equal(await page.locator('#attendance-panel .attendance-rows').evaluate(el => getComputedStyle(el).rowGap), '10px');
+  // Two dark sheets: rows needing action in the alert sheet (risk first, then caution), the rest calm.
+  const sheets = page.locator('#attendance-panel .attendance-rows');
+  assert.equal(await sheets.count(), 2);
+  assert.equal(await sheets.nth(0).evaluate(el => el.classList.contains('alert')), true);
+  assert.deepEqual(await sheets.nth(0).locator('.attendance-row').evaluateAll(rows => rows.map(row => row.dataset.attendanceTone)),
+    ['risk', 'risk', 'caution', 'caution', 'caution', 'caution']);
+  assert.equal(await sheets.nth(1).locator('.attendance-row').evaluateAll(rows => rows.some(row => row.matches('.risk, .edge'))), false);
+  assert.equal(await sheets.nth(0).evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(42, 28, 25)');
+  assert.equal(await sheets.nth(1).evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(32, 36, 31)');
+  assert.equal(await sheets.nth(0).evaluate(el => getComputedStyle(el).marginBottom), '12px');
+  assert.equal(await sheets.nth(1).evaluate(el => getComputedStyle(el).rowGap), '0px');
   for (const row of [ds, cn]) {
     assert.equal(await row.evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
-    assert.equal(await row.evaluate(el => getComputedStyle(el).borderRadius), '20px');
+    assert.equal(await row.evaluate(el => getComputedStyle(el).borderRadius), '0px');
   }
+  assert.equal(await page.locator('.attendance-row[data-course="REPORTED"]').evaluate(el => getComputedStyle(el).borderTopWidth), '1px');
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `overflow at ${width}`);
@@ -114,13 +125,17 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
     assert.equal(alignment, true, `hours aligned at right without overlap at ${width}`);
     const railAlignment = await page.locator('.attendance-rail').evaluateAll(rails => rails.every(rail => {
       const bounds = rail.getBoundingClientRect();
-      const target = rail.querySelector('.attendance-rail-target').getBoundingClientRect();
-      return Math.abs((target.left + target.width / 2 - bounds.left) / bounds.width - 0.75) < 0.001;
+      const fill = rail.querySelector('.attendance-rail-fill').getBoundingClientRect();
+      const target = rail.querySelector('.attendance-rail-target');
+      const value = Number(rail.getAttribute('aria-valuenow')) / 100;
+      return Math.abs(bounds.height - 5) < 0.5 && fill.width > 0
+        && Math.abs(fill.width / bounds.width - value) < 0.01
+        && getComputedStyle(target).display === 'none';
     }));
-    assert.equal(railAlignment, true, `target remains at 75% at ${width}`);
+    assert.equal(railAlignment, true, `visible progress bar matches attendance and hides the target at ${width}`);
     if (width >= 390) {
       const height = await ds.locator('summary').evaluate(el => el.getBoundingClientRect().height);
-      assert.ok(height >= 88 && height < 140, `comfortable row at ${width}: ${height}`);
+      assert.ok(height >= 88 && height < 150, `comfortable row at ${width}: ${height}`);
     }
   }
   assert.equal(await page.locator('#attendance-panel button:visible').count(), 0);
@@ -131,6 +146,10 @@ test('compact attendance keeps signed hours, recent deltas, keyboard details and
   assert.equal(await page.locator('#calculate-attendance').evaluate(el => el === document.activeElement), true);
   assert.equal(await page.locator('.attendance-row[data-course="ZERO"] .attendance-margin-value strong').innerText(), '0');
   assert.equal(await page.locator('.attendance-row[data-course="NEW"] .attendance-margin-value strong').innerText(), '—');
+  // No row needs action: only the calm sheet renders.
+  await page.evaluate(() => renderAttendance({ data: [{ code: 'CALM', title: 'Only calm', present: 18, conducted: 20 }] }));
+  assert.equal(await page.locator('#attendance-panel .attendance-rows').count(), 1);
+  assert.equal(await page.locator('#attendance-panel .attendance-rows.alert').count(), 0);
   await page.evaluate(() => { location.hash = 'home'; });
   await page.locator('#home-view').waitFor({ state: 'visible' });
   const update = async start => page.evaluate(start => {
@@ -204,28 +223,33 @@ test('attendance changes expire independently without sync and cached reports ca
     ] };
     renderAttendance(deltaReport);
   });
-  const badges = () => page.locator('.attendance-change-value').allTextContents();
-  assert.deepEqual(await badges(), ['+1.8', '−1.2']);
+  // Sheets reorder rows by status, so key badges by course instead of document order.
+  const badges = () => page.evaluate(() => [...document.querySelectorAll('.attendance-row')].reduce((all, row) => {
+    const value = row.querySelector('.attendance-change-value');
+    if (value) all[row.dataset.course] = value.textContent;
+    return all;
+  }, {}));
+  assert.deepEqual(await badges(), { CS: '+1.8', MA: '−1.2' });
   await page.clock.runFor(1000);
   await page.evaluate(() => renderAttendance(deltaReport));
-  assert.deepEqual(await badges(), ['+1.8', '−1.2']);
+  assert.deepEqual(await badges(), { CS: '+1.8', MA: '−1.2' });
   await page.clock.runFor(1000);
-  assert.deepEqual(await badges(), ['−1.2']);
+  assert.deepEqual(await badges(), { MA: '−1.2' });
   await page.evaluate(() => {
     deltaReport.data[0].present = 8;
     deltaReport.data[0].changeSinceSync = { points: -9.09, to: Date.now(), expiresAt: Date.now() + 86400000 };
     renderAttendance(deltaReport);
   });
-  assert.deepEqual(await badges(), ['−9.1', '−1.2']);
+  assert.deepEqual(await badges(), { CS: '−9.1', MA: '−1.2' });
   await page.clock.runFor(2000);
-  assert.deepEqual(await badges(), ['−9.1']);
+  assert.deepEqual(await badges(), { CS: '−9.1' });
   await page.clock.fastForward(86400000);
-  assert.deepEqual(await badges(), []);
+  assert.deepEqual(await badges(), {});
   await page.evaluate(() => {
     renderAttendance(deltaReport);
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  assert.deepEqual(await badges(), []);
+  assert.deepEqual(await badges(), {});
 });
 
 test('home widgets advance at the minute after class ends without a reload', { timeout: 30000 }, async context => {

@@ -165,7 +165,9 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
   const styles = await page.evaluate(() => {
     const read = (selector, property = 'backgroundColor') => getComputedStyle(document.querySelector(selector))[property];
     const result = {
-      home: read('.next-class-card'), attendance: read('.attendance-row.good'), marks: read('#marks-panel .m2.good'),
+      home: read('.next-class-card'), attendanceSheet: read('#attendance-panel .attendance-rows:not(.alert)'),
+      attendanceTone: read('#attendance-panel .attendance-row.good .attendance-margin-value strong', 'color'),
+      marksSheet: read('#marks-panel .m2-list'),
       grade: read('.grade-course'),
       marksText: read('#marks-panel .m2.good .m-score', 'color'), settingsInput: read('#settings-display-name'),
     };
@@ -177,11 +179,13 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
     return result;
   });
   assert.equal(styles.home, 'rgb(191, 179, 199)');
-  // Status tiles share the home card colour, so they follow the theme with it.
-  for (const key of ['attendance', 'marks']) assert.equal(styles[key], styles.home, key);
+  // Both status sheets follow the theme surface; their tones follow the theme palette.
+  assert.equal(styles.attendanceSheet, 'rgb(52, 53, 54)');
+  assert.equal(styles.attendanceTone, 'rgb(191, 179, 199)');
+  assert.equal(styles.marksSheet, 'rgb(52, 53, 54)');
   assert.equal(styles.settingsInput, 'rgb(52, 53, 54)');
   assert.equal(styles.grade, 'rgb(46, 47, 49)');
-  assert.equal(styles.marksText, 'rgb(41, 40, 44)');
+  assert.equal(styles.marksText, 'rgb(189, 181, 196)');
   for (const key of ['dialog', 'plannerInput']) assert.equal(styles[key], 'rgb(41, 42, 44)', key);
   assert.match(styles.plannerArt, /scene-cats\.svg/);
   for (const width of [320, 1280]) {
@@ -200,13 +204,18 @@ test('Catnap recolors app surfaces, planners and timetable, then restores Wildfl
   const reset = await page.evaluate(() => ({
     body: getComputedStyle(document.body).backgroundColor,
     card: getComputedStyle(document.querySelector('.next-class-card')).backgroundColor,
-    marks: getComputedStyle(document.querySelector('#marks-panel .m2.good')).backgroundColor,
+    attendanceSheet: getComputedStyle(document.querySelector('#attendance-panel .attendance-rows:not(.alert)')).backgroundColor,
+    attendanceTone: getComputedStyle(document.querySelector('#attendance-panel .attendance-row.good .attendance-margin-value strong')).color,
+    marksSheet: getComputedStyle(document.querySelector('#marks-panel .m2-list')).backgroundColor,
     cat: getComputedStyle(document.querySelector('.brand'), '::after').content,
     scene: getComputedStyle(document.querySelector('.botanical-backdrop')).backgroundImage,
   }));
   assert.equal(reset.body, 'rgb(25, 27, 25)');
   assert.equal(reset.card, 'rgb(197, 212, 167)');
-  assert.equal(reset.marks, reset.card);
+  // Sheets return to the Wildflower surface, the attendance tone to its design fallback.
+  assert.equal(reset.attendanceSheet, 'rgb(32, 36, 31)');
+  assert.equal(reset.attendanceTone, 'rgb(180, 204, 140)');
+  assert.equal(reset.marksSheet, 'rgb(32, 36, 31)');
   assert.equal(reset.cat, 'none');
   assert.match(reset.scene, /floral-screenprint\.svg/);
   assert.deepEqual(errors, []);

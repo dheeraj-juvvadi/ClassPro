@@ -153,8 +153,8 @@ test('Calculate applies recovery hours to attendance after date selection', { ti
   assert.equal(await projected.locator('.attendance-margin-value').textContent(), '−62hrs');
   assert.equal(await projected.locator('.attendance-percent').innerText(), '63.1%');
   assert.equal(await projected.locator('.attendance-recorded-hours').innerText(), '82/130 hrs');
-  // Risk tiles print the margin in the risk card's ink, like the home risk card.
-  assert.equal(await projected.locator('.attendance-margin-value').evaluate(node => getComputedStyle(node).color), 'rgb(33, 27, 23)');
+  // Risk rows print the margin in the risk tone, like every status sheet.
+  assert.equal(await projected.locator('.attendance-margin-value').evaluate(node => getComputedStyle(node).color), 'rgb(228, 143, 120)');
   assert.match(await page.locator('#attendance-plan-summary').innerText(), /10 Oct.*25 Oct/);
   assert.equal(await page.evaluate(() => quietReport.attendance.data[0].present), 60);
   await page.locator('#calculate-attendance').click();
