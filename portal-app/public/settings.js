@@ -55,8 +55,13 @@ globalThis.anonSettings = (() => {
     catch { tell('Browser storage is unavailable. Changes will last for this visit.'); return false; }
   }
   function apply() {
-    document.body.dataset.accent = prefs.theme === 'cats' ? 'cats' : 'sage';
-    get('settings-theme').value = document.body.dataset.accent;
+    // Catnap Alley is retired from the picker; a saved 'cats' falls back to Wildflower.
+    // Gotham reuses Catnap Alley's structure and adds the scene attribute.
+    const theme = prefs.theme === 'gotham' ? 'gotham' : 'sage';
+    document.body.dataset.accent = theme === 'sage' ? 'sage' : 'cats';
+    if (theme === 'gotham') document.body.dataset.scene = 'gotham';
+    else delete document.body.dataset.scene;
+    get('settings-theme').value = theme;
     get('settings-haptics').checked = prefs.haptics !== false;
     anonFeedback.setHaptics(prefs.haptics !== false);
     get('settings-notifications').checked = prefs.notifications === true && globalThis.Notification?.permission === 'granted';
@@ -92,7 +97,7 @@ globalThis.anonSettings = (() => {
         const stored = JSON.parse(localStorage.getItem(key) || '{}');
         prefs = stored.prefs && typeof stored.prefs === 'object' ? stored.prefs : {};
         if (typeof prefs.name !== 'string') prefs.name = '';
-        prefs.theme = prefs.theme === 'cats' ? 'cats' : 'sage';
+        prefs.theme = prefs.theme === 'gotham' ? 'gotham' : 'sage';
       } catch {}
     }
     const snapshot = {
@@ -168,6 +173,7 @@ globalThis.anonSettings = (() => {
   return { update, clear() {
     report = {}; storageKey = ''; prefs = {}; previous = null; nameDirty = false;
     document.body.dataset.accent = 'sage';
+    delete document.body.dataset.scene;
     anonFeedback.setHaptics(true);
     for (const id of ['settings-name', 'settings-program', 'settings-message', 'settings-avatar']) get(id).replaceChildren();
     get('settings-avatar').hidden = true; nameFeedback(nameHint);

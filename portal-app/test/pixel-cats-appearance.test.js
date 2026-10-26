@@ -63,11 +63,12 @@ function appearance(storage = new Map()) {
   return { get, storage, context, update, accent: () => context.document.body.dataset.accent };
 }
 
-test('Settings offers only Wildflower and Catnap Alley', () => {
+test('Settings offers Wildflower, Catnap Alley and Gotham', () => {
   const $ = load(markup);
-  assert.deepEqual($('#settings-theme option').map((_, n) => $(n).attr('value')).get(), themes);
+  assert.deepEqual($('#settings-theme option').map((_, n) => $(n).attr('value')).get(), [...themes, 'gotham']);
   assert.equal($('link[href^="/appearance-scenes.css"]').length, 1);
-  assert.deepEqual($('#settings-theme option').map((_, n) => $(n).text()).get(), ['Wildflower', 'Catnap Alley']);
+  assert.equal($('link[href^="/gotham.css"]').length, 1);
+  assert.deepEqual($('#settings-theme option').map((_, n) => $(n).text()).get(), ['Wildflower', 'Catnap Alley', 'Gotham']);
 });
 
 test('retired and unknown saved themes return to Wildflower without losing preferences', () => {
