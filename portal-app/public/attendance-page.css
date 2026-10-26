@@ -1,7 +1,7 @@
 /* Attendance: dark status sheets. Colour only carries status — no tinted tiles, dots or glow. */
 body.planner[data-page="attendance"] #reports-view { max-width: 960px; margin-inline: auto; }
 body.planner[data-page="attendance"] #reports-view > .page-heading { max-width: none; margin: 0 0 12px; gap: 12px; }
-body.planner[data-page="attendance"] #reports-title { font-size: clamp(30px, 5vw, 38px); font-weight: 550; line-height: 1.2; letter-spacing: -.055em; }
+body.planner[data-page="attendance"] #reports-title { font-size: 28px; font-weight: 550; line-height: 1.2; letter-spacing: -.055em; }
 body.planner[data-page="attendance"] #updated-at { font-size: 12px; line-height: 1.5; margin-top: 8px; }
 body.planner[data-page="attendance"] .report-actions { width: auto; align-self: flex-start; }
 body.planner[data-page="attendance"] #calculate-attendance { min-height: 36px; margin-top: 2px; padding: 4px 0; font: 500 14px/1.5 Inter, sans-serif; color: var(--catnap-accent, #c5d4a7); border: 0; background: transparent; }
@@ -68,19 +68,19 @@ body.planner[data-accent="cats"] #attendance-panel .attendance-rows.alert { back
 .attendance-details:not([open]) > .attendance-detail-body { display: none; }
 
 .attendance-course-heading { grid-column: 1; grid-row: 1; align-self: end; min-width: 0; }
-#attendance-panel .attendance-course-heading h3 { margin: 0; color: var(--att-ink); font-size: 16px; line-height: 1.2; font-weight: 650; letter-spacing: -.3px; overflow-wrap: anywhere; text-wrap: balance; }
+#attendance-panel .attendance-course-heading h3 { margin: 0; color: var(--att-ink); font-size: 15.5px; line-height: 1.2; font-weight: 550; letter-spacing: -.25px; overflow-wrap: anywhere; text-wrap: balance; }
 .attendance-main-metric { grid-column: 2; grid-row: 1 / 3; align-self: start; display: flex; flex-direction: column; align-items: flex-end; margin: 0; padding: 0; border: 0; background: transparent; color: var(--att-ink); }
 .attendance-margin-value { display: flex; align-items: baseline; gap: 4px; color: var(--tone); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
-.attendance-margin-value strong { color: var(--tone); font-size: 44px; line-height: .95; font-weight: 600; letter-spacing: -.06em; }
-.attendance-margin-value > span { color: var(--att-sub); font-size: 18px; font-weight: 550; }
-#attendance-panel .attendance-margin-caption { max-width: 110px; margin-top: 3px; color: var(--att-sub); font-size: 11.5px; font-weight: 550; line-height: 1.2; text-align: right; white-space: nowrap; }
+.attendance-margin-value strong { color: var(--tone); font-size: 40px; line-height: .95; font-weight: 500; letter-spacing: -.065em; }
+.attendance-margin-value > span { color: var(--att-sub); font-size: 15px; font-weight: 450; }
+#attendance-panel .attendance-margin-caption { max-width: 110px; margin-top: 3px; color: var(--att-sub); font-size: 11.5px; font-weight: 450; line-height: 1.2; text-align: right; white-space: nowrap; }
 #attendance-panel .attendance-margin-caption:empty { display: none; }
 
 .attendance-record { grid-column: 1; grid-row: 2; align-self: start; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 7px; color: var(--att-sub); font-size: 12.5px; line-height: 1.5; font-variant-numeric: lining-nums tabular-nums; }
 .attendance-recorded-hours, .attendance-recorded-rate { white-space: nowrap; }
 .attendance-recorded-rate { display: inline-flex; align-items: baseline; gap: 5px; }
 .attendance-recorded-hours + .attendance-recorded-rate::before { content: '·'; color: color-mix(in srgb, var(--att-ink) 55%, var(--att-tile)); }
-.attendance-record strong, #attendance-panel .attendance-percent { color: var(--att-ink); font-weight: 600; }
+.attendance-record strong, #attendance-panel .attendance-percent { color: var(--att-ink); font-weight: 550; }
 #attendance-panel .attendance-percent { font-size: inherit; line-height: inherit; letter-spacing: 0; }
 .attendance-percent small { font-size: inherit; }
 .attendance-record .attendance-change { display: inline-flex; align-items: center; gap: 4px; height: 21px; margin: 0; padding: 0 8px 0 6px; border-radius: 999px; background: #ffffff0d; box-shadow: none; color: var(--att-sub); font-size: 11.5px; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -89,7 +89,7 @@ body.planner[data-accent="cats"] #attendance-panel .attendance-rows.alert { back
 #attendance-panel .attendance-record .attendance-change.negative { color: var(--att-risk); }
 #attendance-panel .attendance-record .attendance-change.unchanged { color: var(--att-sub); }
 .attendance-record .attendance-change small { margin-left: 2px; color: var(--att-ink); font-size: 10.5px; font-weight: 500; opacity: .75; }
-#attendance-panel .attendance-change-value { gap: 0; font-size: 11.5px; font-weight: 650; }
+#attendance-panel .attendance-change-value { gap: 0; font-size: 11.5px; font-weight: 550; }
 #attendance-panel .attendance-change-value::after { content: '%'; }
 
 /* The rail is the course progress bar: tone fill on a neutral track, no 75% target mark. */
@@ -101,7 +101,7 @@ body.planner[data-accent="cats"] #attendance-panel .attendance-rows.alert { back
 
 /* Facts row: faculty, room, slot (and the recovery date on at-risk courses). No top divider. */
 .attendance-facts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; min-height: 0; margin: 4px 0 0; padding: 8px 0 0; border-top: 0; color: var(--att-sub); font-size: 12.5px; font-weight: 550; line-height: 1.3; text-align: left; }
-.attendance-fact { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; color: var(--att-sub); font-size: 12.5px; font-weight: 550; line-height: 1.3; }
+.attendance-fact { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; color: var(--att-sub); font-size: 12.5px; font-weight: 450; line-height: 1.3; }
 .attendance-fact svg { flex: none; width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .attendance-fact-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .attendance-fact.attendance-verdict-text { flex-basis: 100%; color: var(--att-ink); font-weight: 650; }
@@ -123,7 +123,7 @@ body.planner[data-accent="cats"] #attendance-panel .attendance-rows.alert { back
 @media (max-width: 380px) {
   .attendance-details > .attendance-summary { padding-inline: 14px; }
   #attendance-panel .attendance-course-heading h3 { font-size: 14px; }
-  .attendance-margin-value strong { font-size: 38px; }
+  .attendance-margin-value strong { font-size: 36px; }
   .attendance-record { font-size: 11px; }
   .attendance-detail-body { margin-inline: 14px; }
 }
